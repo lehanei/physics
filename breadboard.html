@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Breadboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#E7E9EC}
+#fit{width:100%;overflow:hidden}
+#stage{width:800px;height:730px;transform-origin:top left}
+button{font-family:Inter,system-ui,sans-serif}
+button:focus-visible{outline:2px solid #2F6FD6;outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage"></div></div>
+<script>
+(()=>{
+var BAND=['#1A1A1A','#7B4A2A','#D0312D','#F08A24','#F2D338','#2E9E4F','#2F6FD6','#8B4FC9','#9AA0A6','#F5F5F5'];
+var VALS=[{lbl:'100 Ω',d:[1,0,1]},{lbl:'220 Ω',d:[2,2,1]},{lbl:'470 Ω',d:[4,7,1]},{lbl:'1 kΩ',d:[1,0,2]},{lbl:'4.7 kΩ',d:[4,7,2]},{lbl:'10 kΩ',d:[1,0,3]},{lbl:'100 kΩ',d:[1,0,4]}];
+var COMPS=[
+ {k:'led',lbl:'LED',tag:'LED',hint:'first click is the anode (+), second the cathode.'},
+ {k:'diode',lbl:'Diode',tag:'Diode',hint:'first click is the anode, second the cathode (band end).'},
+ {k:'ldr',lbl:'LDR',tag:'LDR',hint:'click two holes.'},
+ {k:'npn',lbl:'Transistor',tag:'NPN transistor',hint:'click one hole: legs E, B, C go in it and the next two holes to the right.'},
+ {k:'bulb',lbl:'Bulb',tag:'Bulb',hint:'click two holes.'},
+ {k:'cap',lbl:'100 µF cap.',tag:'100 µF',hint:'first click is + , second is − (stripe side).'}];
+var BW={res:48,diode:40,led:24,ldr:24,bulb:28,cap:24};
+var HOLES=[],BYID={};
+function addHole(id,x,y,grp,aria,row,col){var h={id:id,x:x,y:y,grp:grp,aria:aria,row:row,col:col};HOLES.push(h);BYID[id]=h;}
+for(var c=0;c<30;c++){var x=50+c*20,n=c+1,r;
+ addHole('TP'+c,x,30,'TP','Top positive rail, column '+n);
+ addHole('TN'+c,x,50,'TN','Top negative rail, column '+n);
+ for(r=0;r<5;r++)addHole('abcde'[r]+n,x,100+r*20,'T'+c,'Hole '+'abcde'[r]+n,'abcde'[r],n);
+ for(r=0;r<5;r++)addHole('fghij'[r]+n,x,240+r*20,'B'+c,'Hole '+'fghij'[r]+n,'fghij'[r],n);
+ addHole('BN'+c,x,370,'BN','Bottom negative rail, column '+n);
+ addHole('BP'+c,x,390,'BP','Bottom positive rail, column '+n);}
+var LABELS=[];
+[0,4,9,14,19,24,29].forEach(function(c){LABELS.push({x:40+c*20,y:78,t:String(c+1)});LABELS.push({x:40+c*20,y:330,t:String(c+1)});});
+'abcde'.split('').forEach(function(l,i){LABELS.push({x:18,y:93+i*20,t:l});LABELS.push({x:642,y:93+i*20,t:l});});
+'fghij'.split('').forEach(function(l,i){LABELS.push({x:18,y:233+i*20,t:l});LABELS.push({x:642,y:233+i*20,t:l});});
+var STRIPS=[];
+for(var sc=0;sc<30;sc++){STRIPS.push({l:43+sc*20,t:92,w:14,h:96});STRIPS.push({l:43+sc*20,t:232,w:14,h:96});}
+[30,50,370,390].forEach(function(y){STRIPS.push({l:40,t:y-7,w:620,h:14});});
+function partHoles(p){return p.k==='npn'?p.legs:[p.a,p.b];}
+
+var S={parts:[],pending:null,tab:'res',val:3,comp:'led',coverOff:false};
+function set(o){Object.assign(S,o);render();}
+function tool(){return S.tab==='res'?'res':S.comp;}
+function clickHole(id){
+ var parts=S.parts,t=tool(),used={};
+ parts.forEach(function(p){partHoles(p).forEach(function(h){used[h]=true;});});
+ if(t==='npn'){var h=BYID[id];if(!h.row||h.col>28)return;
+  var legs=[id,h.row+(h.col+1),h.row+(h.col+2)];
+  if(legs.some(function(l){return used[l];}))return;
+  set({parts:parts.concat([{k:'npn',legs:legs}]),pending:null});return;}
+ if(!S.pending){if(!used[id])set({pending:id});return;}
+ if(S.pending===id){set({pending:null});return;}
+ if(used[id])return;
+ set({parts:parts.concat([{k:t,a:S.pending,b:id,v:S.val}]),pending:null});
+}
+var F='font-family:Inter,system-ui,sans-serif;';
+function band(v,w){return '<span style="width:'+w+'px;background:'+BAND[v]+'"></span>';}
+function render(){
+ var parts=S.parts,pending=S.pending,t=tool(),off=S.coverOff,pGrp=pending?BYID[pending].grp:null,o='';
+ o+='<div style="width:800px;height:730px;box-sizing:border-box;padding:32px 60px;background:#E7E9EC;'+F+'color:#1B1D20;display:flex;flex-direction:column;gap:16px">';
+ var cur=COMPS.find(function(c){return c.k===t;}),toolName=t==='res'?VALS[S.val].lbl+' resistor':cur.tag;
+ var status=pending?'Now click a second hole for the '+toolName+' (click the first hole again to cancel).':(t==='res'?'Placing '+toolName+': click two holes.':'Placing '+toolName+': '+cur.hint)+' Click a part to remove it.';
+ o+='<div style="display:flex;align-items:center;justify-content:space-between;gap:16px"><div style="display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font-size:24px;font-weight:800">Breadboard</h1><span style="font-size:13px;color:#4A4F57">'+status+'</span></div>';
+ o+='<div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;font-weight:600;color:#4A4F57;white-space:nowrap">'+(parts.length===1?'1 component':parts.length+' components')+'</span>';
+ o+='<button type="button" data-a="cover" aria-pressed="'+off+'" style="height:40px;padding:0 16px;border-radius:8px;border:1px solid #A8ADB3;background:'+(off?'#1B1D20':'#FFFFFF')+';font-size:13px;font-weight:700;color:'+(off?'#FFFFFF':'#1B1D20')+';cursor:pointer;white-space:nowrap">'+(off?'Replace cover':'Remove cover')+'</button>';
+ o+='<button type="button" data-a="clear" style="height:40px;padding:0 16px;border-radius:8px;border:1px solid #A8ADB3;background:#FFFFFF;font-size:13px;font-weight:700;color:#1B1D20;cursor:pointer;white-space:nowrap">Clear board</button></div></div>';
+ // board
+ o+='<div style="position:relative;width:680px;height:420px;flex-shrink:0;border-radius:10px;background:'+(off?'#2F3237':'#F4F2EC')+';box-shadow:0 10px 24px rgba(0,0,0,0.18),inset 0 0 0 1px #D9D5CB">';
+ o+='<div style="position:absolute;left:0;top:196px;width:680px;height:28px;background:'+(off?'#24272B':'#E2DED3')+';box-shadow:inset 0 2px 4px rgba(0,0,0,0.12)"></div>';
+ if(off)STRIPS.forEach(function(s){o+='<div aria-hidden="true" style="position:absolute;left:'+s.l+'px;top:'+s.t+'px;width:'+s.w+'px;height:'+s.h+'px;box-sizing:border-box;border-radius:4px;background:#C8743A;border:1px solid #8A4A20;box-shadow:inset 0 1px 0 rgba(255,214,170,0.6)"></div>';});
+ [[15,'#D93A3A'],[63,'#2F6FD6'],[355,'#2F6FD6'],[403,'#D93A3A']].forEach(function(l){o+='<div style="position:absolute;left:40px;top:'+l[0]+'px;width:600px;height:2px;background:'+l[1]+'"></div>';});
+ [[20,21,'+','#C0282E'],[21,39,'−','#2459B5'],[21,359,'−','#2459B5'],[20,379,'+','#C0282E'],[650,21,'+','#C0282E'],[651,39,'−','#2459B5'],[651,359,'−','#2459B5'],[650,379,'+','#C0282E']].forEach(function(s){o+='<span style="position:absolute;left:'+s[0]+'px;top:'+s[1]+'px;font-size:16px;font-weight:800;color:'+s[3]+'">'+s[2]+'</span>';});
+ LABELS.forEach(function(lb){o+='<span style="position:absolute;left:'+lb.x+'px;top:'+lb.y+'px;width:20px;text-align:center;font-size:10px;font-weight:700;color:'+(off?'#C9CDD3':'#6B7078')+'">'+lb.t+'</span>';});
+ HOLES.forEach(function(h){
+  var bg=h.id===pending?'#F5C84B':(off?'#5E646C':'#2B2B2B'),ring=(pGrp&&h.grp===pGrp&&h.id!==pending)?'0 0 0 3px #7FB3F0':'none';
+  o+='<button type="button" data-h="'+h.id+'" aria-label="'+h.aria+'" style="position:absolute;left:'+(h.x-6)+'px;top:'+(h.y-6)+'px;width:12px;height:12px;padding:0;border:0;border-radius:2px;cursor:pointer;background:'+bg+';box-shadow:'+ring+'"></button>';});
+ var tags=[];
+ parts.forEach(function(p,i){
+  if(p.k==='npn'){var e=BYID[p.legs[0]];
+   o+='<div style="position:absolute;left:'+(e.x-10)+'px;top:'+(e.y-20)+'px;width:60px;height:40px;pointer-events:none">';
+   [7,27,47].forEach(function(lx){o+='<div style="position:absolute;left:'+lx+'px;top:17px;width:6px;height:6px;border-radius:50%;background:#9AA0A6"></div>';});
+   o+='<button type="button" data-r="'+i+'" aria-label="Remove NPN transistor at '+p.legs.join(', ')+'" style="position:absolute;left:2px;top:0;width:56px;height:18px;padding:0;border:0;border-radius:12px 12px 2px 2px;background:#1E1E1E;box-shadow:0 2px 3px rgba(0,0,0,0.35);color:#FFFFFF;font-size:9px;font-weight:700;cursor:pointer;pointer-events:auto">NPN</button>';
+   o+='<div style="position:absolute;left:0;top:25px;width:60px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;font-size:9px;font-weight:800;color:'+(off?'#E7E9EC':'#1B1D20')+'"><span>E</span><span>B</span><span>C</span></div></div>';
+   tags.push({x:e.x+20-50,y:e.y-42,t:'NPN transistor'});return;}
+  var a=BYID[p.a],b=BYID[p.b],dx=b.x-a.x,dy=b.y-a.y,len=Math.max(Math.sqrt(dx*dx+dy*dy),1);
+  var name=p.k==='res'?VALS[p.v].lbl:COMPS.find(function(c){return c.k===p.k;}).tag,bl=((len-BW[p.k])/2).toFixed(1);
+  var aria='Remove '+name+' from '+p.a+' to '+p.b,btn='type="button" data-r="'+i+'" aria-label="'+aria+'"';
+  o+='<div style="position:absolute;left:'+((a.x+b.x)/2-len/2).toFixed(1)+'px;top:'+((a.y+b.y)/2-9).toFixed(1)+'px;width:'+len.toFixed(1)+'px;height:18px;transform:rotate('+(Math.atan2(dy,dx)*180/Math.PI).toFixed(2)+'deg);pointer-events:none">';
+  o+='<div style="position:absolute;left:0;top:8px;width:100%;height:2px;background:#9AA0A6"></div><div style="position:absolute;left:-3px;top:6px;width:6px;height:6px;border-radius:50%;background:#9AA0A6"></div><div style="position:absolute;right:-3px;top:6px;width:6px;height:6px;border-radius:50%;background:#9AA0A6"></div>';
+  if(p.k==='res'){var v=VALS[p.v];o+='<button '+btn+' style="position:absolute;left:'+bl+'px;top:1px;width:48px;height:16px;padding:0 7px;box-sizing:border-box;border:0;border-radius:8px;background:#E3C99A;box-shadow:0 2px 3px rgba(0,0,0,0.3);display:flex;align-items:stretch;gap:3px;cursor:pointer;pointer-events:auto">'+band(v.d[0],4)+band(v.d[1],4)+band(v.d[2],4)+'<span style="flex:1"></span><span style="width:4px;background:#C9A23A"></span></button>';}
+  else if(p.k==='diode')o+='<button '+btn+' style="position:absolute;left:'+bl+'px;top:2px;width:40px;height:14px;padding:0 5px 0 0;box-sizing:border-box;border:0;border-radius:3px;background:#1E1E1E;box-shadow:0 2px 3px rgba(0,0,0,0.3);display:flex;justify-content:flex-end;cursor:pointer;pointer-events:auto"><span style="width:5px;background:#D8DCE0"></span></button>';
+  else if(p.k==='led')o+='<span style="position:absolute;left:4px;top:-10px;font-size:11px;font-weight:800;color:#C0282E">+</span><button '+btn+' style="position:absolute;left:'+bl+'px;top:-3px;width:24px;height:24px;padding:0;border:2px solid #A82227;border-radius:50%;background:#E2453F;box-shadow:inset 5px 5px 0 rgba(255,255,255,0.35),0 2px 4px rgba(0,0,0,0.35);cursor:pointer;pointer-events:auto"></button>';
+  else if(p.k==='ldr')o+='<button '+btn+' style="position:absolute;left:'+bl+'px;top:-3px;width:24px;height:24px;padding:0;border:2px solid #B98A3E;border-radius:50%;background:#EEDFB8;box-shadow:0 2px 4px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto"><svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M2 2 H14 V5 H2 V8 H14 V11 H2" fill="none" stroke="#A33A2A" stroke-width="1.4"></path></svg></button>';
+  else if(p.k==='bulb')o+='<button '+btn+' style="position:absolute;left:'+bl+'px;top:-5px;width:28px;height:28px;padding:0;border:2px solid #C9B060;border-radius:50%;background:#FFF1B0;box-shadow:inset 4px 4px 0 rgba(255,255,255,0.6),0 2px 4px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto"><svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><path d="M1 10 L5 10 C 6 3, 8 3, 9 7 C 10 3, 12 3, 13 10 L17 10" fill="none" stroke="#7A5A1A" stroke-width="1.4"></path></svg></button>';
+  else if(p.k==='cap')o+='<span style="position:absolute;left:4px;top:-10px;font-size:11px;font-weight:800;color:#C0282E">+</span><button '+btn+' style="position:absolute;left:'+bl+'px;top:-3px;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:#2F5FA8;box-shadow:0 2px 4px rgba(0,0,0,0.35);overflow:hidden;cursor:pointer;pointer-events:auto"><span style="position:absolute;right:0;top:0;width:7px;height:24px;background:#C9D3E0"></span></button>';
+  o+='</div>';
+  tags.push({x:((a.x+b.x)/2-50).toFixed(1),y:((a.y+b.y)/2-32).toFixed(1),t:name});
+ });
+ tags.forEach(function(g){o+='<span aria-hidden="true" style="position:absolute;left:'+g.x+'px;top:'+g.y+'px;width:100px;text-align:center;pointer-events:none"><span style="display:inline-block;padding:2px 6px;border-radius:4px;background:#1B1D20;color:#FFFFFF;font-size:11px;font-weight:700;white-space:nowrap">'+g.t+'</span></span>';});
+ o+='</div>';
+ // palette
+ function tab(k,label){var on=S.tab===k;return '<button type="button" role="tab" data-tab="'+k+'" aria-selected="'+on+'" style="height:40px;padding:0 16px;border:0;border-bottom:3px solid '+(on?'#2F6FD6':'transparent')+';background:transparent;font-size:14px;font-weight:700;color:'+(on?'#1B1D20':'#4A4F57')+';cursor:pointer">'+label+'</button>';}
+ o+='<div style="display:flex;flex-direction:column;gap:10px"><div role="tablist" style="display:flex;gap:4px;border-bottom:1px solid #C9CDD3">'+tab('res','Resistors')+tab('comp','Other components')+'</div>';
+ var chipStyle=function(on,extra){return 'height:48px;'+extra+'padding:0 10px;border-radius:8px;border:2px solid '+(on?'#2F6FD6':'#C9CDD3')+';background:'+(on?'#FFFFFF':'#F4F5F7')+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer';};
+ o+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
+ if(S.tab==='res')VALS.forEach(function(v,i){var on=i===S.val;
+  o+='<button type="button" data-val="'+i+'" aria-pressed="'+on+'" style="'+chipStyle(on,'')+'"><span style="width:38px;height:12px;box-sizing:border-box;padding:0 5px;border-radius:6px;background:#E3C99A;display:flex;gap:2px">'+band(v.d[0],3)+band(v.d[1],3)+band(v.d[2],3)+'<span style="flex:1"></span><span style="width:3px;background:#C9A23A"></span></span><span style="font-size:11px;font-weight:700;color:#1B1D20">'+v.lbl+'</span></button>';});
+ else COMPS.forEach(function(c){var on=c.k===S.comp,ic={
+   led:'<span style="width:14px;height:14px;border-radius:50%;background:#E2453F;border:1px solid #A82227"></span>',
+   diode:'<span style="width:26px;height:10px;box-sizing:border-box;padding-right:3px;border-radius:2px;background:#1E1E1E;display:flex;justify-content:flex-end"><span style="width:3px;background:#D8DCE0"></span></span>',
+   ldr:'<span style="width:14px;height:14px;border-radius:50%;background:#EEDFB8;border:1px solid #B98A3E"></span>',
+   npn:'<span style="width:26px;height:12px;border-radius:7px 7px 1px 1px;background:#1E1E1E"></span>',
+   bulb:'<span style="width:15px;height:15px;border-radius:50%;background:#FFF1B0;border:1px solid #C9B060"></span>',
+   cap:'<span style="position:relative;width:14px;height:14px;border-radius:50%;background:#2F5FA8;overflow:hidden"><span style="position:absolute;right:0;top:0;width:4px;height:14px;background:#C9D3E0"></span></span>'}[c.k];
+  o+='<button type="button" data-comp="'+c.k+'" aria-pressed="'+on+'" style="'+chipStyle(on,'min-width:76px;')+'"><span style="height:16px;display:flex;align-items:center">'+ic+'</span><span style="font-size:11px;font-weight:700;color:#1B1D20">'+c.lbl+'</span></button>';});
+ o+='</div></div></div>';
+ document.getElementById('stage').innerHTML=o;
+}
+document.getElementById('stage').addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b)return;var d=b.dataset;
+ if(d.h)clickHole(d.h);
+ else if(d.r!=null)set({parts:S.parts.filter(function(_,j){return j!==+d.r;})});
+ else if(d.a==='cover')set({coverOff:!S.coverOff});
+ else if(d.a==='clear')set({parts:[],pending:null});
+ else if(d.tab)set({tab:d.tab,pending:null});
+ else if(d.val!=null)set({val:+d.val,pending:null});
+ else if(d.comp)set({comp:d.comp,pending:null});
+});
+function fit(){var w=document.getElementById('fit').clientWidth,s=Math.min(1,w/800),st=document.getElementById('stage');
+ st.style.transform='scale('+s+')';document.getElementById('fit').style.height=(730*s)+'px';
+ st.style.marginLeft=(s===1?Math.max(0,(w-800)/2):0)+'px';}
+window.addEventListener('resize',fit);render();fit();
+})();
+</script>
+</body>
+</html>

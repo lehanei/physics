@@ -1,0 +1,531 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Charge Blanket Model</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* Layout: same lab bench as Animations 1–2 — mode switch, 3D stage, controls, live force readout, then reading notes. */
+:root{
+  --bg:#e9eef1; --surface:#fbfcfd; --fg:#15212a; --muted:#566773; --line:#c8d2d9;
+  --pos:#c4362b; --neg:#2160c4; --mass:#6b4f9e; --accent:#0e7466; --accent-ink:#ffffff; --on-color:#ffffff;
+  --sheet:#dfe6ea; --grid:#5e6f7b; --test:#e0a21a; --comp-a:#7b4fd6; --comp-b:#d9692b;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f161b; --surface:#172129; --fg:#e4ebef; --muted:#93a5b1; --line:#2c3a44;
+  --pos:#f0695d; --neg:#6fa3ff; --mass:#b197e6; --accent:#37bfa9; --accent-ink:#06201b; --on-color:#0f161b;
+  --sheet:#46535d; --grid:#a9b8c2; --test:#f2c04a; --comp-a:#ad8cff; --comp-b:#ff9a5c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161b; --surface:#172129; --fg:#e4ebef; --muted:#93a5b1; --line:#2c3a44;
+  --pos:#f0695d; --neg:#6fa3ff; --mass:#b197e6; --accent:#37bfa9; --accent-ink:#06201b; --on-color:#0f161b;
+  --sheet:#46535d; --grid:#a9b8c2; --test:#f2c04a; --comp-a:#ad8cff; --comp-b:#ff9a5c; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding-block:28px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,5vw,42px);line-height:1.05;margin:4px 0 0;text-wrap:balance}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.mode{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.mode button{font:inherit;font-weight:700;font-size:15px;padding:9px 16px;border:0;background:transparent;color:var(--fg);cursor:pointer}
+.mode button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:7px 14px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:0}
+#view{position:relative;width:100%;aspect-ratio:16/10;max-width:100%;touch-action:none;cursor:grab}
+@media (max-width:600px){#view{aspect-ratio:1/1}}
+#view canvas{display:block;width:100%!important;height:100%!important}
+.hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--muted);pointer-events:none}
+.bar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;padding:12px 14px;border-top:1px solid var(--line)}
+.ctl{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--muted);flex:1;min-width:230px}
+.ctl output{min-width:96px;font-variant-numeric:tabular-nums;color:var(--fg);text-align:right}
+.ctl.wide output{min-width:150px}
+input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:inherit;font-weight:700;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--surface)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
+@media (max-width:600px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.readout div{padding:10px 14px;display:flex;flex-direction:column;border-right:1px solid var(--line);min-width:0}
+.readout div:last-child{border-right:0}
+.readout span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.readout b{font-family:var(--f-display);font-size:21px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.now{margin:0;max-width:75ch}
+.key{margin:0;font-size:14px;color:var(--muted)}.key span{font-weight:700;margin-right:8px}
+.ka{color:var(--comp-a)}.kb{color:var(--comp-b)}.kr{color:var(--test)}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.cols{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.eq{font-family:var(--f-display);font-size:24px;font-weight:600;margin:2px 0}
+.pos{color:var(--pos);font-weight:700}.neg{color:var(--neg);font-weight:700}.mass{color:var(--mass);font-weight:700}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Static electricity · Animation 3</p>
+    <h1>Charge Blanket Model</h1>
+  </header>
+
+  <div class="top">
+    <div class="mode" role="group" aria-label="Field type">
+      <button id="mG" aria-pressed="false">Gravitational field</button>
+      <button id="mE" aria-pressed="true">Electric field</button>
+    </div>
+    <div class="presets" id="presets"></div>
+  </div>
+
+  <figure class="stage">
+    <div id="view"><span class="hint" id="hint">Drag to rotate · scroll to zoom · drag a ball to move it</span></div>
+    <div class="bar">
+      <label class="ctl" for="qa"><span id="la">Charge A</span><input type="range" id="qa" step="1"><output id="qaOut"></output></label>
+      <label class="ctl" for="qb"><span id="lb">Charge B</span><input type="range" id="qb" step="1"><output id="qbOut"></output></label>
+      <label class="ctl wide" for="eps" id="epsRow">Stretchy<input type="range" id="eps" min="0" max="100" value="0">Stiff<output id="epsOut"></output></label>
+      <div class="btns">
+        <button class="btn primary" id="play">Release</button>
+        <button class="btn" id="reset">Reset</button>
+        <button class="btn" id="place" aria-pressed="false">Place test charge</button>
+        <button class="btn" id="test" aria-pressed="false">Roll a test charge</button>
+        <button class="btn" id="clear">Clear tests</button>
+        <button class="btn" id="lines" aria-pressed="false">Field lines</button>
+        <button class="btn" id="comps" aria-pressed="true">Components</button>
+      </div>
+      <div class="btns" id="plateBtns">
+        <button class="btn" id="addPos">Add + plate</button>
+        <button class="btn" id="addNeg">Add − plate</button>
+        <button class="btn" id="clearPlates">Remove plates</button>
+      </div>
+    </div>
+    <div class="readout">
+      <div><span id="rqL">q₁ × q₂</span><b id="rq">–</b></div>
+      <div><span>Distance d</span><b id="rd">–</b></div>
+      <div><span>Force F</span><b id="rf">–</b></div>
+      <div><span>Type</span><b id="rt">–</b></div>
+    </div>
+  </figure>
+
+  <p class="key" id="key">On a placed test charge, each component arrow is drawn in the colour of the charge that exerts it. The <span class="kr">gold</span> arrow is the resultant: the components add as vectors to give it.</p>
+  <p class="now" id="now" aria-live="polite"></p>
+
+  <div class="cols">
+    <section class="card" id="card1"></section>
+    <section class="card" id="card2"></section>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(()=>{
+const view=document.getElementById('view');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let C={};
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['surface','fg','muted','pos','neg','mass','accent','sheet','grid','test','comp-a','comp-b'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
+readColors();
+
+// ---------- three setup ----------
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+view.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,1.6,0.1,200);
+let camR=28,camTh=0.55,camPh=0.95;
+function placeCam(){camera.position.set(camR*Math.sin(camPh)*Math.sin(camTh),camR*Math.cos(camPh),camR*Math.sin(camPh)*Math.cos(camTh));camera.lookAt(0,0,0);}
+scene.add(new THREE.HemisphereLight(0xffffff,0x556677,0.85));
+const sun=new THREE.DirectionalLight(0xffffff,0.75);sun.position.set(6,14,9);scene.add(sun);
+
+const SIZE=20,SEG=120,HALF=SIZE/2,LIM=9;
+const geo=new THREE.PlaneGeometry(SIZE,SIZE,SEG,SEG);geo.rotateX(-Math.PI/2);
+const posA=geo.attributes.position;
+const colA=new THREE.BufferAttribute(new Float32Array(posA.count*3),3);geo.setAttribute('color',colA);
+const gridCanvas=document.createElement('canvas');gridCanvas.width=gridCanvas.height=1024;
+const gridTex=new THREE.CanvasTexture(gridCanvas);gridTex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+function paintGrid(){const g=gridCanvas.getContext('2d');g.fillStyle='#ffffff';g.fillRect(0,0,1024,1024);
+  const step=1024/SIZE;g.strokeStyle=C.grid;
+  for(let i=0;i<=SIZE;i++){g.lineWidth=i%5===0?3:1.2;const p=Math.round(i*step);
+    g.beginPath();g.moveTo(p,0);g.lineTo(p,1024);g.stroke();g.beginPath();g.moveTo(0,p);g.lineTo(1024,p);g.stroke();}
+  gridTex.needsUpdate=true;}
+const sheet=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({map:gridTex,vertexColors:true,side:THREE.DoubleSide,roughness:.9,metalness:0}));
+scene.add(sheet);geo.boundingSphere=new THREE.Sphere(new THREE.Vector3(),20);
+const frame=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-HALF,-HALF],[HALF,-HALF],[HALF,HALF],[-HALF,HALF]].map(([x,z])=>new THREE.Vector3(x,0,z))),new THREE.LineBasicMaterial({color:0x888888}));
+scene.add(frame);
+
+// ---------- modes ----------
+// E: charges in µC, 1 grid unit = 2 cm. G: masses in ×10²⁴ kg, 1 grid unit = 20 000 km.
+let mode='E',epsR=1;
+const MATERIALS=[[1,'vacuum or air'],[2.3,'polythene'],[4.5,'glass (approx.)'],[80,'water']];
+const strength=c=>mode==='E'?c.q/epsR:-c.q;     // + raises a hill, − makes a dent
+const pairCoupling=(a,b)=>mode==='E'?a.q*b.q/epsR:-a.q*b.q; // >0 repel, <0 attract
+
+const H0=0.7,A2=0.81;
+const win=(x,z)=>(1-(x/HALF)**2)*(1-(z/HALF)**2);
+// SRC = every point charge on the blanket: A, B and the charges spread along each plate (rebuilt each frame)
+let SRC=[];
+function heightAt(x,z){let h=0;
+  for(const c of SRC){if(!c.q)continue;h+=strength(c)/Math.sqrt((x-c.x)**2+(z-c.z)**2+A2);}
+  return H0*h*win(x,z);}
+const rad=q=>0.35+0.13*Math.abs(q);
+function makeLabel(){const cv=document.createElement('canvas');cv.width=160;cv.height=80;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),depthTest:false,transparent:true}));
+  sp.scale.set(2.4,1.2,1);sp.renderOrder=10;sp.userData.cv=cv;scene.add(sp);return sp;}
+function paintLabel(sp,txt,col){const cv=sp.userData.cv,g=cv.getContext('2d');g.clearRect(0,0,160,80);
+  g.fillStyle=col;g.beginPath();g.roundRect?g.roundRect(8,10,144,60,30):g.rect(8,10,144,60);g.fill();
+  g.fillStyle='#ffffff';g.font='bold 34px "Atkinson Hyperlegible", sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(txt,80,42);
+  sp.material.map.needsUpdate=true;}
+const Q=[0,1].map(i=>{
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,32,20),new THREE.MeshStandardMaterial({roughness:.35,metalness:.1}));
+  scene.add(mesh);
+  const arrow=new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(),1,0x000000,0.6,0.45);scene.add(arrow);
+  return{name:i?'B':'A',q:0,x:0,z:0,vx:0,vz:0,mesh,arrow,label:makeLabel()};});
+// ---------- charged plates (electric mode): a row of equal charges ----------
+const PL_N=15,PL_L=10,PL_Q=7;
+const plates=[];
+const plateGeo=new THREE.SphereGeometry(0.2,12,8);
+function plateSubs(p){const out=[];for(let i=0;i<PL_N;i++)out.push({x:p.x,z:p.z+(i/(PL_N-1)-0.5)*PL_L,q:p.sign*PL_Q/PL_N,plate:p});return out;}
+const segDist=(p,x,z)=>Math.hypot(x-p.x,Math.max(0,Math.abs(z-p.z)-PL_L/2));
+function addPlate(sign,x){
+  if(plates.length>=4)return;
+  if(x===undefined){x=[-2.5,2.5,-6,6,0].find(v=>plates.every(p=>Math.abs(p.x-v)>1));if(x===undefined)x=0;}
+  const p={sign,x,z:0,balls:[],label:makeLabel(),subs:[]};
+  for(let i=0;i<PL_N;i++){const b=new THREE.Mesh(plateGeo,new THREE.MeshStandardMaterial({roughness:.4}));scene.add(b);p.balls.push(b);}
+  plates.push(p);stylePlate(p);rebuildSources();
+}
+function stylePlate(p){const col=p.sign>0?C.pos:C.neg;p.balls.forEach(b=>b.material.color.set(col));paintLabel(p.label,p.sign>0?'+ plate':'− plate',col);}
+function removePlates(){plates.splice(0).forEach(p=>{p.balls.forEach(b=>scene.remove(b));scene.remove(p.label);});rebuildSources();}
+function rebuildSources(){plates.forEach(p=>p.subs=plateSubs(p));SRC=[...Q,...plates.flatMap(p=>p.subs)];}
+const groups=()=>[...Q.filter(c=>c.q),...plates];
+
+const fmtq=q=>mode==='G'?(q?q+' ×10²⁴ kg':'none'):(q===0?'none':(q>0?'+':'−')+Math.abs(q)+' µC');
+const colOf=q=>mode==='G'?C.mass:(q>0?C.pos:C.neg);
+function styleCharge(c){
+  c.mesh.visible=c.label.visible=!!c.q;
+  if(!c.q)return;
+  c.mesh.scale.setScalar(rad(c.q));c.mesh.material.color.set(colOf(c.q));
+  paintLabel(c.label,c.name+' '+(mode==='G'?c.q+'M':(c.q>0?'+':'−')+Math.abs(c.q)),colOf(c.q));
+}
+
+// ---------- field: force per unit positive test charge (or per unit test mass) ----------
+function groupAt(g,x,z){if(g.subs){let ex=0,ez=0;for(const s of g.subs){const [a,b]=compAt(s,x,z);ex+=a;ez+=b;}return[ex,ez];}return compAt(g,x,z);}
+function fieldExcl(c,soft){let ex=0,ez=0;for(const s of SRC){if(s===c||!s.q)continue;const [a,b]=compAt(s,c.x,c.z,soft);ex+=a;ez+=b;}return[ex,ez];}
+function compAt(c,x,z,soft=0.3){if(!c.q)return[0,0];const dx=x-c.x,dz=z-c.z,r2=dx*dx+dz*dz+soft,r=Math.sqrt(r2),sg=strength(c);return[sg*dx/(r2*r),sg*dz/(r2*r)];}
+function fieldAt(x,z,soft=0.3){let ex=0,ez=0;
+  for(const c of SRC){if(!c.q)continue;const dx=x-c.x,dz=z-c.z,r2=dx*dx+dz*dz+soft,r=Math.sqrt(r2),sg=strength(c);
+    ex+=sg*dx/(r2*r);ez+=sg*dz/(r2*r);}
+  return[ex,ez];}
+
+// ---------- test charges / masses ----------
+// rolling tests move with the field and leave a trail; placed probes stay put and show a field arrow
+const tests=[];
+const testGeo=new THREE.SphereGeometry(0.22,16,10);
+function removeTest(t){scene.remove(t.mesh);[t.line,t.arrow,...(t.comps||[])].forEach(o=>o&&scene.remove(o));}
+function clearTests(){tests.splice(0).forEach(removeTest);}
+function addTest(x,z,held){
+  if(tests.length>=40)removeTest(tests.shift());
+  const mesh=new THREE.Mesh(testGeo,new THREE.MeshStandardMaterial({color:C.test,roughness:.3}));scene.add(mesh);
+  const t={x,z,vx:0,vz:0,age:0,n:0,mesh,held,dead:false};
+  if(held){t.comps=[];t.arrow=mkArrow();}
+  else{const lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(600*3),3));lg.setDrawRange(0,0);
+    t.line=new THREE.Line(lg,new THREE.LineBasicMaterial({color:C.test}));scene.add(t.line);}
+  tests.push(t);
+}
+const mkArrow=()=>{const a=new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(),1,0x000000,0.35,0.26);scene.add(a);return a;};
+const nearAny=(x,z,pad)=>Q.some(c=>c.q&&Math.hypot(x-c.x,z-c.z)<rad(c.q)+pad)||plates.some(p=>segDist(p,x,z)<0.2+pad);
+function dropTest(){
+  let x,z,ok=false;
+  for(let k=0;k<40&&!ok;k++){x=(Math.random()*2-1)*7;z=(Math.random()*2-1)*7;ok=!nearAny(x,z,1.8);}
+  addTest(x,z,false);
+}
+
+// ---------- field lines ----------
+let showLines=false;
+const LINE_PTS=500,lines=[],cones=[];
+const coneGeo=new THREE.ConeGeometry(0.16,0.42,10);coneGeo.rotateX(Math.PI/2); // points along +z
+const lineMat=new THREE.LineBasicMaterial({color:0x000000,transparent:true,opacity:.75});
+const coneMat=new THREE.MeshBasicMaterial({color:0x000000});
+function getLine(i){while(lines.length<=i){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(LINE_PTS*3),3));
+  const l=new THREE.Line(g,lineMat);scene.add(l);lines.push(l);const c=new THREE.Mesh(coneGeo,coneMat);scene.add(c);cones.push(c);}
+  return i;}
+function trace(x,z,dirSign,src){
+  const pts=[[x,z]];const h=0.12;
+  for(let k=0;k<LINE_PTS-1;k++){
+    let [ex,ez]=fieldAt(x,z,0.02);let m=Math.hypot(ex,ez);if(m<1e-6)break;
+    const mx=x+dirSign*ex/m*h/2,mz=z+dirSign*ez/m*h/2;
+    [ex,ez]=fieldAt(mx,mz,0.02);m=Math.hypot(ex,ez);if(m<1e-6)break;
+    x+=dirSign*ex/m*h;z+=dirSign*ez/m*h;pts.push([x,z]);
+    if(Math.abs(x)>HALF||Math.abs(z)>HALF)return{pts,end:null};
+    for(const c of Q){if(c===src||!c.q)continue;if(Math.hypot(x-c.x,z-c.z)<rad(c.q)+0.05)return{pts,end:Math.sign(strength(c))};}
+    for(const p of plates){if(p===src)continue;if(segDist(p,x,z)<0.12)return{pts,end:p.sign};}
+  }
+  return{pts,end:null};
+}
+function updateLines(){
+  let n=0;
+  if(showLines){
+    const starts=[]; // [x, z, sign, source]
+    for(const c of Q.filter(c=>c.q)){
+      const sg=Math.sign(strength(c)),count=4*Math.abs(c.q);
+      const other=groups().find(o=>o!==c);const base=other?Math.atan2(other.z-c.z,other.x-c.x):0;
+      for(let k=0;k<count;k++){const ang=base+(k+0.5)*2*Math.PI/count,r0=rad(c.q)+0.08;starts.push([c.x+Math.cos(ang)*r0,c.z+Math.sin(ang)*r0,sg,c]);}
+    }
+    for(const p of plates)for(let i=0;i<PL_N;i+=2)for(const side of[-1,1])starts.push([p.x+side*0.35,p.subs[i].z,p.sign,p]);
+    for(const [sx,sz,sg,src] of starts){
+      {
+        const res=trace(sx,sz,sg,src);
+        if(sg<0&&res.end>0)continue; // already drawn from the positive end
+        if(res.pts.length<3)continue;
+        const i=getLine(n++),l=lines[i],p=l.geometry.attributes.position;
+        res.pts.forEach(([x,z],j)=>p.setXYZ(j,x,heightAt(x,z)+0.06,z));
+        p.needsUpdate=true;l.geometry.setDrawRange(0,res.pts.length);l.geometry.computeBoundingSphere();l.visible=true;
+        // arrowhead pointing along the field
+        const mid=Math.floor(res.pts.length*(sg>0?0.45:0.55)),q0=res.pts[mid],q1=res.pts[Math.min(mid+1,res.pts.length-1)];
+        const cn=cones[i];cn.visible=true;cn.position.set(q0[0],heightAt(q0[0],q0[1])+0.08,q0[1]);
+        const fx=(q1[0]-q0[0])*sg,fz=(q1[1]-q0[1])*sg;cn.lookAt(cn.position.x+fx,cn.position.y,cn.position.z+fz);
+      }
+    }
+  }
+  for(let i=n;i<lines.length;i++){lines[i].visible=false;cones[i].visible=false;}
+}
+
+// ---------- presets & state ----------
+const PRESETS={
+  E:[{name:'One charge',a:2,b:0,pa:[0,0],pb:[4,0]},{name:'Unlike charges',a:2,b:-2,pa:[-4.5,0],pb:[4.5,0]},
+     {name:'Like charges',a:2,b:2,pa:[-2.5,0],pb:[2.5,0]},{name:'Unequal charges',a:3,b:-1,pa:[-4.5,0],pb:[4.5,0]},
+     {name:'Parallel plates',a:0,b:0,pa:[0,0],pb:[0,-3],plates:[[1,-2.5],[-1,2.5]]}],
+  G:[{name:'One mass',a:2,b:0,pa:[0,0],pb:[4,0]},{name:'Two equal masses',a:2,b:2,pa:[-4.5,0],pb:[4.5,0]},
+     {name:'Unequal masses',a:3,b:1,pa:[-4.5,0],pb:[4.5,0]}]};
+let preset=1,playing=false,status='';
+const qa=document.getElementById('qa'),qb=document.getElementById('qb'),epsIn=document.getElementById('eps');
+const presetsEl=document.getElementById('presets');
+function buildPresets(){presetsEl.innerHTML='';PRESETS[mode].forEach((p,i)=>{const b=document.createElement('button');b.className='chip';b.textContent=p.name;b.onclick=()=>applyPreset(i);presetsEl.appendChild(b);});}
+function applyPreset(i){preset=i;const p=PRESETS[mode][i];
+  Q[0].q=p.a;Q[1].q=p.b;[Q[0].x,Q[0].z]=p.pa;[Q[1].x,Q[1].z]=p.pb;
+  Q.forEach(c=>{c.vx=c.vz=0;styleCharge(c);});removePlates();(p.plates||[]).forEach(([sg,x])=>addPlate(sg,x));
+  clearTests();playing=false;status='';syncUI();}
+function setMode(m){mode=m;
+  const G=m==='G';
+  qa.min=qb.min=G?0:-3;qa.max=qb.max=3;
+  document.getElementById('la').textContent=G?'Mass A':'Charge A';document.getElementById('lb').textContent=G?'Mass B':'Charge B';
+  if(typeof syncToggles==='function')syncToggles();
+  document.getElementById('rqL').textContent=G?'m₁ × m₂':'q₁ × q₂';
+  document.getElementById('epsRow').hidden=G;document.getElementById('plateBtns').hidden=G;
+  document.getElementById('key').innerHTML=`On a placed test ${G?'mass':'charge'}, each component arrow is drawn in the colour of the ${G?'mass':'charge'} that exerts it. The <span class="kr">gold</span> arrow is the resultant: the components add as vectors to give it.`;
+  document.getElementById('mG').setAttribute('aria-pressed',G);document.getElementById('mE').setAttribute('aria-pressed',!G);
+  writeCards();buildPresets();applyPreset(1);}
+function syncUI(){
+  qa.value=Q[0].q;qb.value=Q[1].q;
+  document.getElementById('qaOut').textContent=fmtq(Q[0].q);document.getElementById('qbOut').textContent=fmtq(Q[1].q);
+  const near=MATERIALS.find(([v])=>Math.abs(Math.log(epsR/v))<0.12);
+  document.getElementById('epsOut').textContent=`εr = ${epsR<10?epsR.toFixed(1):Math.round(epsR)}${near?' · '+near[1]:''}`;
+  document.getElementById('play').textContent=playing?'Pause':'Release';
+  [...presetsEl.children].forEach((b,i)=>b.setAttribute('aria-pressed',i===preset));
+}
+
+// ---------- physics ----------
+const K=6;
+function physics(dt){
+  const [a,b]=Q;
+  if(playing&&canPlay()){
+    const n=4,h=dt/n;
+    for(let st=0;st<n;st++){
+      if(a.q&&b.q){const r=Math.hypot(b.x-a.x,b.z-a.z);
+        if(r<rad(a.q)+rad(b.q)&&pairCoupling(a,b)<0){ // attracting bodies meet and combine
+          const q=a.q+b.q;a.x=(a.x+b.x)/2;a.z=(a.z+b.z)/2;a.q=q;b.q=0;a.vx=a.vz=b.vx=b.vz=0;
+          styleCharge(a);styleCharge(b);playing=!!(q&&plates.length);
+          status=mode==='G'?`The masses collided and combined. Mass is conserved: one ${q} ×10²⁴ kg body makes a single deeper dent.`
+            :(q?`The charges met and combined. Charge is conserved: the result is ${fmtq(q)}, so a smaller ${q>0?'hill':'dent'} remains.`
+               :'The equal and opposite charges met and cancelled. Total charge is zero, so their hill and dent have gone.');
+          syncUI();break;}}
+      const act=Q.filter(c=>c.q);
+      const acc=act.map(c=>{const [ex,ez]=fieldExcl(c,0.05);return[K*c.q*ex,K*c.q*ez];});
+      act.forEach((c,i)=>{c.vx+=acc[i][0]*h;c.vz+=acc[i][1]*h;const d=Math.exp(-0.6*h);c.vx*=d;c.vz*=d;
+        const ox=c.x,oz=c.z;c.x+=c.vx*h;c.z+=c.vz*h;
+        if(plates.some(p=>segDist(p,c.x,c.z)<rad(c.q)+0.2)){c.x=ox;c.z=oz;c.vx=c.vz=0;} // stopped by a plate
+        if(Math.abs(c.x)>LIM){c.x=Math.sign(c.x)*LIM;c.vx=c.vz=0;}
+        if(Math.abs(c.z)>LIM){c.z=Math.sign(c.z)*LIM;c.vx=c.vz=0;}});
+      if(!plates.length&&act.length===2&&act.every(c=>Math.abs(c.x)>=LIM||Math.abs(c.z)>=LIM)){playing=false;status='The like charges have pushed each other to the edges of the blanket.';syncUI();}
+    }
+  }
+  for(const t of tests){if(t.dead)continue;
+    if(t.held){
+      if(nearAny(t.x,t.z,0.1)){t.dead=true;[t.mesh,t.arrow,...t.comps].forEach(o=>o.visible=false);continue;}
+      const y=heightAt(t.x,t.z)+0.3;t.mesh.position.set(t.x,y-0.08,t.z);
+      // one component per source (each charge, each whole plate); linear scale so they add as vectors
+      const gs=groups(),vs=gs.map(g=>groupAt(g,t.x,t.z)),vr=vs.reduce((s,v)=>[s[0]+v[0],s[1]+v[1]],[0,0]);
+      while(t.comps.length<gs.length)t.comps.push(mkArrow());
+      const S=12,longest=Math.max(Math.hypot(...vr),...vs.map(v=>Math.hypot(...v)))*S,f=longest>3.5?3.5/longest:1;
+      const list=gs.map((g,i)=>[t.comps[i],vs[i],colOf(g.subs?g.sign:g.q),showComps&&gs.length>1]);
+      t.comps.slice(gs.length).forEach(a=>a.visible=false);
+      [...list,[t.arrow,vr,C.test,true]].forEach(([ar,v,col,on])=>{
+        const L=Math.hypot(...v)*S*f;ar.visible=on&&L>0.05;if(!ar.visible)return;
+        dir.set(v[0],0,v[1]).normalize();ar.position.set(t.x,y,t.z);ar.setDirection(dir);
+        ar.setLength(L,Math.min(0.35,L*0.4),Math.min(0.26,L*0.3));ar.setColor(testC.set(col));});
+      continue;}
+    const n=4,h=dt/n;
+    for(let s=0;s<n;s++){
+      if(Q.some(c=>c.q&&strength(c)<0&&Math.hypot(t.x-c.x,t.z-c.z)<rad(c.q)+0.25)||plates.some(p=>segDist(p,t.x,t.z)<0.3)){t.dead=true;break;}
+      const [ex,ez]=fieldAt(t.x,t.z);
+      t.vx+=K*0.5*ex*h;t.vz+=K*0.5*ez*h;const sp=Math.hypot(t.vx,t.vz);if(sp>12){t.vx*=12/sp;t.vz*=12/sp;}
+      const d=Math.exp(-0.8*h);t.vx*=d;t.vz*=d;t.x+=t.vx*h;t.z+=t.vz*h;}
+    t.age+=dt;
+    if(Math.abs(t.x)>LIM+0.5||Math.abs(t.z)>LIM+0.5||t.age>14)t.dead=true;
+    const y=heightAt(t.x,t.z)+0.22;t.mesh.position.set(t.x,y,t.z);t.mesh.visible=!t.dead;
+    if(!t.dead&&t.n<600){const p=t.line.geometry.attributes.position;p.setXYZ(t.n,t.x,y-0.12,t.z);t.n++;p.needsUpdate=true;t.line.geometry.setDrawRange(0,t.n);}
+  }
+}
+
+// ---------- geometry update ----------
+const testC=new THREE.Color(),cSheet=new THREE.Color(),cPos=new THREE.Color(),cNeg=new THREE.Color(),tmp=new THREE.Color(),dir=new THREE.Vector3(),accentC=new THREE.Color();
+function updateSheet(){
+  cSheet.set(C.sheet);cPos.set(C.pos);cNeg.set(mode==='G'?C.mass:C.neg);accentC.set(C.accent);
+  for(let i=0;i<posA.count;i++){const x=posA.getX(i),z=posA.getZ(i);const h=heightAt(x,z);posA.setY(i,h);
+    const k=Math.min(1,Math.abs(h)/2.2);tmp.copy(cSheet).lerp(h>0?cPos:cNeg,k*0.85);colA.setXYZ(i,tmp.r,tmp.g,tmp.b);}
+  posA.needsUpdate=true;colA.needsUpdate=true;geo.computeVertexNormals();
+  const multi=groups().length>1;
+  for(const c of Q){if(!c.q){c.arrow.visible=false;continue;}
+    const R=rad(c.q),y=heightAt(c.x,c.z)+R;c.mesh.position.set(c.x,y,c.z);c.label.position.set(c.x,y+R+0.8,c.z);
+    const [ex,ez]=fieldExcl(c,0.05),fx=c.q*ex,fz=c.q*ez,F=Math.hypot(fx,fz);
+    c.arrow.visible=multi&&F>1e-5;
+    if(c.arrow.visible){dir.set(fx/F,0,fz/F);
+      c.arrow.position.set(c.x+dir.x*R,y,c.z+dir.z*R);c.arrow.setDirection(dir);c.arrow.setLength(Math.min(4.2,0.5+3*Math.sqrt(F)),0.55,0.4);c.arrow.setColor(accentC);}}
+  for(const p of plates){p.balls.forEach((bl,i)=>{const sb=p.subs[i];bl.position.set(sb.x,heightAt(sb.x,sb.z)+0.2,sb.z);});
+    p.label.position.set(p.x,heightAt(p.x,p.z+PL_L/2)+1.2,p.z+PL_L/2+0.6);}
+}
+
+// ---------- readout + narration ----------
+const rq=document.getElementById('rq'),rd=document.getElementById('rd'),rf=document.getElementById('rf'),rt=document.getElementById('rt'),now=document.getElementById('now');
+let lastNow='';
+function sci(v){if(v>=0.1&&v<1000)return v<10?v.toFixed(2):v.toFixed(v<100?1:0);
+  const e=Math.floor(Math.log10(v));return (v/10**e).toFixed(1)+' × 10'+String(e).replace(/-/,'⁻').replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);}
+function readout(){
+  const [a,b]=Q,G=mode==='G';
+  if(a.q&&b.q){const ru=Math.hypot(b.x-a.x,b.z-a.z);
+    if(G){const d=ru*2e7,F=6.67e-11*a.q*b.q*1e48/(d*d);
+      rq.textContent=`${a.q*b.q} ×10⁴⁸ kg²`;rd.textContent=Math.round(ru*2e4).toLocaleString('en-IE')+' km';rf.textContent=sci(F)+' N';rt.textContent='Attraction';}
+    else{const dcm=ru*2,d=dcm/100,F=Math.abs(a.q*b.q)*1e-12/(4*Math.PI*8.85e-12*epsR*d*d);
+      rq.textContent=`${a.q*b.q>0?'':'−'}${Math.abs(a.q*b.q)} µC²`;rd.textContent=dcm.toFixed(1)+' cm';rf.textContent=sci(F)+' N';
+      rt.textContent=a.q*b.q>0?'Repulsion':'Attraction';}}
+  else{rq.textContent=rd.textContent=rf.textContent='–';rt.textContent=G?'One mass':'One charge';}
+  let s=status;
+  if(!s){
+    const one=(a.q&&!b.q)?a:(!a.q&&b.q)?b:null;
+    if(G){
+      if(!a.q&&!b.q)s='No masses: the blanket is flat. There is no gravitational field.';
+      else if(one)s=`A ${fmtq(one.q)} mass makes a dent. A bigger mass makes a deeper dent: a stronger gravitational field. Drop test masses and watch them roll downhill into the dent. Downhill is the direction of g. Mass only comes in one sign, so every body makes a dent and gravity only ever attracts.`;
+      else s=playing?'The masses attract. As d gets smaller the force gets bigger (F ∝ 1/d²), so they speed up as they close in. The arrows stay equal and opposite even when the masses differ.'
+        :'Two dents. Each mass sits on the inner slope of the other\'s dent, so each is pulled towards the other. Press Release to let them go. Switch to Electric field to see the same shape of law with charges.';
+    }else{
+      const pp=plates.some(p=>p.sign>0)&&plates.some(p=>p.sign<0);
+      if(plates.length){
+        s=pp?'Parallel plates: between the plates the blanket is an even, straight slope from the + plate down to the − plate. An even slope means the same field strength and direction everywhere between the plates: a uniform field. Place test charges between the plates and compare their arrows. Outside the plates the blanket is almost flat, so the field there is weak. Near the ends of the plates the lines bend outwards (edge effects).'
+          :`A charged plate makes a long ${plates[0].sign>0?'ridge':'trench'}. Near the middle of the plate the field lines leave at right angles and run parallel; near the ends they spread out.`;
+        if(a.q||b.q)s+=' A charge here feels a force from every charge on the plates as well as from any other ball.'+(pp?' Between parallel plates that force is the same everywhere, so the charge accelerates steadily, like a ball rolling down an even slope.':'');
+      }
+      else if(!a.q&&!b.q)s='No charges: the blanket is flat. There is no field and no force.';
+      else if(one)s=one.q>0
+        ?`A ${fmtq(one.q)} charge pushes the blanket up into a hill. A bigger charge makes a bigger hill. Test charges roll downhill, away from the positive charge: the direction of the field.`
+        :`A ${fmtq(one.q)} charge pulls the blanket down into a dent. A bigger charge makes a deeper dent. Test charges roll downhill into the dent, towards the negative charge: the direction of the field.`;
+      else if(a.q*b.q<0)s=playing?'Unlike charges attract. As d gets smaller the force gets bigger (F ∝ 1/d²), so they speed up as they close in.'
+        :'Unlike charges: a hill and a dent, with a slope running between them. Press Release to let them go.';
+      else s=playing?'Like charges repel. As they move apart d gets bigger, so the force gets smaller (F ∝ 1/d²).'
+        :`Two ${a.q>0?'hills':'dents'} side by side. Each charge sits on the outer slope of the other's ${a.q>0?'hill':'dent'}, which pushes them apart. Press Release to let them go.`;
+      if(epsR>1.05&&(a.q||b.q||plates.length))s+=` The blanket is now stiffer (εr = ${epsR<10?epsR.toFixed(1):Math.round(epsR)}): every hill and dent is ${epsR<10?epsR.toFixed(1):Math.round(epsR)} times smaller, and so is the force.`;
+    }
+  }
+  if(s!==lastNow){lastNow=s;now.textContent=s;}
+}
+
+function writeCards(){
+  const c1=document.getElementById('card1'),c2=document.getElementById('card2');
+  if(mode==='G'){
+    c1.innerHTML=`<h2>Reading the blanket</h2><ul>
+      <li>Every <span class="mass">mass</span> pulls the blanket down into a dent. A bigger mass makes a deeper dent: a stronger field.</li>
+      <li>The steeper the slope, the stronger the gravitational field strength g at that point.</li>
+      <li>A small test mass rolls downhill. Downhill is the direction of g, the force per unit mass.</li>
+      <li>There is no negative mass, so there are no hills. Gravity only attracts.</li>
+      <li>There is no stiffness control: G is the same in every medium. Nothing placed between two masses weakens gravity.</li></ul>`;
+    c2.innerHTML=`<h2>Newton's law of gravitation</h2><p class="eq">F = G m₁m₂ / d²</p><ul>
+      <li>m₁ and m₂ are above the line: as either mass gets bigger, F gets bigger. F ∝ m₁m₂.</li>
+      <li>d is below the line and squared: as d gets bigger, F gets smaller. F ∝ 1/d², so doubling d gives a quarter of the force.</li>
+      <li>Units: G = F d² / m₁m₂, so G is measured in N m² kg⁻². G = 6.67 × 10⁻¹¹ N m² kg⁻².</li>
+      <li>Same form as Coulomb's law: both are inverse square laws. The differences are that charge has two signs and the electric force depends on the medium.</li></ul>`;
+  }else{
+    c1.innerHTML=`<h2>Reading the blanket</h2><ul>
+      <li>A <span class="pos">positive</span> charge pushes the blanket up into a hill. A <span class="neg">negative</span> charge pulls it down into a dent. A bigger charge makes a bigger hill or dent.</li>
+      <li>The steeper the slope, the stronger the electric field at that point.</li>
+      <li>A small positive test charge rolls downhill. Downhill is the direction of E, the force per unit positive charge. A negative charge is pushed the other way, uphill.</li>
+      <li>A charged plate makes a ridge or trench. Two oppositely charged parallel plates make an even slope between them: a uniform field. The height difference is the potential difference V and the slope is V/d, which is why E = V/d between parallel plates.</li>
+      <li>The stiffness of the blanket is the permittivity of the medium. Air or a vacuum is the most stretchy. In a stiffer medium such as water the same charge makes a much smaller hill or dent.</li></ul>`;
+    c2.innerHTML=`<h2>Coulomb's law</h2><p class="eq">F = q₁q₂ / 4πεd²</p><ul>
+      <li>q₁ and q₂ are above the line: as either charge gets bigger, F gets bigger. F ∝ q₁q₂.</li>
+      <li>d is below the line and squared: as d gets bigger, F gets smaller. F ∝ 1/d².</li>
+      <li>ε is below the line: as the permittivity gets bigger, F gets smaller. F ∝ 1/ε. A stiffer blanket means a weaker field and a smaller force.</li>
+      <li>Units: ε = q₁q₂ / 4πFd², so ε is measured in C² N⁻¹ m⁻². ε₀ = 8.85 × 10⁻¹² C² N⁻¹ m⁻² (vacuum); ε = εr ε₀.</li>
+      <li>The two force arrows are always equal and opposite (Newton's third law).</li></ul>`;
+  }
+}
+
+// ---------- interaction ----------
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
+let drag=null,orbit=null;
+function setNdc(e){const r=renderer.domElement.getBoundingClientRect();ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,camera);}
+view.addEventListener('pointerdown',e=>{setNdc(e);view.setPointerCapture(e.pointerId);
+  const hits=ray.intersectObjects([...Q.filter(c=>c.q).map(c=>c.mesh),...plates.flatMap(p=>p.balls)]);
+  if(hits.length){const o=hits[0].object;drag=Q.find(c=>c.mesh===o)||plates.find(p=>p.balls.includes(o));
+    playing=false;status='';if(!drag.subs)drag.vx=drag.vz=0;syncUI();}
+  else if(placeMode){const sh=ray.intersectObject(sheet);if(sh.length){const p=sh[0].point;
+      if(Math.abs(p.x)<=LIM&&Math.abs(p.z)<=LIM&&!nearAny(p.x,p.z,0.1))addTest(p.x,p.z,placeMode==='held');}}
+  else orbit={x:e.clientX,y:e.clientY};
+  view.style.cursor='grabbing';});
+view.addEventListener('pointermove',e=>{
+  if(drag){setNdc(e);if(ray.ray.intersectPlane(plane,hit)){const zl=drag.subs?LIM-PL_L/2:LIM;drag.x=Math.max(-LIM,Math.min(LIM,hit.x));drag.z=Math.max(-zl,Math.min(zl,hit.z));if(drag.subs)rebuildSources();}}
+  else if(orbit){camTh-=(e.clientX-orbit.x)*0.006;camPh=Math.max(0.25,Math.min(1.45,camPh-(e.clientY-orbit.y)*0.006));orbit={x:e.clientX,y:e.clientY};placeCam();}});
+const end=()=>{drag=null;orbit=null;view.style.cursor=placeMode?'crosshair':'grab';};
+view.addEventListener('pointerup',end);view.addEventListener('pointercancel',end);
+view.addEventListener('wheel',e=>{e.preventDefault();camR=Math.max(14,Math.min(45,camR*(1+Math.sign(e.deltaY)*0.08)));placeCam();},{passive:false});
+
+qa.oninput=()=>{Q[0].q=+qa.value;status='';styleCharge(Q[0]);syncUI();};
+qb.oninput=()=>{Q[1].q=+qb.value;status='';styleCharge(Q[1]);syncUI();};
+epsIn.oninput=()=>{epsR=Math.pow(80,epsIn.value/100);syncUI();};
+const canPlay=()=>Q.some(c=>c.q)&&groups().length>1;
+document.getElementById('play').onclick=()=>{if(!canPlay())return;status='';playing=!playing;syncUI();};
+document.getElementById('addPos').onclick=()=>{addPlate(1);status='';};
+document.getElementById('addNeg').onclick=()=>{addPlate(-1);status='';};
+document.getElementById('clearPlates').onclick=()=>{removePlates();status='';};
+document.getElementById('reset').onclick=()=>applyPreset(preset);
+let placeMode=null,showComps=true; // null | 'held' | 'roll'
+const testBtn=document.getElementById('test'),placeBtn=document.getElementById('place'),linesBtn=document.getElementById('lines'),hint=document.getElementById('hint');
+function syncToggles(){const G=mode==='G';
+  const w=G?'mass':'charge';
+  placeBtn.setAttribute('aria-pressed',placeMode==='held');placeBtn.textContent='Place test '+w;
+  testBtn.setAttribute('aria-pressed',placeMode==='roll');testBtn.textContent='Roll a test '+w;
+  linesBtn.setAttribute('aria-pressed',showLines);
+  hint.textContent=placeMode==='held'?`Click the blanket to place a test ${w} · its arrow shows the field direction`
+    :placeMode==='roll'?`Click the blanket to release a test ${w} there · it rolls along the field`:'Drag to rotate · scroll to zoom · drag a ball to move it';
+  view.style.cursor=placeMode?'crosshair':'grab';}
+placeBtn.onclick=()=>{placeMode=placeMode==='held'?null:'held';syncToggles();};
+testBtn.onclick=()=>{placeMode=placeMode==='roll'?null:'roll';syncToggles();};
+linesBtn.onclick=()=>{showLines=!showLines;syncToggles();};
+document.getElementById('clear').onclick=clearTests;
+const compsBtn=document.getElementById('comps');compsBtn.onclick=()=>{showComps=!showComps;compsBtn.setAttribute('aria-pressed',showComps);document.getElementById('key').hidden=!showComps;};
+document.getElementById('mG').onclick=()=>mode!=='G'&&setMode('G');
+document.getElementById('mE').onclick=()=>mode!=='E'&&setMode('E');
+
+function resize(){const r=view.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(view);
+function retheme(){readColors();lineMat.color.set(C.fg);coneMat.color.set(C.fg);renderer.setClearColor(new THREE.Color(C.surface));paintGrid();frame.material.color.set(C.muted);Q.forEach(styleCharge);tests.forEach(t=>{t.mesh.material.color.set(C.test);t.line&&t.line.material.color.set(C.test);});plates.forEach(stylePlate);}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',retheme);
+new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+rebuildSources();placeCam();retheme();setMode('E');syncToggles();resize();
+let last=performance.now();
+function loop(t){const dt=Math.min(0.05,(t-last)/1000)*(reduce?0.5:1);last=t;rebuildSources();physics(dt);updateSheet();updateLines();readout();renderer.render(scene,camera);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>
+
+</body></html>

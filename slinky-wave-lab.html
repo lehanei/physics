@@ -1,0 +1,501 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Slinky Wave Lab</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 3D bench stage fills the left, a lab-sheet control panel on the right; stacks on phones. */
+:root{
+  --bg:#e9ecea; --panel:#fbfcfb; --fg:#1a2023; --muted:#5a656a; --line:#d3d9d7;
+  --accent:#0d6a85; --accent-fg:#ffffff; --chip:#eef2f1;
+  --stage-top:#e4e8e7; --stage-bot:#aeb6b6;
+  --ui:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101415; --panel:#171d1f; --fg:#e4e9ea; --muted:#94a1a5; --line:#2a3336;
+  --accent:#4fb6d2; --accent-fg:#06222b; --chip:#1f272a;
+  --stage-top:#2a3236; --stage-bot:#0f1314; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101415; --panel:#171d1f; --fg:#e4e9ea; --muted:#94a1a5; --line:#2a3336;
+  --accent:#4fb6d2; --accent-fg:#06222b; --chip:#1f272a;
+  --stage-top:#2a3236; --stage-bot:#0f1314; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:14px}
+.app{box-sizing:border-box;height:100%;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;
+  padding-block:14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.stage{position:relative;min-width:0;border-radius:14px;overflow:hidden;background:var(--stage-bot)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;top:12px;left:12px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
+.hud span{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--panel) 82%,transparent);
+  backdrop-filter:blur(6px);padding:5px 9px;border-radius:7px;border:1px solid var(--line)}
+.hud b{font-weight:600;color:var(--accent)}
+.bar{position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bar .sp{flex:1}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:8px 13px;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.send{background:var(--accent);color:var(--accent-fg);border-color:transparent;font-size:15px;padding:10px 22px;letter-spacing:.02em}
+.send:hover{filter:brightness(1.08)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:auto;padding:18px 18px 22px;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:22px;font-stretch:118%;font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+.sub{margin:4px 0 0;color:var(--muted);line-height:1.45}
+section{display:flex;flex-direction:column;gap:9px}
+h2{margin:0;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.seg{display:flex;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;border-radius:7px;padding:7px 4px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px}
+.row label{font-weight:600}
+.row output{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px}
+.row input{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.note{margin:0;color:var(--muted);line-height:1.45;font-size:13px}
+.note i{font-family:var(--mono);font-style:normal;color:var(--fg)}
+.eq{font-family:var(--mono);font-size:13px;background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:9px 10px;line-height:1.6}
+.eq b{color:var(--accent)}
+.kbd{font-family:var(--mono);font-size:11px;opacity:.75;margin-left:6px}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr;height:auto}
+  .stage{height:62svh;min-height:340px}
+  .panel{overflow:visible}
+}
+</style>
+
+<div class="app">
+  <div class="stage" id="stage">
+    <canvas id="c" aria-label="3D slinky on a lab bench"></canvas>
+    <div class="hud" id="hud"></div>
+    <div class="bar">
+      <button class="btn send" id="send">Send <span class="kbd">Space</span></button>
+      <button class="btn" id="pause">Pause</button>
+      <button class="btn" id="clear">Still the slinky</button>
+      <span class="sp"></span>
+      <div class="seg" id="speedSeg" style="background:var(--panel)">
+        <button data-v="1" aria-pressed="true">1×</button><button data-v="0.5">½×</button><button data-v="0.25">¼×</button><button data-v="0.1">⅒×</button>
+      </div>
+    </div>
+  </div>
+
+  <aside class="panel">
+    <div>
+      <h1>Slinky Wave Lab</h1>
+      <p class="sub">Shake the end, watch the wave. Drag to orbit the bench, scroll to zoom. The red coil only oscillates; it never travels with the wave.</p>
+    </div>
+
+    <section>
+      <h2>Demonstration</h2>
+      <div class="seg" data-key="demo"><button data-v="one" aria-pressed="true">One hand</button><button data-v="two">Two hands (superposition)</button></div>
+    </section>
+
+    <section>
+      <h2>Wave type</h2>
+      <div class="seg" data-key="wave"><button data-v="T" aria-pressed="true">Transverse</button><button data-v="L">Longitudinal</button></div>
+    </section>
+
+    <section>
+      <h2>What the hand sends</h2>
+      <div class="seg" data-key="count"><button data-v="0" aria-pressed="true">Pulse</button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="c">Continuous</button></div>
+      <p class="note" id="contNote" hidden>The hand keeps shaking until you press Stop. Change f or the medium while it runs and watch λ change. Choose "No reflection" for a clean travelling wave; a fixed or free end sets up a standing wave.</p>
+      <div class="row"><label for="f">Hand frequency, f</label><output id="fOut"></output><input id="f" type="range" min="0.5" max="5" step="0.1" value="2"></div>
+      <div class="row"><label for="amp">How hard you shake</label><output id="ampOut"></output><input id="amp" type="range" min="0.1" max="1" step="0.05" value="0.6"></div>
+      <p class="note"><i>λ = v/f</i>. The speed is set by the slinky, so as f goes up, λ goes down: the pulses arrive closer together.</p>
+    </section>
+
+    <section id="endSec">
+      <h2>Far end</h2>
+      <div class="seg" data-key="end"><button data-v="fixed" aria-pressed="true">Fixed</button><button data-v="free">Free</button><button data-v="none">No reflection</button></div>
+      <p class="note" id="endNote"></p>
+    </section>
+
+    <section id="rightSec" hidden>
+      <h2>Right hand</h2>
+      <div class="seg" data-key="rEqual"><button data-v="1" aria-pressed="true">Equal wavelength</button><button data-v="0">Unequal</button></div>
+      <div class="row" id="fRRow" hidden><label for="fR">Right-hand frequency</label><output id="fROut"></output><input id="fR" type="range" min="0.5" max="5" step="0.1" value="3.4"></div>
+      <div class="seg" data-key="rSide"><button data-v="1" aria-pressed="true">Same side</button><button data-v="-1">Opposite side</button></div>
+      <p class="note" id="rNote"></p>
+    </section>
+
+    <section>
+      <h2>The medium: change the slinky</h2>
+      <div class="seg" data-key="material"><button data-v="plastic">Plastic</button><button data-v="aluminium">Aluminium</button><button data-v="steel" aria-pressed="true">Steel</button><button data-v="brass">Brass</button></div>
+      <div class="row"><label for="d">Wire thickness</label><output id="dOut"></output><input id="d" type="range" min="1" max="4" step="0.1" value="1.5"></div>
+      <div class="row"><label for="T">Tension (how far it's stretched)</label><output id="TOut"></output><input id="T" type="range" min="0.1" max="1.5" step="0.05" value="0.4"></div>
+      <div class="eq" id="eq"></div>
+      <p class="note"><i>T</i> is above the line, so as T increases, v increases. <i>μ</i> is below the line and under the root, so as μ increases, v decreases (v ∝ 1/√μ). Thicker or denser wire means more mass per metre.</p>
+    </section>
+  </aside>
+</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ---------- constants ---------- */
+const L = 6, H = 0.55;                 // slinky length (m) and height above bench
+const N = 241, dx = L/(N-1);           // simulation nodes
+const TURNS = 90, SEG = 22, P = TURNS*SEG+1, RAD = 8;
+const COIL_R = 0.12;                   // drawn coil radius
+const R_REAL = 0.035;                  // real coil radius used for μ
+const MATS = {
+  plastic:  {rho:1200, color:0x2a7fc4, metal:0, rough:0.36, cc:0.8},
+  aluminium:{rho:2700, color:0xdfe3e8, metal:1, rough:0.40, cc:0},
+  steel:    {rho:7850, color:0xb4bac1, metal:1, rough:0.24, cc:0},
+  brass:    {rho:8500, color:0xd9a748, metal:1, rough:0.30, cc:0},
+};
+const state = {demo:'one', wave:'T', count:0, f:2, amp:0.6, end:'fixed', rEqual:true, fR:3.4, rSide:1,
+               material:'steel', d:1.5, T:0.4, speed:1, paused:false};
+
+const mu = () => { const r = state.d/2000; return MATS[state.material].rho*Math.PI*r*r*(TURNS/L)*2*Math.PI*R_REAL; };
+const vel = () => Math.sqrt(state.T/mu());
+
+/* ---------- renderer / scene ---------- */
+const canvas = document.getElementById('c'), stageEl = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+function setBackground(){
+  const cs = getComputedStyle(document.documentElement);
+  const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+  const g = c.getContext('2d'); const gr = g.createLinearGradient(0,0,0,256);
+  gr.addColorStop(0, cs.getPropertyValue('--stage-top').trim()); gr.addColorStop(1, cs.getPropertyValue('--stage-bot').trim());
+  g.fillStyle = gr; g.fillRect(0,0,4,256);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  if (scene.background) scene.background.dispose();
+  scene.background = t;
+}
+setBackground();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setBackground);
+new MutationObserver(setBackground).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 100);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.maxPolarAngle = 1.5; controls.minDistance = 1.5; controls.maxDistance = 18;
+
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(1.5, 6, 3.5); sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera, {left:-4.5, right:4.5, top:2.5, bottom:-2.5, near:1, far:15});
+sun.shadow.radius = 4; sun.shadow.bias = -0.0004;
+scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7158, 0.35));
+
+/* ---------- bench & metre rule ---------- */
+function woodTexture(){
+  const c = document.createElement('canvas'); c.width = 2048; c.height = 512;
+  const g = c.getContext('2d'); g.fillStyle = '#a97c4f'; g.fillRect(0,0,2048,512);
+  for (let i=0;i<320;i++){
+    const y = Math.random()*512, a = 0.04+Math.random()*0.12;
+    g.strokeStyle = `rgba(${60+Math.random()*50|0},${38+Math.random()*25|0},20,${a})`;
+    g.lineWidth = 0.6+Math.random()*2.6; g.beginPath(); g.moveTo(0,y);
+    for (let x=0;x<=2048;x+=48) g.lineTo(x, y+Math.sin(x*0.003+i*0.7)*5);
+    g.stroke();
+  }
+  for (let k=1;k<4;k++){ g.fillStyle='rgba(40,25,10,.35)'; g.fillRect(0,k*128,2048,1.5); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+const bench = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.08, 1.7),
+  new THREE.MeshStandardMaterial({map:woodTexture(), roughness:0.62, metalness:0}));
+bench.position.y = -0.04; bench.receiveShadow = true; scene.add(bench);
+
+function rulerTexture(){
+  const W = 4096, Hh = 128, pad = 0.1, pxm = W/(L+2*pad);
+  const c = document.createElement('canvas'); c.width = W; c.height = Hh;
+  const g = c.getContext('2d'); g.fillStyle = '#efe5c3'; g.fillRect(0,0,W,Hh);
+  g.fillStyle = '#1b1b1b'; g.font = '600 40px Archivo, sans-serif'; g.textAlign = 'center';
+  for (let i=0;i<=L*100;i++){
+    const x = (pad + i/100)*pxm, h = i%100===0 ? 62 : i%10===0 ? 40 : i%5===0 ? 26 : 16;
+    g.fillRect(x-1.2, 0, 2.4, h);
+    if (i%100===0) g.fillText(i===L*100 ? `${i/100} m` : `${i/100}`, x + (i===0?14:0), 108);
+    else if (i%10===0) { g.font='500 22px Archivo, sans-serif'; g.fillText(`${i/100}`.slice(1), x, 70); g.font='600 40px Archivo, sans-serif'; }
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+const ruler = new THREE.Mesh(new THREE.BoxGeometry(L+0.2, 0.006, 0.09),
+  [0,0,1,0,0,0].map(i => i ? new THREE.MeshStandardMaterial({map:rulerTexture(), roughness:0.55})
+                            : new THREE.MeshStandardMaterial({color:0xd8cda8, roughness:0.6})));
+ruler.position.set(0, 0.003, 0.55); ruler.receiveShadow = true; scene.add(ruler);
+
+/* ---------- slinky geometry (custom tube, rebuilt in place each frame) ---------- */
+const pos = new Float32Array(P*RAD*3), nor = new Float32Array(P*RAD*3), col = new Float32Array(P*RAD*3);
+const idx = [];
+for (let i=0;i<P-1;i++) for (let j=0;j<RAD;j++){
+  const a=i*RAD+j, b=i*RAD+(j+1)%RAD, c=(i+1)*RAD+j, d=(i+1)*RAD+(j+1)%RAD;
+  idx.push(a,b,c, b,d,c);
+}
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(pos,3).setUsage(THREE.DynamicDrawUsage));
+geo.setAttribute('normal', new THREE.BufferAttribute(nor,3).setUsage(THREE.DynamicDrawUsage));
+geo.setAttribute('color', new THREE.BufferAttribute(col,3));
+geo.setIndex(idx);
+const slinkyMat = new THREE.MeshPhysicalMaterial({vertexColors:true, side:THREE.DoubleSide, envMapIntensity:1.1});
+const slinky = new THREE.Mesh(geo, slinkyMat);
+slinky.castShadow = true; slinky.frustumCulled = false; scene.add(slinky);
+
+const MARK_TURN = 44;
+function applyMaterial(){
+  const m = MATS[state.material];
+  slinkyMat.metalness = m.metal; slinkyMat.roughness = m.rough; slinkyMat.clearcoat = m.cc; slinkyMat.clearcoatRoughness = 0.2;
+  const base = new THREE.Color(m.color), mark = new THREE.Color(0xd3261f);
+  for (let k=0;k<P;k++){
+    const turn = Math.floor(k/SEG), c = turn===MARK_TURN ? mark : base;
+    for (let j=0;j<RAD;j++){ const o=(k*RAD+j)*3; col[o]=c.r; col[o+1]=c.g; col[o+2]=c.b; }
+  }
+  geo.attributes.color.needsUpdate = true;
+}
+
+/* ---------- props: hands, retort stand ---------- */
+const steelMat = new THREE.MeshStandardMaterial({color:0xc9ced3, metalness:1, roughness:0.28});
+const woodMat  = new THREE.MeshStandardMaterial({color:0x7a4d2b, roughness:0.55});
+const paintMat = new THREE.MeshStandardMaterial({color:0x2f4560, roughness:0.5, metalness:0.2});
+const shadowAll = o => o.traverse(m => { if (m.isMesh){ m.castShadow = true; m.receiveShadow = true; } });
+
+function endRing(){
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(COIL_R, 0.006, 12, 56), steelMat); ring.rotation.y = Math.PI/2; g.add(ring);
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.004,0.004,COIL_R*2,10), steelMat); g.add(bar);
+  return g;
+}
+function hand(){
+  const g = endRing();
+  const dowel = new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.024,0.26,20), woodMat);
+  dowel.position.y = -COIL_R-0.13; g.add(dowel);
+  shadowAll(g); scene.add(g); return g;
+}
+const handL = hand(), handR = hand();
+
+const SX = L/2 + 0.36; // stand rod x
+const stand = new THREE.Group();
+{ const base = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.025,0.2), paintMat); base.position.set(0,0.0125,0); stand.add(base);
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,1.05,16), steelMat); rod.position.y = 0.525; stand.add(rod);
+  stand.position.x = SX; shadowAll(stand); scene.add(stand); }
+const boss = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.05,0.05), paintMat); scene.add(boss);
+const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,1,12), steelMat); arm.rotation.z = Math.PI/2; scene.add(arm);
+const endFix = endRing(); scene.add(endFix);
+const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.05,18), steelMat); scene.add(sleeve);
+const link = new THREE.Mesh(new THREE.CylinderGeometry(0.004,0.004,1,10), steelMat); link.rotation.z = Math.PI/2; scene.add(link);
+[boss,arm,endFix,sleeve,link].forEach(shadowAll);
+
+function placeBar(mesh, x1, x2, y){ mesh.scale.y = Math.max(0.001, Math.abs(x2-x1)); mesh.position.set((x1+x2)/2, y, 0); }
+
+/* ---------- physics: discretised wave equation on the slinky ---------- */
+const mk = () => ({u:new Float64Array(N), p:new Float64Array(N), n:new Float64Array(N)});
+const F = {x:mk(), y:mk()};   // x = longitudinal, y = transverse displacement
+let simT = 0, acc = 0, dtCur = 0;
+const drives = [];
+function driveVal(side, key, t){
+  let s = 0;
+  for (const d of drives){
+    if (d.side!==side || d.key!==key) continue;
+    const tt = t - d.t0, dur = d.n===0 ? 0.5/d.f : d.n/d.f;
+    if (tt>=0 && tt<=dur) s += d.A*Math.sin(2*Math.PI*d.f*tt);
+  }
+  return s;
+}
+function step(dt){
+  const r = vel()*dt/dx, r2 = r*r, damp = 1 - 0.1*dt;
+  const twoHands = state.demo==='two';
+  for (const key of ['x','y']){
+    const {u,p,n} = F[key];
+    for (let i=1;i<N-1;i++) n[i] = u[i] + (u[i]-p[i])*damp + r2*(u[i+1]-2*u[i]+u[i-1]);
+    n[0] = driveVal('L', key, simT+dt);
+    if (twoHands) n[N-1] = driveVal('R', key, simT+dt);
+    else if (state.end==='fixed') n[N-1] = 0;
+    else if (state.end==='free') n[N-1] = n[N-2];
+    else n[N-1] = u[N-2] + ((r-1)/(r+1))*(n[N-2]-u[N-1]);   // absorbing end
+    F[key].p = u; F[key].u = n; F[key].n = p;
+  }
+  simT += dt;
+}
+function advance(elapsed){
+  const dt = 0.8*dx/vel();
+  if (dtCur && Math.abs(dt-dtCur) > 1e-12){            // medium changed mid-flight: keep velocities
+    for (const key of ['x','y']){ const {u,p} = F[key]; for (let i=0;i<N;i++) p[i] = u[i]-(u[i]-p[i])*(dt/dtCur); }
+  }
+  dtCur = dt; acc += elapsed;
+  let guard = 0;
+  while (acc >= dt && guard++ < 400){ step(dt); acc -= dt; }
+  if (guard >= 400) acc = 0;
+  for (let i=drives.length-1;i>=0;i--){ const d=drives[i]; if (simT - d.t0 > (d.n===0?0.5:d.n)/d.f + 0.1) drives.splice(i,1); }
+}
+
+/* ---------- build slinky surface from the displacement field ---------- */
+const cx = new Float64Array(P), cy = new Float64Array(P), e1x = new Float64Array(P), e1y = new Float64Array(P), th = new Float64Array(P);
+const q = new Float64Array(P*3);
+const cph = [], sph = []; for (let j=0;j<RAD;j++){ cph.push(Math.cos(2*Math.PI*j/RAD)); sph.push(Math.sin(2*Math.PI*j/RAD)); }
+function sample(arr, s){ const fi = s*(N-1); let i = Math.floor(fi); if (i>=N-1) i = N-2; const w = fi-i; return [arr[i]*(1-w)+arr[i+1]*w, (arr[i+1]-arr[i])/dx]; }
+function buildSlinky(){
+  const wireR = 0.0035 + state.d*0.0022, gap = 2.05*wireR/SEG;
+  const ux = F.x.u, uy = F.y.u;
+  for (let k=0;k<P;k++){
+    const s = k/(P-1);
+    const [dX, gX] = sample(ux, s), [dY, gY] = sample(uy, s);
+    let x = -L/2 + s*L + dX;
+    if (k>0 && x < cx[k-1] + gap) x = cx[k-1] + gap;       // coils touch, they can't pass through each other
+    cx[k] = x; cy[k] = H + dY;
+    let ax = 1+gX, ay = gY; const m = Math.hypot(ax,ay); ax/=m; ay/=m;
+    e1x[k] = -ay; e1y[k] = ax; th[k] = 2*Math.PI*TURNS*s;
+  }
+  for (let k=0;k<P;k++){
+    const c = Math.cos(th[k]), sn = Math.sin(th[k]);
+    q[k*3] = cx[k] + COIL_R*e1x[k]*c; q[k*3+1] = cy[k] + COIL_R*e1y[k]*c; q[k*3+2] = COIL_R*sn;
+  }
+  for (let k=0;k<P;k++){
+    const a = Math.max(0,k-1), b = Math.min(P-1,k+1);
+    let tx = q[b*3]-q[a*3], ty = q[b*3+1]-q[a*3+1], tz = q[b*3+2]-q[a*3+2];
+    let tl = Math.hypot(tx,ty,tz)||1; tx/=tl; ty/=tl; tz/=tl;
+    const c = Math.cos(th[k]), sn = Math.sin(th[k]);
+    let nx = e1x[k]*c, ny = e1y[k]*c, nz = sn;
+    const dp = nx*tx+ny*ty+nz*tz; nx-=dp*tx; ny-=dp*ty; nz-=dp*tz;
+    const nl = Math.hypot(nx,ny,nz)||1; nx/=nl; ny/=nl; nz/=nl;
+    const bx = ty*nz-tz*ny, by = tz*nx-tx*nz, bz = tx*ny-ty*nx;
+    for (let j=0;j<RAD;j++){
+      const dxr = nx*cph[j]+bx*sph[j], dyr = ny*cph[j]+by*sph[j], dzr = nz*cph[j]+bz*sph[j];
+      const o = (k*RAD+j)*3;
+      pos[o] = q[k*3]+wireR*dxr; pos[o+1] = q[k*3+1]+wireR*dyr; pos[o+2] = q[k*3+2]+wireR*dzr;
+      nor[o] = dxr; nor[o+1] = dyr; nor[o+2] = dzr;
+    }
+  }
+  geo.attributes.position.needsUpdate = true; geo.attributes.normal.needsUpdate = true;
+}
+
+function placeProps(){
+  const lx = cx[0], ly = cy[0], rx = cx[P-1], ry = cy[P-1];
+  handL.position.set(lx, ly, 0);
+  const two = state.demo==='two';
+  handR.visible = two; handR.position.set(rx, ry, 0);
+  const showStand = !two && state.end!=='none';
+  stand.visible = boss.visible = showStand;
+  arm.visible = endFix.visible = sleeve.visible = link.visible = false;
+  if (!showStand) return;
+  boss.position.set(SX, H, 0);
+  endFix.visible = true; endFix.position.set(rx, ry, 0);
+  if (state.end==='fixed'){
+    arm.visible = true; placeBar(arm, rx, SX, H);
+  } else if (state.wave==='T'){           // ring slides up and down the stand rod
+    sleeve.visible = link.visible = true; sleeve.rotation.z = 0;
+    sleeve.position.set(SX, ry, 0); placeBar(link, rx, SX, ry);
+    boss.visible = false;
+  } else {                                // ring slides along a horizontal guide rod
+    arm.visible = true; placeBar(arm, L/2-0.45, SX, H);
+    sleeve.visible = true; sleeve.rotation.z = Math.PI/2; sleeve.position.set(rx, H, 0);
+  }
+}
+
+/* ---------- camera fit ---------- */
+function resize(){
+  const w = stageEl.clientWidth, h = stageEl.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w/h;
+  const half = Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect);
+  const dist = Math.max(4, 4.15/Math.tan(half));
+  camera.position.set(0, 0.55 + dist*0.32, dist);
+  controls.target.set(0, 0.38, 0);
+  camera.updateProjectionMatrix(); controls.update();
+}
+new ResizeObserver(resize).observe(stageEl);
+
+/* ---------- UI ---------- */
+const $ = id => document.getElementById(id);
+const fmt = (x, n=2) => x.toFixed(n);
+function updateText(){
+  const v = vel(), m = mu();
+  $('fOut').textContent = `${fmt(state.f,1)} Hz`;
+  $('ampOut').textContent = `${Math.round(state.amp*100)}%`;
+  $('dOut').textContent = `${fmt(state.d,1)} mm`;
+  $('TOut').textContent = `${fmt(state.T,2)} N`;
+  $('fROut').textContent = `${fmt(state.fR,1)} Hz`;
+  $('eq').innerHTML = `μ = ${m<0.01?m.toFixed(4):m.toFixed(3)} kg m⁻¹<br>v = √(T/μ) = √(${fmt(state.T)} / ${m<0.01?m.toFixed(4):m.toFixed(3)}) = <b>${fmt(v)} m s⁻¹</b>`;
+  const lam = v/state.f;
+  const parts = [`<span>v <b>${fmt(v)}</b> m s⁻¹</span>`, `<span>f <b>${fmt(state.f,1)}</b> Hz</span>`, `<span>λ = v/f <b>${fmt(lam)}</b> m</span>`];
+  if (state.demo==='two' && !state.rEqual) parts.push(`<span>λ<sub>right</sub> <b>${fmt(v/state.fR)}</b> m</span>`);
+  $('hud').innerHTML = parts.join('');
+  const notes = {Tfixed:'Reflects inverted: a crest returns as a trough.', Tfree:'Reflects upright: a crest returns as a crest.',
+    Lfixed:'A compression reflects as a compression.', Lfree:'A compression reflects as a rarefaction.',
+    Tnone:'The wave is absorbed, as if the slinky went on for ever.', Lnone:'The wave is absorbed, as if the slinky went on for ever.'};
+  $('endNote').textContent = notes[state.wave+state.end];
+  $('rNote').textContent = state.rSide===1
+    ? (state.wave==='T' ? 'Crest meets crest: constructive interference, the displacements add.' : 'Compression meets compression: the displacements add.')
+    : (state.wave==='T' ? 'Crest meets trough: destructive interference, the displacements cancel.' : 'Compression meets rarefaction: the displacements cancel.');
+  $('contNote').hidden = state.count!==Infinity;
+  $('send').firstChild.textContent = state.count!==Infinity ? 'Send ' : running() ? 'Stop ' : 'Start ';
+  $('endSec').hidden = state.demo==='two'; $('rightSec').hidden = state.demo!=='two'; $('fRRow').hidden = state.rEqual;
+}
+
+document.querySelectorAll('.seg[data-key]').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x===b));
+  const k = seg.dataset.key, v = b.dataset.v;
+  if (k==='count'){ if (running()) stopContinuous(); state.count = v==='c' ? Infinity : +v; }
+  else if (k==='rEqual') state.rEqual = v==='1';
+  else if (k==='rSide') state.rSide = +v;
+  else state[k] = v;
+  if (k==='material') applyMaterial();
+  if (k==='wave' || k==='demo') clearSlinky();
+  updateText();
+}));
+$('speedSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $('speedSeg').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x===b));
+  state.speed = +b.dataset.v;
+});
+for (const id of ['f','amp','d','T','fR']) $(id).addEventListener('input', e => { state[id] = +e.target.value; retuneContinuous(); updateText(); });
+
+const running = () => drives.some(d => d.n===Infinity);
+function stopContinuous(){   // finish the current cycle so the hand stops smoothly at rest
+  for (const d of drives) if (d.n===Infinity) d.n = Math.max(1, Math.ceil((simT-d.t0)*d.f));
+}
+function retuneContinuous(){ // live changes to f and amplitude, keeping the hand's phase continuous
+  const key = state.wave==='T' ? 'y' : 'x', A = state.amp*(key==='y' ? 0.32 : 0.15);
+  for (const d of drives){
+    if (d.n!==Infinity) continue;
+    const fNew = d.side==='L' || state.rEqual ? state.f : state.fR;
+    const phase = (simT-d.t0)*d.f;
+    d.f = fNew; d.t0 = simT - phase/fNew;
+    d.A = d.side==='L' ? A : A*state.rSide*(key==='x'?-1:1);
+  }
+}
+function send(){
+  if (state.count===Infinity && running()){ stopContinuous(); updateText(); return; }
+  const key = state.wave==='T' ? 'y' : 'x';
+  const A = state.amp*(key==='y' ? 0.32 : 0.15);
+  drives.push({side:'L', key, t0:simT, f:state.f, n:state.count, A});
+  if (state.demo==='two')
+    drives.push({side:'R', key, t0:simT, f:state.rEqual?state.f:state.fR, n:state.count, A:A*state.rSide*(key==='x'?-1:1)});
+  updateText();
+}
+function clearSlinky(){ for (const key of ['x','y']) for (const a of ['u','p','n']) F[key][a].fill(0); drives.length = 0; updateText(); }
+$('send').addEventListener('click', send);
+$('clear').addEventListener('click', clearSlinky);
+$('pause').addEventListener('click', () => { state.paused = !state.paused; $('pause').textContent = state.paused ? 'Play' : 'Pause'; });
+addEventListener('keydown', e => {
+  if (e.code==='Space' && !['INPUT','BUTTON'].includes(document.activeElement?.tagName)){ e.preventDefault(); send(); }
+});
+
+/* ---------- loop ---------- */
+applyMaterial(); updateText(); resize();
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (!state.paused) advance(dt*state.speed);
+  buildSlinky(); placeProps();
+  controls.update(); renderer.render(scene, camera);
+});
+</script>
+
+</body></html>

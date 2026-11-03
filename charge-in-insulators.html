@@ -1,0 +1,303 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Charge in Insulators</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* Layout: one lab bench — a wide animation stage, controls beneath, numbered steps that track the playhead. */
+:root{
+  --bg:#e9eef1; --surface:#fbfcfd; --fg:#15212a; --muted:#566773; --line:#c8d2d9;
+  --pos:#c4362b; --pos-soft:rgba(196,54,43,.22); --neg:#2160c4; --neg-soft:rgba(33,96,196,.24);
+  --accent:#0e7466; --accent-ink:#ffffff; --on-color:#ffffff;
+  --rod-a:#d3dce2; --rod-b:#eadfb8; --wool:#d8b98d; --cloth:#c3cfb0; --paper:#f1ece0;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f161b; --surface:#172129; --fg:#e4ebef; --muted:#93a5b1; --line:#2c3a44;
+  --pos:#f0695d; --pos-soft:rgba(240,105,93,.25); --neg:#6fa3ff; --neg-soft:rgba(111,163,255,.26);
+  --accent:#37bfa9; --accent-ink:#06201b; --on-color:#0f161b;
+  --rod-a:#3a4752; --rod-b:#4d4630; --wool:#5e4a31; --cloth:#3f4a35; --paper:#3a372f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161b; --surface:#172129; --fg:#e4ebef; --muted:#93a5b1; --line:#2c3a44;
+  --pos:#f0695d; --pos-soft:rgba(240,105,93,.25); --neg:#6fa3ff; --neg-soft:rgba(111,163,255,.26);
+  --accent:#37bfa9; --accent-ink:#06201b; --on-color:#0f161b;
+  --rod-a:#3a4752; --rod-b:#4d4630; --wool:#5e4a31; --cloth:#3f4a35; --paper:#3a372f; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding-block:28px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,5vw,42px);line-height:1.05;margin:4px 0 0;text-wrap:balance}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--fg);
+  padding:8px 14px;border-radius:999px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tab span{color:var(--muted);font-variant-numeric:tabular-nums}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tab[aria-selected="true"] span{color:inherit;opacity:.75}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+canvas{display:block;width:100%;height:auto;aspect-ratio:900/480;max-width:100%}
+.bar{display:flex;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.btn{font:inherit;font-weight:700;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);
+  border-radius:8px;padding:6px 12px;cursor:pointer;min-width:78px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.below{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:18px;align-items:start}
+@media (max-width:720px){.below{grid-template-columns:1fr}}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;
+  border-radius:10px;cursor:pointer;color:var(--muted);border:1px solid transparent}
+ol.steps li::before{content:counter(s);font-family:var(--f-display);font-weight:800;font-size:18px;line-height:1.3}
+ol.steps li.on{background:var(--surface);border-color:var(--line);color:var(--fg)}
+ol.steps li.on::before{color:var(--accent)}
+.legend{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.legend h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.key{display:flex;align-items:center;gap:10px}
+.dot{width:20px;height:20px;border-radius:50%;flex:none;display:grid;place-items:center;color:var(--on-color);font-weight:700;font-size:14px;line-height:1}
+.dot.p{background:var(--pos)} .dot.n{background:var(--neg);width:14px;height:14px;margin:0 3px}
+.dot.c{background:var(--neg-soft)} .dot.g{background:var(--pos);box-shadow:0 0 0 5px var(--pos-soft);width:14px;height:14px;margin:0 3px}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Static electricity · Animation 1</p>
+    <h1>Charge in Insulators</h1>
+  </header>
+
+  <div class="tabs" role="tablist" id="tabs"></div>
+
+  <figure class="stage" style="margin:0">
+    <canvas id="cv" aria-label="Animation of charges in an insulator"></canvas>
+    <div class="bar">
+      <button class="btn primary" id="play">Pause</button>
+      <button class="btn" id="restart">Restart</button>
+      <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Animation position">
+    </div>
+  </figure>
+
+  <div class="below">
+    <ol class="steps" id="steps"></ol>
+    <aside class="legend">
+      <h2>Key</h2>
+      <div class="key"><span class="dot p">+</span>Nucleus (protons, fixed)</div>
+      <div class="key"><span class="dot n"></span>Electron</div>
+      <div class="key"><span class="dot c"></span>Electron cloud</div>
+      <div class="key"><span class="dot g"></span>Atom missing an electron (positive ion)</div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(()=>{
+const W=900,H=480;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let C={};
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['surface','fg','muted','line','pos','pos-soft','neg','neg-soft','accent','on-color','rod-a','rod-b','wool','cloth','paper']
+  .forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
+
+// ---------- helpers ----------
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x*x*(3-2*x)};
+const seg=(t,a,b)=>ease((t-a)/(b-a));
+const lerp=(a,b,s)=>a+(b-a)*s;
+let clock=0;
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function disc(x,y,r,col){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();}
+function nucleus(x,y,glow){
+  if(glow){disc(x,y,15,C['pos-soft']);}
+  disc(x,y,9,C.pos);ctx.strokeStyle=C['on-color'];ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(x-4.5,y);ctx.lineTo(x+4.5,y);ctx.moveTo(x,y-4.5);ctx.lineTo(x,y+4.5);ctx.stroke();}
+function electron(x,y){disc(x,y,6.5,C.neg);ctx.strokeStyle=C['on-color'];ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-3.5,y);ctx.lineTo(x+3.5,y);ctx.stroke();}
+function orbitPos(x,y,phase,r=15){const a=clock*2.2+phase;return [x+Math.cos(a)*r,y+Math.sin(a)*r*0.75];}
+function ring(x,y,r,alpha){ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=C.neg;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(x,y,r,r*0.75,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
+function text(s,x,y,{align='left',col=C.fg,size=15,weight=700,alpha=1}={}){
+  ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle=col;ctx.font=`${weight} ${size}px "Atkinson Hyperlegible", sans-serif`;
+  ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(s,x,y);ctx.restore();}
+const jig=(i,a=2)=>[Math.sin(clock*7+i*1.7)*a,Math.cos(clock*6.3+i*2.3)*a];
+const fmt=q=>q===0?'0':(q>0?'+'+q+'e':'−'+(-q)+'e');
+
+// ---------- Scene 1: atomic picture of an insulator ----------
+const S1={name:'Atoms in an insulator',dur:16,steps:[
+ {at:0,text:'Every atom has a positive nucleus surrounded by negative electrons. In a neutral insulator the number of protons equals the number of electrons, so there is no net charge.'},
+ {at:0.3,text:'In an insulator each electron is tightly bound to its own atom. It can vibrate about the atom, but it cannot travel through the material. There are no free electrons.'},
+ {at:0.46,text:'Now add some extra electrons at one end, the way rubbing does.'},
+ {at:0.72,text:'The extra electrons cannot move through the insulator, so they stay exactly where they were put. That end is negative; the rest stays neutral. Charge on an insulator is localised.'}],
+ draw(t){
+  const cols=9,rows=4;
+  rr(120,115,660,310,14);ctx.fillStyle=C['rod-a'];ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.stroke();
+  text('Insulator (e.g. polythene)',450,452,{align:'center',col:C.muted});
+  const emph=Math.min(seg(t,0.28,0.33),1-seg(t,0.44,0.5));
+  let k=0;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const x=165+c*71,y=160+r*75;
+    ring(x,y,15,0.18+0.55*emph);
+    nucleus(x,y,false);
+    const [ex,ey]=orbitPos(x,y,k*1.3);electron(ex,ey);k++;
+  }
+  const targets=[[165,197],[236,272],[165,347],[236,197]];
+  let extra=0;
+  targets.forEach(([tx,ty],i)=>{
+    const s=seg(t,0.48+0.05*i,0.6+0.05*i);if(s<=0)return;
+    if(s>=1)extra++;
+    const [jx,jy]=jig(i);electron(lerp(30,tx,s)+jx*s,ty+jy*s);
+  });
+  const a=seg(t,0.7,0.78);
+  if(a>0){
+    ctx.save();ctx.globalAlpha=a;ctx.setLineDash([6,5]);ctx.strokeStyle=C.neg;ctx.lineWidth=2;rr(132,125,138,290,10);ctx.stroke();ctx.restore();
+    text('Net negative',201,98,{align:'center',col:C.neg,alpha:a});
+    text('Neutral',525,98,{align:'center',col:C.muted,alpha:a});
+  }
+  text(`Protons: 36    Electrons: ${36+extra}    Net charge: ${fmt(-extra)}`,120,60,{col:C.fg});
+ }};
+
+// ---------- Scenes 2 & 3: charging a rod by friction ----------
+function makeRub(o){
+  const rodXs=[...Array(10)].map((_,i)=>165+i*63),rodY=160;
+  const offs=[-100,-50,0,50,100];
+  const cx=t=>(t>0.12&&t<0.7)?450+170*Math.sin(2*Math.PI*3*(t-0.12)/0.58):450;
+  const top=t=>345-141*seg(t,0,0.1)+141*seg(t,0.72,0.86);
+  const D=0.05,used=new Set();
+  const pairs=[0.2,0.3,0.4,0.5,0.6].map((tau,i)=>{
+    const sx=cx(tau)+offs[i];let best=0,bd=1e9;
+    rodXs.forEach((x,j)=>{if(!used.has(j)&&Math.abs(x-sx)<bd){bd=Math.abs(x-sx);best=j}});
+    used.add(best);return{i,j:best,tau};});
+  return{name:o.tab,dur:15,steps:o.steps,draw(t){
+    const n=pairs.filter(p=>t>=p.tau+D).length;
+    const rodQ=o.toRod?-n:n, clothQ=-rodQ;
+    // rod
+    rr(120,128,660,74,37);ctx.fillStyle=C[o.rodFill];ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.stroke();
+    text(o.rodName,120,108);
+    text('Net charge: '+fmt(rodQ),780,108,{align:'right',col:rodQ<0?C.neg:rodQ>0?C.pos:C.muted});
+    rodXs.forEach((x,j)=>{
+      const p=pairs.find(p=>p.j===j);
+      const lost=!o.toRod&&p&&t>=p.tau;
+      ring(x,rodY,15,0.18);nucleus(x,rodY,lost&&t>=p.tau+D);
+      if(!lost){const [ex,ey]=orbitPos(x,rodY,j*1.1);electron(ex,ey);}
+      if(o.toRod&&p&&t>=p.tau+D){const [jx,jy]=jig(j,1.5);electron(x+jx,189+jy);}
+    });
+    // cloth
+    const X=cx(t),T=top(t);
+    rr(X-130,T,260,80,10);ctx.fillStyle=C[o.clothFill];ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.stroke();
+    offs.forEach((off,i)=>{
+      const p=pairs.find(p=>p.i===i);const x=X+off,y=T+24;
+      const lost=o.toRod&&p&&t>=p.tau;
+      ring(x,y,15,0.18);nucleus(x,y,lost&&t>=p.tau+D);
+      if(!lost){const [ex,ey]=orbitPos(x,y,i*1.7+0.5);electron(ex,ey);}
+      if(!o.toRod&&p&&t>=p.tau+D){const [jx,jy]=jig(i,1.5);electron(x+jx,T+56+jy);}
+    });
+    text(`${o.clothName}  ·  net charge: ${fmt(clothQ)}`,X,T+102,{align:'center',col:clothQ<0?C.neg:clothQ>0?C.pos:C.muted});
+    // electrons in flight
+    pairs.forEach(p=>{
+      if(t<p.tau||t>=p.tau+D)return;
+      const s=ease((t-p.tau)/D);
+      let a,b;
+      if(o.toRod){a=[cx(p.tau)+offs[p.i],top(p.tau)+12];b=[rodXs[p.j],189];}
+      else{a=[rodXs[p.j],172];b=[X+offs[p.i],T+56];}
+      electron(lerp(a[0],b[0],s),lerp(a[1],b[1],s)-Math.sin(s*Math.PI)*14);
+    });
+    const r=Math.min(seg(t,0.12,0.16),1-seg(t,0.66,0.7));
+    if(r>0)text('Rubbing ⟷',450,60,{align:'center',col:C.muted,alpha:r});
+    if(t>0.72){const a=seg(t,0.72,0.8);
+      text(`Total charge: ${fmt(rodQ)} + (${fmt(clothQ)}) = 0`,450,60,{align:'center',alpha:a});}
+  }};
+}
+const S2=makeRub({tab:'Rod becomes negative',toRod:true,rodName:'Polythene rod',clothName:'Wool cloth',rodFill:'rod-a',clothFill:'wool',steps:[
+ {at:0,text:'A neutral polythene rod and a neutral wool cloth. Each has equal numbers of protons and electrons.'},
+ {at:0.12,text:'Rubbing brings the two surfaces into very close contact. Polythene holds on to electrons more strongly than wool, so electrons transfer from the wool to the rod.'},
+ {at:0.62,text:'Only electrons move. The protons are locked inside the nuclei, so atoms on the wool are left as positive ions.'},
+ {at:0.72,text:'The rod has gained electrons and is negative. The wool has lost the same number and is positive. Charge is not created; it is transferred, and the total stays zero (conservation of charge).'}]});
+const S3=makeRub({tab:'Rod becomes positive',toRod:false,rodName:'Acetate rod',clothName:'Cloth',rodFill:'rod-b',clothFill:'cloth',steps:[
+ {at:0,text:'A neutral acetate rod and a neutral cloth. Each has equal numbers of protons and electrons.'},
+ {at:0.12,text:'Rubbing brings the surfaces into close contact. This time the cloth holds electrons more strongly than acetate, so electrons transfer from the rod to the cloth.'},
+ {at:0.62,text:'Again only electrons move. The rod is left with atoms that are short of an electron: positive ions.'},
+ {at:0.72,text:'The rod has lost electrons and is positive. The cloth has gained the same number and is negative. The total charge is still zero.'}]});
+
+// ---------- Scene 4: charged rod near a neutral insulator ----------
+const S4={name:'Charged rod near a neutral insulator',dur:18,steps:[
+ {at:0,text:'A neutral insulator, here a small piece of paper. Each atom\'s electron cloud is centred on its nucleus.'},
+ {at:0.1,text:'Bring a negatively charged rod close. It repels the electrons in every atom, so each electron cloud shifts slightly away from the rod. The electrons cannot leave their atoms. The atoms are polarised.'},
+ {at:0.52,text:'The surface nearest the rod is now slightly positive and the far surface slightly negative. The paper as a whole is still neutral.'},
+ {at:0.68,text:'Coulomb\'s law: F ∝ q₁q₂ / d². d is below the line and squared, so as d gets smaller, F gets bigger. The positive side (distance d₁) is closer than the negative side (d₂), so the attraction is stronger than the repulsion.'},
+ {at:0.8,text:'There is a net force of attraction, and the light paper is pulled up to the rod. A charged object attracts a neutral one.'}],
+ draw(t){
+  const yb=lerp(70,235,seg(t,0.1,0.5));
+  const py=320-75*seg(t,0.8,0.93);
+  // paper
+  rr(290,py,320,100,6);ctx.fillStyle=C.paper;ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.stroke();
+  const atoms=[];for(let r=0;r<2;r++)for(let c=0;c<6;c++)atoms.push([330+c*48,py+30+r*42]);
+  atoms.forEach(([x,y])=>{
+    const d=y-yb;const disp=12*clamp((320-d)/230);
+    ctx.beginPath();ctx.ellipse(x,y+disp,16,16+disp*0.35,0,0,Math.PI*2);ctx.fillStyle=C['neg-soft'];ctx.fill();
+    const [jx,jy]=jig(x+y,1.2);electron(x+jx*0.6,y+disp+11+jy*0.5);
+    nucleus(x,y,false);
+  });
+  const ind=seg(t,0.5,0.58);
+  if(ind>0){for(let i=0;i<7;i++){const x=306+i*48;
+    text('+',x,py+10,{align:'center',col:C.pos,size:18,alpha:ind});
+    text('−',x,py+90,{align:'center',col:C.neg,size:18,alpha:ind});}}
+  text('Neutral insulator (piece of paper)',450,py+122,{align:'center',col:C.muted});
+  // distance markers
+  const dm=seg(t,0.66,0.72)*(1-seg(t,0.8,0.84));
+  if(dm>0){ctx.save();ctx.globalAlpha=dm;ctx.strokeStyle=C.fg;ctx.lineWidth=1.5;
+    [[640,py,'d₁'],[690,py+100,'d₂']].forEach(([x,y2,l])=>{ctx.beginPath();ctx.moveTo(x,yb);ctx.lineTo(x,y2);
+      ctx.moveTo(x-6,yb);ctx.lineTo(x+6,yb);ctx.moveTo(x-6,y2);ctx.lineTo(x+6,y2);ctx.stroke();
+      text(l,x+10,(yb+y2)/2,{col:C.fg,size:16});});ctx.restore();}
+  // net force arrow
+  const fa=seg(t,0.76,0.8);
+  if(fa>0){ctx.save();ctx.globalAlpha=fa;ctx.strokeStyle=C.accent;ctx.fillStyle=C.accent;ctx.lineWidth=4;
+    const ax=240,y0=py+80,y1=py+25;ctx.beginPath();ctx.moveTo(ax,y0);ctx.lineTo(ax,y1);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ax,y1-10);ctx.lineTo(ax-8,y1+4);ctx.lineTo(ax+8,y1+4);ctx.closePath();ctx.fill();ctx.restore();
+    text('net attraction',ax-12,py+52,{align:'right',col:C.accent,alpha:fa});}
+  // rod (drawn last, on top)
+  rr(200,yb-50,500,50,25);ctx.fillStyle=C['rod-a'];ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.stroke();
+  for(let i=0;i<8;i++){const [jx,jy]=jig(i+20,1.2);electron(245+i*58+jx,yb-25+jy);}
+  text('Negatively charged rod',200,yb-66,{col:C.neg});
+ }};
+
+const SC=[S1,S2,S3,S4];
+
+// ---------- UI ----------
+const tabsEl=document.getElementById('tabs'),stepsEl=document.getElementById('steps');
+const playBtn=document.getElementById('play'),scrub=document.getElementById('scrub');
+let scene=0,t=0,playing=!reduce,last=performance.now(),activeStep=-1;
+SC.forEach((s,i)=>{const b=document.createElement('button');b.className='tab';b.role='tab';b.id='tab'+i;
+  b.innerHTML=`<span>${i+1}</span>${s.name}`;b.onclick=()=>select(i);tabsEl.appendChild(b);});
+function select(i){scene=i;t=0;playing=!reduce;activeStep=-1;
+  [...tabsEl.children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  stepsEl.innerHTML='';SC[i].steps.forEach((st,j)=>{const li=document.createElement('li');li.textContent=st.text;
+    li.onclick=()=>{t=st.at+0.001;};stepsEl.appendChild(li);});
+  updateBtn();}
+function updateBtn(){playBtn.textContent=playing?'Pause':(t>=1?'Replay':'Play');}
+playBtn.onclick=()=>{if(t>=1)t=0;playing=!playing;updateBtn();};
+document.getElementById('restart').onclick=()=>{t=0;playing=true;updateBtn();};
+scrub.oninput=()=>{t=scrub.value/1000;if(playing){playing=false;updateBtn();}};
+
+function resize(){const w=cv.getBoundingClientRect().width,d=devicePixelRatio||1;
+  cv.width=Math.round(w*d);cv.height=Math.round(w*H/W*d);}
+new ResizeObserver(resize).observe(cv);
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readColors);
+new MutationObserver(readColors).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+function frame(now){
+  const dt=Math.min(0.1,(now-last)/1000);last=now;
+  if(playing){t+=dt/SC[scene].dur;if(t>=1){t=1;playing=false;updateBtn();}}
+  if(!reduce)clock=now/1000;
+  const k=cv.width/W;ctx.setTransform(k,0,0,k,0,0);
+  ctx.fillStyle=C.surface;ctx.fillRect(0,0,W,H);
+  SC[scene].draw(t);
+  if(document.activeElement!==scrub)scrub.value=Math.round(t*1000);
+  const st=SC[scene].steps;let a=0;st.forEach((s,i)=>{if(t>=s.at)a=i;});
+  if(a!==activeStep){activeStep=a;[...stepsEl.children].forEach((li,i)=>li.classList.toggle('on',i===a));}
+  requestAnimationFrame(frame);
+}
+select(0);
+if(reduce){t=1;updateBtn();}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>

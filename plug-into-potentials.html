@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plug Into Potentials</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: lab bench — circuit board + live controls on the left, step guide on the right; questions underneath */
+:root{
+  --bg:#eef1f3; --panel:#ffffff; --board:#f8fafb; --grid:#e4e9ec;
+  --ink:#1a242c; --muted:#5b6872; --line:#cdd5db;
+  --copper:#b2622a; --pos:#c23b2e; --neg:#24557f; --ok:#2f7d4f; --warn:#9a5f00;
+  --lcd:#dfe8d6; --lcd-ink:#1d2a17; --hi:#f3d9c4;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171b; --panel:#182127; --board:#141c21; --grid:#1f2a31;
+  --ink:#dfe7ec; --muted:#93a1ab; --line:#2f3d46;
+  --copper:#e08d4f; --pos:#ef6a5b; --neg:#6fa7d8; --ok:#5fbf86; --warn:#e0a83a;
+  --lcd:#0f1a12; --lcd-ink:#9be29b; --hi:#3a2a1d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11171b; --panel:#182127; --board:#141c21; --grid:#1f2a31;
+  --ink:#dfe7ec; --muted:#93a1ab; --line:#2f3d46;
+  --copper:#e08d4f; --pos:#ef6a5b; --neg:#6fa7d8; --ok:#5fbf86; --warn:#e0a83a;
+  --lcd:#0f1a12; --lcd-ink:#9be29b; --hi:#3a2a1d; color-scheme:dark }
+
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{padding-block:28px 18px}
+.eyebrow{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.12em;color:var(--copper);font-size:14px}
+h1{font-family:var(--f-display);font-size:clamp(30px,5vw,44px);line-height:1.05;margin:4px 0 8px;text-wrap:balance}
+h2{font-family:var(--f-display);font-size:24px;margin:0 0 10px;text-wrap:balance}
+.lede{max-width:68ch;color:var(--muted);margin:0}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start;padding-block:0 24px}
+@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.bench{display:flex;flex-direction:column;gap:12px;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.group{display:flex;flex-direction:column;gap:4px}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:13px;padding:6px 11px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--copper);color:var(--panel);font-weight:600}
+button:focus-visible,input:focus-visible{outline:2px solid var(--copper);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-size:13px;padding:6px 11px;border-radius:7px;cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--panel);border-color:var(--ink);font-weight:600}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.board-wrap{background:var(--board);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+svg#board{display:block;width:100%;height:auto;touch-action:none;user-select:none}
+.hint{font-size:13px;color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center}
+.controls input[type=range]{width:min(320px,100%);accent-color:var(--copper)}
+.slidergrp{flex:1 1 260px;min-width:0}
+.toggle{display:flex;gap:6px;align-items:center;font-size:13px}
+#warn{display:flex;flex-direction:column;gap:6px}
+#warn{margin-bottom:10px}#warn:empty{display:none}
+.keybox{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px;background:var(--board)}
+.keybox h3{font-family:var(--f-display);font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--copper);margin:0 0 6px}
+.keybox ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+#warn p{margin:0;padding:8px 12px;border-radius:7px;border-left:4px solid var(--warn);background:var(--hi);font-size:14px}
+.results{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px}
+@media (max-width:700px){.results{grid-template-columns:minmax(0,1fr)}}
+.tablebox{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:7px}
+table{border-collapse:collapse;width:100%;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:5px 10px;text-align:right;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;background:var(--panel);font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:600}
+td:first-child,th:first-child{text-align:left}
+.rowhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+#graph{width:100%;height:auto;display:block}
+
+/* guide */
+.guide{position:sticky;top:12px}
+@media (max-width:980px){.guide{position:static}}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.step{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.step .st{display:flex;gap:10px;align-items:baseline;font-weight:600}
+.num{font-family:var(--f-display);font-size:18px;color:var(--muted);min-width:18px}
+.step.done .num{color:var(--ok)}
+.step.done{opacity:.75}
+.step.current{border-color:var(--copper);box-shadow:0 0 0 1px var(--copper)}
+.step.current .num{color:var(--copper)}
+.step.future .st{color:var(--muted);font-weight:500}
+.step .body{margin:6px 0 0 28px;font-size:14px}
+.step .body p{margin:0 0 6px}
+.tick{margin-left:auto;color:var(--ok);font-size:13px;font-weight:600}
+.key{font-family:var(--f-mono);background:var(--grid);padding:0 4px;border-radius:4px;font-size:13px}
+
+/* questions */
+.questions{padding-block:8px 48px}
+.qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px}
+.q{display:flex;flex-direction:column;gap:8px}
+.q h3{font-size:15px;margin:0;font-weight:600;line-height:1.4}
+.q .qn{font-family:var(--f-display);color:var(--copper);margin-right:6px}
+.q label{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer;padding:4px 6px;border-radius:6px}
+.q label:hover{background:var(--grid)}
+.q input{margin-top:4px;accent-color:var(--copper)}
+.fb{font-size:14px;padding:8px 10px;border-radius:7px;margin:0;border-left:4px solid var(--line)}
+.fb.right{border-color:var(--ok)}
+.fb.wrong{border-color:var(--pos)}
+
+/* svg */
+.t-ink{fill:var(--ink)} .t-muted{fill:var(--muted)}
+.s-ink{stroke:var(--ink)}
+.svgtext{font-family:var(--f-body);font-size:13px}
+.svgmono{font-family:var(--f-mono)}
+.term{cursor:pointer}
+.wire{fill:none;stroke-width:4;stroke-linecap:round}
+.wirehit{fill:none;stroke:transparent;stroke-width:16;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.pulse{animation:p 1s ease-in-out infinite alternate}@keyframes p{to{opacity:.35}}}
+</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<header class="wrap">
+  <div class="eyebrow">LC Physics · Electricity · I–V characteristics</div>
+  <h1>Plug into potentials</h1>
+  <p class="lede">Build the potential-divider circuit used for every I–V experiment. The battery fixes two potentials, the rheostat spreads them along its coil, and the component is plugged into two of them. Then measure the current through it and the potential difference across it.</p>
+</header>
+
+<main class="wrap grid">
+  <section class="bench panel" aria-label="Circuit board">
+    <div class="toolbar">
+      <div class="group"><span class="label">Component</span>
+        <div class="seg" id="compSeg">
+          <button data-c="wire">Resistance wire</button>
+          <button data-c="bulb">Filament bulb</button>
+          <button data-c="dfwd">Diode (forward)</button>
+          <button data-c="drev">Diode (reverse)</button>
+        </div></div>
+      <div class="group"><span class="label">Tool</span>
+        <div class="seg" id="toolSeg">
+          <button data-t="wire">Wire</button>
+          <button data-t="probe">Probe</button>
+          <button data-t="del">Delete wire</button>
+        </div></div>
+      <div class="group"><span class="label">&nbsp;</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn" id="undo">Undo wire</button>
+          <button class="btn" id="clearW">Clear wires</button>
+          <button class="btn" id="clearP">Clear probes</button>
+        </div></div>
+    </div>
+    <p class="hint" id="toolHint"></p>
+    <div class="board-wrap"><svg id="board" viewBox="0 0 900 570" role="img" aria-label="Circuit board with battery, rheostat, component, ammeter and voltmeter"></svg></div>
+    <div class="controls">
+      <div class="group slidergrp"><label class="label" for="sl">Slider position (drag the slider on the rheostat or use this)</label>
+        <input type="range" id="sl" min="0" max="1" step="0.002" value="0.3"></div>
+      <div class="group"><label class="label" for="emf">Battery voltage</label>
+        <select id="emf" class="btn"><option value="1">1.0 V</option><option value="1.5">1.5 V</option><option value="3">3.0 V</option><option value="6" selected>6.0 V</option><option value="9">9.0 V</option><option value="12">12.0 V</option></select></div>
+      <label class="toggle"><input type="checkbox" id="col"> Colour wires by potential</label>
+      <button class="btn primary" id="rec" disabled>Record V and I</button>
+    </div>
+    <div class="results">
+      <div>
+        <div class="rowhead"><h2 style="margin:0">Readings</h2><button class="btn" id="clearR">Clear readings</button></div>
+        <div class="tablebox"><table><thead><tr><th>#</th><th>V (V)</th><th>I (mA)</th><th>V/I (Ω)</th></tr></thead><tbody id="tbody"></tbody></table></div>
+      </div>
+      <div>
+        <div class="rowhead"><h2 style="margin:0" id="gtitle">I–V graph</h2></div>
+        <svg id="graph" viewBox="0 0 420 270" aria-label="Graph of current against potential difference"></svg>
+      </div>
+    </div>
+  </section>
+
+  <aside class="guide panel" aria-label="Guide">
+    <h2>Guide</h2>
+    <div id="warn" role="status" aria-live="polite"></div>
+    <div class="keybox" id="keybox"></div>
+    <ol class="steps" id="steps"></ol>
+  </aside>
+</main>
+
+<section class="wrap questions" aria-label="Questions">
+  <div class="panel">
+    <h2>Check your understanding</h2>
+    <p class="hint" style="margin-top:-4px">Use the circuit to test your answers before you check them.</p>
+    <div class="qs" id="qs"></div>
+  </div>
+</section>
+
+<script>
+(()=>{
+const NS='http://www.w3.org/2000/svg';
+let E=6; const RB=0.5, RT=20, RA=0.05, RV=1e7;
+const Is=1e-9, NVT=0.0388, VC=NVT*Math.log(NVT/Is); // diode: incremental resistance 1 Ω above VC
+const COMP={
+  wire:{name:'Resistance wire',f:v=>[v/10,0.1]},
+  bulb:{name:'Filament bulb',f:v=>{const d=4+2.667*Math.abs(v);return [v/d,4/(d*d)];}},
+  dfwd:{name:'Diode',diode:true,anodeRight:true},
+  drev:{name:'Diode',diode:true,anodeRight:false}
+};
+function fDiode(v){
+  if(v<VC){const e=Math.exp(v/NVT);return [Is*(e-1),Is*e/NVT];}
+  const e=Math.exp(VC/NVT);return [Is*(e-1)+(Is*e/NVT)*(v-VC),Is*e/NVT];
+}
+/* Layout keeps the intended wiring cross-free: − left → left coil end (0 V) → left of component;
+   + right → right coil end; slider terminal (right end of bar, below coil) → ammeter (right) → right of component */
+const T={
+  Bn:{x:120,y:70,lab:'−',kind:'neg',ly:-18},
+  Bp:{x:780,y:70,lab:'+',kind:'pos',ly:-18},
+  RL:{x:120,y:220,lab:'coil end',lx:-16,ly:4,anchor:'end'},
+  RR:{x:780,y:220,lab:'coil end',lx:16,ly:4,anchor:'start'},
+  S:{x:735,y:300,lab:'slider',lx:16,ly:4,anchor:'start'},
+  CL:{x:230,y:400,lab:''},
+  CR:{x:570,y:400,lab:''},
+  Vn:{x:150,y:500,lab:'−',kind:'neg',ly:-18},
+  Vp:{x:270,y:500,lab:'+',kind:'pos',ly:-18},
+  An:{x:640,y:500,lab:'−',kind:'neg',ly:-18},
+  Ap:{x:760,y:500,lab:'+',kind:'pos',ly:-18}
+};
+const IDS=Object.keys(T);
+const COIL={x0:200,x1:700,y:220};
+
+let wires=[], slider=0.3, comp='wire', tool='wire', pending=null, probes=[], readings=[], showCol=false;
+const prog={Bp:false,Bn:false,coil:0};
+let sol=null;
+
+const $=id=>document.getElementById(id);
+const svg=$('board');
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+
+/* ---------- solver ---------- */
+function solve(){
+  const parent={};IDS.forEach(i=>parent[i]=i);
+  const find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
+  wires.forEach(([a,b])=>{const ra=find(a),rb=find(b);if(ra!==rb)parent[ra]=rb;});
+  const node={};IDS.forEach(i=>node[i]=find(i));
+  const x=Math.min(Math.max(slider,0.0005),0.9995);
+  const c=COMP[comp];
+  let cf,ca,cb;
+  if(c.diode){cf=fDiode;ca=c.anodeRight?node.CR:node.CL;cb=c.anodeRight?node.CL:node.CR;}
+  else{cf=c.f;ca=node.CL;cb=node.CR;}
+  const els=[
+    {id:'bat',a:node.Bp,b:node.Bn},
+    {id:'r1',a:node.RL,b:node.S,g:1/(RT*x)},
+    {id:'r2',a:node.S,b:node.RR,g:1/(RT*(1-x))},
+    {id:'am',a:node.Ap,b:node.An,g:1/RA},
+    {id:'vm',a:node.Vp,b:node.Vn,g:1/RV},
+    {id:'comp',a:ca,b:cb,f:cf}
+  ];
+  // nodes connected to 0 V reference
+  const adj={};els.forEach(e=>{if(e.a===e.b)return;(adj[e.a]=adj[e.a]||[]).push(e.b);(adj[e.b]=adj[e.b]||[]).push(e.a);});
+  const gnd=node.Bn, seen=new Set([gnd]), q=[gnd];
+  while(q.length){const n=q.pop();(adj[n]||[]).forEach(m=>{if(!seen.has(m)){seen.add(m);q.push(m);}});}
+  const idx={};let n=0;seen.forEach(k=>{if(k!==gnd)idx[k]=n++;});
+  idx[gnd]=-1;
+  let V=new Float64Array(n);
+  const act=els.filter(e=>e.a!==e.b&&seen.has(e.a));
+  const pv=k=>idx[k]<0?0:V[idx[k]];
+  for(let it=0;it<400&&n>0;it++){
+    const G=Array.from({length:n},()=>new Float64Array(n)),I=new Float64Array(n);
+    const stamp=(a,b,g)=>{const ia=idx[a],ib=idx[b];if(ia>=0)G[ia][ia]+=g;if(ib>=0)G[ib][ib]+=g;if(ia>=0&&ib>=0){G[ia][ib]-=g;G[ib][ia]-=g;}};
+    const inj=(k,i)=>{if(idx[k]>=0)I[idx[k]]+=i;};
+    act.forEach(e=>{
+      if(e.id==='bat'){stamp(e.a,e.b,1/RB);inj(e.a,E/RB);inj(e.b,-E/RB);}
+      else if(e.f){const vd=pv(e.a)-pv(e.b);let [id,gd]=e.f(vd);gd+=1e-12;stamp(e.a,e.b,gd);const ieq=id-gd*vd;inj(e.a,-ieq);inj(e.b,ieq);}
+      else stamp(e.a,e.b,e.g);
+    });
+    const Vn=gauss(G,I);
+    let mx=0;for(let i=0;i<n;i++)mx=Math.max(mx,Math.abs(Vn[i]-V[i]));
+    const s=mx>0.25?0.25/mx:1;
+    for(let i=0;i<n;i++)V[i]+=s*(Vn[i]-V[i]);
+    if(mx<1e-10)break;
+  }
+  const pot=k=>seen.has(k)?pv(k):null;
+  const P={};IDS.forEach(i=>P[i]=pot(node[i]));
+  const diff=(a,b)=>(P[a]==null||P[b]==null)?0:P[a]-P[b];
+  const vd=(pot(ca)==null)?0:pot(ca)-pot(cb);
+  const Icomp=seen.has(ca)?cf(vd)[0]:0;
+  return {node,P,x,
+    Iam:diff('Ap','An')/RA,
+    Vvm:diff('Vp','Vn'),
+    Ibat:node.Bp===node.Bn?E/RB:(E-diff('Bp','Bn'))/RB,
+    Icomp, vdDiode:vd};
+}
+function gauss(A,b){
+  const n=b.length,M=A.map((r,i)=>{const x=Array.from(r);x.push(b[i]);return x;});
+  for(let c=0;c<n;c++){
+    let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;
+    [M[c],M[p]]=[M[p],M[c]];
+    const d=M[c][c]||1e-18;
+    for(let r=c+1;r<n;r++){const f=M[r][c]/d;if(!f)continue;for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k];}
+  }
+  const x=new Float64Array(n);
+  for(let r=n-1;r>=0;r--){let s=M[r][n];for(let k=r+1;k<n;k++)s-=M[r][k]*x[k];x[r]=s/(M[r][r]||1e-18);}
+  return x;
+}
+function coilPot(t){
+  const {P,x}=sol;if(P.RL==null)return null;
+  return t<=x?P.RL+(P.S-P.RL)*(t/x):P.S+(P.RR-P.S)*((t-x)/(1-x));
+}
+
+/* ---------- topology checks ---------- */
+function checks(){
+  const N=sol.node, zero=N.Bn;
+  const batCoil=N.Bp!==N.Bn&&((N.Bp===N.RL&&N.Bn===N.RR)||(N.Bp===N.RR&&N.Bn===N.RL));
+  const am=[N.Ap,N.An];
+  const direct=(c,t)=>N[c]===t;
+  const viaAm=(c,t)=>N[c]!==t&&am.includes(N[c])&&am.includes(t)&&N.Ap!==N.An;
+  const reach=(c,t)=>direct(c,t)||viaAm(c,t);
+  let plugged=false,series=false,outer=null;
+  if(batCoil&&N.CL!==N.CR&&N.S!==zero){
+    for(const [c0,cs] of [['CL','CR'],['CR','CL']]){
+      if(reach(c0,zero)&&reach(cs,N.S)){plugged=true;
+        if(viaAm(cs,N.S)){series=true;outer=[N[c0],N.S];}
+        else if(viaAm(c0,zero)){series=true;outer=[zero,N[cs]];}}
+    }
+  }
+  const same=(p,q)=>N.Vp!==N.Vn&&((N.Vp===p&&N.Vn===q)||(N.Vp===q&&N.Vn===p));
+  const voltComp=plugged&&same(N.CL,N.CR);
+  const voltBoth=!!outer&&same(outer[0],outer[1]);
+  return {batCoil,plugged,series,volt:voltComp||voltBoth,voltComp,voltBoth};
+}
+
+/* ---------- static drawing ---------- */
+const gStatic=el('g',{},svg), gWires=el('g',{},svg), gComp=el('g',{},svg), gTerms=el('g',{},svg), gDyn=el('g',{},svg), gProbe=el('g',{},svg);
+const rubber=el('path',{class:'wire',stroke:'var(--copper)','stroke-dasharray':'6 6',opacity:.7,d:'','pointer-events':'none'},gDyn);
+gProbe.setAttribute('pointer-events','none');
+function text(x,y,s,cls,parent,anchor='middle'){const t=el('text',{x,y,class:cls,'text-anchor':anchor},parent);t.textContent=s;return t;}
+function drawStatic(){
+  const g=gStatic, ink='var(--ink)';
+  // battery (− on the left: short thick plate faces left)
+  el('line',{x1:120,y1:70,x2:420,y2:70,stroke:ink,'stroke-width':2.5},g);
+  el('line',{x1:480,y1:70,x2:780,y2:70,stroke:ink,'stroke-width':2.5},g);
+  [[420,0],[432,1],[468,0],[480,1]].forEach(([x,l])=>el('line',{x1:x,y1:l?44:58,x2:x,y2:l?96:82,stroke:ink,'stroke-width':l?2.5:6},g));
+  el('line',{x1:432,y1:70,x2:468,y2:70,stroke:ink,'stroke-width':2.5,'stroke-dasharray':'4 4'},g);
+  batLabel=text(450,30,'Battery  6.0 V','svgtext t-ink',g);
+  // rheostat: coil, with the slider bar underneath
+  text(450,190,'Rheostat (20 Ω coil) — click the coil with Probe to read its potential','svgtext t-muted',g);
+  el('rect',{x:COIL.x0,y:COIL.y-15,width:COIL.x1-COIL.x0,height:30,rx:6,fill:'var(--panel)',stroke:ink,'stroke-width':2},g);
+  for(let x=COIL.x0+4;x<COIL.x1-4;x+=7)el('line',{x1:x,y1:COIL.y-13,x2:x+5,y2:COIL.y+13,stroke:'var(--copper)','stroke-width':2},g);
+  el('line',{x1:120,y1:COIL.y,x2:COIL.x0,y2:COIL.y,stroke:ink,'stroke-width':2.5},g);
+  el('line',{x1:COIL.x1,y1:COIL.y,x2:780,y2:COIL.y,stroke:ink,'stroke-width':2.5},g);
+  el('line',{x1:190,y1:300,x2:735,y2:300,stroke:'var(--muted)','stroke-width':6,'stroke-linecap':'round'},g);
+  coilHit=el('rect',{x:COIL.x0,y:COIL.y-18,width:COIL.x1-COIL.x0,height:36,fill:'transparent',class:'coilhit'},g);
+  // component frame
+  el('rect',{x:210,y:350,width:380,height:104,rx:10,fill:'none',stroke:'var(--muted)','stroke-dasharray':'5 5'},g);
+  // meters
+  [['V',210,'Voltmeter'],['A',700,'Ammeter']].forEach(([L,cx,name])=>{
+    el('line',{x1:cx-60,y1:500,x2:cx-38,y2:500,stroke:ink,'stroke-width':2.5},g);
+    el('line',{x1:cx+38,y1:500,x2:cx+60,y2:500,stroke:ink,'stroke-width':2.5},g);
+    el('circle',{cx,cy:500,r:38,fill:'var(--panel)',stroke:ink,'stroke-width':2.5},g);
+    el('rect',{x:cx-30,y:504,width:60,height:22,rx:3,fill:'var(--lcd)'},g);
+    text(cx,495,L,'t-ink',g).setAttribute('style','font:700 22px var(--f-display)');
+    text(cx,558,name,'svgtext t-muted',g);
+  });
+  meterV=text(210,520,'','svgmono',g);meterA=text(700,520,'','svgmono',g);
+  [meterA,meterV].forEach(m=>{m.setAttribute('fill','var(--lcd-ink)');m.setAttribute('font-size','12');});
+  // terminals
+  IDS.forEach(id=>{
+    const t=T[id];
+    const col=t.kind==='pos'?'var(--pos)':t.kind==='neg'?'var(--ink)':'var(--copper)';
+    const grp=el('g',{class:'term','data-id':id,tabindex:0,role:'button','aria-label':'terminal '+id},gTerms);
+    el('circle',{cx:t.x,cy:t.y,r:28,fill:'transparent'},grp);
+    t.dot=el('circle',{cx:t.x,cy:t.y,r:8,fill:'var(--panel)',stroke:col,'stroke-width':3.5},grp);
+    if(t.lab)text(t.x+(t.lx||0),t.y+t.ly,t.lab,'svgtext t-ink',grp,t.anchor||'middle').setAttribute('font-weight','600');
+  });
+  // slider knob (sits on the bar, contact reaches up to the coil)
+  knob=el('g',{style:'cursor:grab'},gDyn);
+  knobLine=el('line',{y1:288,y2:COIL.y+14,stroke:'var(--ink)','stroke-width':3},knob);
+  knobRect=el('rect',{y:288,width:24,height:24,rx:4,fill:'var(--copper)',stroke:'var(--ink)','stroke-width':1.5},knob);
+}
+let coilHit,meterA,meterV,knob,knobLine,knobRect,batLabel;
+
+function drawComp(){
+  gComp.innerHTML='';const ink='var(--ink)',g=gComp;
+  const lead=(x1,x2)=>el('line',{x1,y1:400,x2,y2:400,stroke:ink,'stroke-width':2.5},g);
+  let label=COMP[comp].name;
+  if(comp==='wire'){lead(230,355);lead(445,570);el('rect',{x:355,y:388,width:90,height:24,fill:'var(--panel)',stroke:ink,'stroke-width':2.5},g);label='Resistance wire (10 Ω)';}
+  else if(comp==='bulb'){lead(230,377);lead(423,570);el('circle',{cx:400,cy:400,r:23,fill:'var(--panel)',stroke:ink,'stroke-width':2.5},g);
+    el('path',{d:'M384 384 L416 416 M416 384 L384 416',stroke:ink,'stroke-width':2.5},g);}
+  else{const ar=COMP[comp].anodeRight;const a=ar?418:382,k=ar?382:418;
+    lead(230,382);lead(418,570);
+    el('path',{d:`M${a} 381 L${a} 419 L${k} 400 Z`,fill:ink},g);
+    el('line',{x1:k,y1:381,x2:k,y2:419,stroke:ink,'stroke-width':3},g);}
+  compLabel=text(400,442,label,'svgtext t-muted',g);
+}
+let compLabel;
+
+/* ---------- dynamic drawing ---------- */
+const potCol=v=>v==null?'var(--muted)':`hsl(${Math.round(225*(1-Math.max(0,Math.min(E,v))/E))} 72% 47%)`;
+function wirePath(a,b){
+  const A=T[a],B=T[b],mx=(A.x+B.x)/2,my=(A.y+B.y)/2,d=Math.hypot(B.x-A.x,B.y-A.y);
+  return `M${A.x} ${A.y} Q${mx} ${my+Math.min(60,d*0.18)} ${B.x} ${B.y}`;
+}
+function fmtV(v){return v==null?'not connected':(Math.abs(v)<0.005?0:v).toFixed(2)+' V';}
+function fmtmA(i){const m=i*1000;const r=Math.abs(m)<10?m.toFixed(2):m.toFixed(1);return (/^-0\.0+$/.test(r)?r.slice(1):r);}
+function fmtI(i){if(Math.abs(i)<1e-3){let r=(i*1e6).toFixed(Math.abs(i)<1e-8?3:2);if(/^-0\.0+$/.test(r))r=r.slice(1);return r+' µA';}return fmtmA(i)+' mA';}
+function render(){
+  sol=solve();
+  // wires
+  gWires.innerHTML='';
+  wires.forEach(([a,b],i)=>{
+    const d=wirePath(a,b),v=sol.P[a];
+    el('path',{class:'wire',d,stroke:showCol?potCol(v):'var(--copper)'},gWires);
+    el('path',{class:'wirehit',d,'data-w':i},gWires);
+  });
+  IDS.forEach(id=>{T[id].dot.setAttribute('fill',showCol&&sol.P[id]!=null?potCol(sol.P[id]):(pending===id?'var(--copper)':'var(--panel)'));
+    T[id].dot.classList.toggle('pulse',pending===id);});
+  // knob
+  const kx=COIL.x0+(COIL.x1-COIL.x0)*slider;
+  knobLine.setAttribute('x1',kx);knobLine.setAttribute('x2',kx);knobRect.setAttribute('x',kx-12);
+  // meters
+  meterA.textContent=fmtI(sol.Iam);
+  meterV.textContent=(Math.abs(sol.Vvm)<0.005?0:sol.Vvm).toFixed(2)+' V';
+  // diode bias label
+  if(COMP[comp].diode){const vd=sol.vdDiode;compLabel.textContent='Diode — '+(Math.abs(vd)<0.01?'no pd across it':vd>0?'forward biased':'reverse biased');}
+  // probes
+  gProbe.innerHTML='';
+  probes.forEach(p=>{
+    let x,y,v;
+    if(p.t){x=T[p.t].x;y=T[p.t].y-(T[p.t].ly<0?44:28);v=sol.P[p.t];}
+    else{x=COIL.x0+(COIL.x1-COIL.x0)*p.c;y=COIL.y+38;v=coilPot(p.c);
+      el('line',{x1:x,y1:COIL.y+15,x2:x,y2:y-12,stroke:'var(--ink)','stroke-width':1.5},gProbe);}
+    const s=fmtV(v),w=s.length*7.4+14;
+    el('rect',{x:x-w/2,y:y-12,width:w,height:22,rx:5,fill:'var(--ink)'},gProbe);
+    const t=text(x,y+4,s,'svgmono',gProbe);t.setAttribute('fill','var(--panel)');t.setAttribute('font-size','12');
+  });
+  renderGuide();renderWarn();
+}
+
+/* ---------- interaction ---------- */
+function svgPt(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
+let dragging=false;
+svg.addEventListener('pointerdown',e=>{
+  if(e.target===knobRect||e.target===knobLine){dragging=true;svg.setPointerCapture(e.pointerId);e.preventDefault();}
+});
+svg.addEventListener('pointermove',e=>{
+  const p=svgPt(e);
+  if(dragging){slider=Math.min(1,Math.max(0,(p.x-COIL.x0)/(COIL.x1-COIL.x0)));$('sl').value=slider;render();return;}
+  if(pending){rubber.setAttribute('d',`M${T[pending].x} ${T[pending].y} L${p.x} ${p.y}`);}
+});
+svg.addEventListener('pointerup',()=>{dragging=false;});
+function nearestTerm(p,maxD){let best=null,bd=maxD;IDS.forEach(id=>{const d=Math.hypot(T[id].x-p.x,T[id].y-p.y);if(d<bd){bd=d;best=id;}});return best;}
+svg.addEventListener('click',e=>{
+  const near=nearestTerm(svgPt(e),Math.max(34,40*900/svg.getBoundingClientRect().width*0.5));
+  if(near)return termClick(near);
+  if(e.target.classList.contains('coilhit')&&tool==='probe'){
+    const c=Math.min(1,Math.max(0,(svgPt(e).x-COIL.x0)/(COIL.x1-COIL.x0)));
+    probes.push({c});if(probes.length>10)probes.shift();
+    if(checks().batCoil)prog.coil++;
+    return render();
+  }
+  if(e.target.dataset.w!=null&&tool==='del'){wires.splice(+e.target.dataset.w,1);return render();}
+  if(pending){pending=null;rubber.setAttribute('d','');render();}
+});
+svg.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('.term')){e.preventDefault();termClick(e.target.closest('.term').dataset.id);}});
+function termClick(id){
+  if(tool==='probe'){
+    const i=probes.findIndex(p=>p.t===id);
+    if(i>=0)probes.splice(i,1);else{probes.push({t:id});if(probes.length>10)probes.shift();}
+    if(id==='Bp')prog.Bp=true;if(id==='Bn')prog.Bn=true;
+  }else if(tool==='wire'){
+    if(!pending)pending=id;
+    else{if(pending!==id&&!wires.some(([a,b])=>(a===pending&&b===id)||(a===id&&b===pending)))wires.push([pending,id]);pending=null;rubber.setAttribute('d','');}
+  }else if(tool==='del'){
+    const before=wires.length;wires=wires.filter(([a,b])=>a!==id&&b!==id);
+  }
+  render();
+}
+const hints={wire:'Wire: click one terminal, then another, to join them with a lead. A terminal can take several leads.',
+  probe:'Probe: click any terminal, or any point on the rheostat coil, to read its potential. Click a terminal again to remove its label.',
+  del:'Delete wire: click a lead to remove it, or click a terminal to remove every lead attached to it.'};
+function setTool(t){tool=t;pending=null;rubber.setAttribute('d','');
+  document.querySelectorAll('#toolSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===t));
+  $('toolHint').textContent=hints[t];render();}
+function setComp(c){if(c!==comp){readings=[];}comp=c;
+  document.querySelectorAll('#compSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===c));
+  drawComp();render();renderReadings();}
+$('toolSeg').addEventListener('click',e=>{if(e.target.dataset.t)setTool(e.target.dataset.t);});
+$('compSeg').addEventListener('click',e=>{if(e.target.dataset.c)setComp(e.target.dataset.c);});
+$('sl').addEventListener('input',e=>{slider=+e.target.value;render();});
+$('emf').addEventListener('change',e=>{E=+e.target.value;batLabel.textContent='Battery  '+E.toFixed(1)+' V';render();});
+$('col').addEventListener('change',e=>{showCol=e.target.checked;render();});
+$('undo').onclick=()=>{wires.pop();render();};
+$('clearW').onclick=()=>{wires=[];pending=null;render();};
+$('clearP').onclick=()=>{probes=[];render();};
+$('clearR').onclick=()=>{readings=[];renderReadings();};
+$('rec').onclick=()=>{readings.push({V:sol.Vvm,I:sol.Iam*1000});renderReadings();render();};
+
+/* ---------- warnings ---------- */
+function renderWarn(){
+  const w=[],c=checks();
+  if(sol.node.Bp===sol.node.Bn||sol.Ibat>0.5*E/RB)w.push('The battery is short-circuited: a lead (or the ammeter) joins + straight to −, so a very large current flows. Remove that connection.');
+  else if(Math.abs(sol.Iam)>1.5)w.push('The ammeter is carrying a very large current. An ammeter has almost no resistance, so it must be in series with the component — never plugged across two different potentials.');
+  if(COMP[comp].diode&&sol.Icomp>0.1)w.push('Diode current is over 100 mA. A real diode would overheat; in the lab a protective resistor goes in series with it. Move the slider back.');
+  if(c.volt&&sol.Vvm<-0.01)w.push('The voltmeter reads negative: its + lead is on the lower potential. Swap the two voltmeter leads.');
+  if(comp==='drev'&&c.series&&c.voltComp)w.push('Hint: in reverse bias the diode’s resistance is far bigger than the voltmeter’s. The ammeter is now mostly measuring the current through the voltmeter, not the diode. Try plugging the voltmeter across both the diode and the ammeter.');
+  if(c.series&&sol.Iam<-1e-7)w.push('The ammeter reads negative: current is entering at −. Swap the two ammeter leads.');
+  $('warn').innerHTML=w.map(s=>`<p>${s}</p>`).join('');
+  $('rec').disabled=!(c.series&&c.volt);
+}
+
+/* ---------- guide ---------- */
+const STEPS=[
+  {t:'Start with the source',b:`<p>The battery fixes two potentials. Choose <span class="key">Probe</span> and click both battery terminals.</p><p>The − terminal is the reference: we call it 0 V. The + terminal sits the battery voltage above it.</p>`,
+   done:()=>prog.Bp&&prog.Bn},
+  {t:'Spread the potential along the coil',b:`<p>Choose <span class="key">Wire</span>. Join the battery − to the left end of the rheostat coil and + to the right end.</p><p>Now every point on the coil has its own potential, from 0 V at the left end up to the battery voltage at the right. Probe at least three points along the coil.</p>`,
+   done:c=>c.batCoil&&prog.coil>=3},
+  {t:'Plug the component into two potentials',b:`<p>Wire the left-hand end of the component to the 0 V end of the coil. Wire its right-hand end to the <b>slider</b> terminal.</p><p>The component is now plugged into 0 V and into whatever potential the slider sits at. Move the slider and probe both ends of the component. The pd across it is the difference between those two potentials.</p>`,
+   done:c=>c.plugged},
+  {t:'Put the ammeter in series',b:`<p>To measure the current, it must flow <i>through</i> the ammeter. Remove the lead from the slider to the component and reroute it: slider → ammeter + … ammeter − → component.</p><p>The same current now flows through the ammeter and the component. Current should enter at +.</p>`,
+   done:c=>c.series},
+  {t:'Plug the voltmeter into each end of the component',b:`<p>A voltmeter reads the difference between two potentials. Wire its + to the right-hand end of the component (the higher potential) and its − to the left-hand end.</p><p class="hint"><b>Diode in reverse bias:</b> its resistance is far bigger than the voltmeter’s. Think about where the ammeter current goes if the voltmeter is across the diode alone. Should the voltmeter go across the diode and ammeter together?</p>`,
+   done:c=>c.volt},
+  {t:'Take readings',b:`<p>Start with the slider at the 0 V end. Move it in small steps and press <span class="key">Record V and I</span> at each position. Take at least six readings and watch the graph build.</p><p>Then switch component and repeat. Your leads stay in place.</p>`,
+   done:()=>readings.length>=6}
+];
+const KEY_ALL=['The battery − terminal is 0 V. Every other potential is measured from it.','The pd across the component is the difference between the two potentials it is plugged into.','Ammeter: in series, very low resistance. Current enters at +.','Voltmeter: plugged into each end, very high resistance. + goes to the higher potential.'];
+const KEY_COMP={
+  wire:'Resistance wire: keep the current small so the wire stays at constant temperature.',
+  bulb:'Filament bulb: the filament heats up as the current rises, so V/I increases.',
+  dfwd:'Diode, forward bias: it barely conducts until about 0.6 V, then the current rises steeply. A 1 V battery gives fine control; keep the current under 100 mA (a protective resistor is used in the lab).',
+  drev:'Diode, reverse bias: the current is tiny, so use a microammeter. The diode’s resistance is far bigger than the voltmeter’s — plug the voltmeter across the diode and ammeter together. A 12 V battery gives a wider range.'
+};
+function renderKey(){$('keybox').innerHTML='<h3>Key points</h3><ul>'+[...KEY_ALL,KEY_COMP[comp]].map(s=>`<li>${s}</li>`).join('')+'</ul>';}
+function renderGuide(){
+  renderKey();
+  const c=checks();let cur=-1;
+  const html=STEPS.map((s,i)=>{
+    const d=s.done(c);if(!d&&cur<0)cur=i;
+    const st=d?'done':(cur===i?'current':'future');
+    return `<li class="step ${st}"><div class="st"><span class="num">${i+1}</span><span>${s.t}</span>${d?'<span class="tick">✓ done</span>':''}</div>${st==='current'?`<div class="body">${s.b}</div>`:''}</li>`;
+  }).join('');
+  $('steps').innerHTML=html+(cur<0?'<li class="step current"><div class="st"><span class="num">✓</span><span>Circuit complete</span></div><div class="body"><p>Compare the graph with the other components, then try the questions below.</p></div></li>':'');
+}
+
+/* ---------- readings + graph ---------- */
+function fmtR(r){const a=Math.abs(r);return a>=1e6?(r/1e6).toPrecision(3)+' M':a>=1e4?(r/1e3).toPrecision(3)+' k':r.toFixed(1);}
+const fmtTick=v=>String(+(+v.toPrecision(3)).toPrecision(3));
+function niceStep(r){const p=Math.pow(10,Math.floor(Math.log10(r)));const f=r/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p;}
+function renderReadings(){
+  $('gtitle').textContent='I–V graph · '+(comp==='drev'?'Diode (reverse)':comp==='dfwd'?'Diode (forward)':COMP[comp].name);
+  $('tbody').innerHTML=readings.map((r,i)=>`<tr><td>${i+1}</td><td>${r.V.toFixed(2)}</td><td>${Math.abs(r.I)<0.01?r.I.toPrecision(3):Math.abs(r.I)<10?r.I.toFixed(2):r.I.toFixed(1)}</td><td>${Math.abs(r.I)>1e-9?fmtR(r.V/(r.I/1000)):'—'}</td></tr>`).join('')
+    ||'<tr><td colspan="4" style="text-align:left;color:var(--muted)">No readings yet</td></tr>';
+  const g=$('graph');g.innerHTML='';
+  const L=52,R=404,Tp=14,B=226;
+  const xs=readings.map(r=>r.V),ys=readings.map(r=>r.I);
+  let x0=Math.min(0,...xs),x1=Math.max(1,...xs),y0=Math.min(0,...ys),y1=Math.max(readings.length?1e-6:1,...ys);
+  if(y1-y0<1e-9)y1=y0+1e-6;
+  const sx=niceStep((x1-x0)/5),sy=niceStep((y1-y0)/5);
+  x0=Math.floor(x0/sx)*sx;x1=Math.ceil(x1/sx)*sx;y0=Math.floor(y0/sy)*sy;y1=Math.ceil(y1/sy)*sy;
+  const X=v=>L+(v-x0)/(x1-x0)*(R-L),Y=v=>B-(v-y0)/(y1-y0)*(B-Tp);
+  for(let v=x0;v<=x1+1e-9;v+=sx){el('line',{x1:X(v),y1:Tp,x2:X(v),y2:B,stroke:'var(--grid)'},g);text(X(v),B+16,fmtTick(v),'svgmono t-muted',g).setAttribute('font-size','11');}
+  for(let v=y0;v<=y1+1e-9;v+=sy){el('line',{x1:L,y1:Y(v),x2:R,y2:Y(v),stroke:'var(--grid)'},g);text(L-6,Y(v)+4,fmtTick(v),'svgmono t-muted',g,'end').setAttribute('font-size','11');}
+  el('line',{x1:X(0),y1:Tp,x2:X(0),y2:B,stroke:'var(--ink)','stroke-width':1.5},g);
+  el('line',{x1:L,y1:Y(0),x2:R,y2:Y(0),stroke:'var(--ink)','stroke-width':1.5},g);
+  text((L+R)/2,B+36,'Potential difference V (V)','svgtext t-ink',g).setAttribute('font-size','12');
+  const yl=text(14,(Tp+B)/2,'Current I (mA)','svgtext t-ink',g);yl.setAttribute('font-size','12');yl.setAttribute('transform',`rotate(-90 14 ${(Tp+B)/2})`);
+  if(!readings.length){text((L+R)/2,(Tp+B)/2,'Your readings plot here','svgtext t-muted',g);return;}
+  const s=[...readings].sort((a,b)=>a.V-b.V);
+  el('path',{d:s.map((r,i)=>(i?'L':'M')+X(r.V)+' '+Y(r.I)).join(' '),fill:'none',stroke:'var(--copper)','stroke-width':1.5,opacity:.6},g);
+  s.forEach(r=>el('circle',{cx:X(r.V),cy:Y(r.I),r:4,fill:'var(--copper)',stroke:'var(--panel)','stroke-width':1.5},g));
+}
+
+/* ---------- questions ---------- */
+const QS=[
+  {q:'A 6.0 V battery is connected across the coil and nothing else is plugged in. The slider is exactly half-way along. What is the potential at the slider?',
+   o:['0 V','3 V','6 V','12 V'],a:1,
+   e:'The coil has the same resistance per unit length all the way along, so the potential falls evenly from 6 V to 0 V. Half-way along, the potential is half-way down: 3 V. Probe the coil to check.'},
+  {q:'Why is the component plugged into the slider and 0 V, rather than straight across the battery?',
+   o:['It makes the current larger','The pd across the component can be varied smoothly from 0 V up to the battery voltage','It stops the battery going flat','The ammeter only works this way'],a:1,
+   e:'The slider can be at any potential from 0 V up to the battery voltage. Since the other end of the component is at 0 V, the pd across it can be set to any value in that range, including values close to zero.'},
+  {q:'The slider is moved all the way to the 0 V end of the coil. What does the voltmeter read, and why?',
+   o:['The full battery voltage','0 V — both ends of the component are plugged into the same potential','Half the battery voltage','It depends on the component'],a:1,
+   e:'Potential difference is the difference between two potentials. If both ends sit at 0 V there is no difference, so V = 0 and no current flows through the component.'},
+  {q:'Why must the ammeter be in series with the component?',
+   o:['The same current has to flow through the ammeter as through the component','The ammeter measures the potential at a point','The ammeter has a very large resistance','It keeps the ammeter cool'],a:0,
+   e:'An ammeter measures the current flowing through it. In series, every charge passing through the component also passes through the ammeter. Its resistance is very small, so it hardly changes the current.'},
+  {q:'Why is the voltmeter plugged into each end of the component?',
+   o:['It needs current to flow through it to work','A pd is the difference in potential between two points, so it must touch both','It protects the component','It makes the reading larger'],a:1,
+   e:'The voltmeter compares the potential at its + terminal with the potential at its − terminal. Its resistance is very large, so almost no current is diverted through it.'},
+  {q:'The graph for the resistance wire is a straight line through the origin. What does this tell you?',
+   o:['The current is independent of the pd','I ∝ V, so V/I is constant: the resistance stays the same','The resistance increases as the pd increases','The wire is heating up'],a:1,
+   e:'A straight line through the origin means I is directly proportional to V. Since R = V/I, resistance is the voltage per unit current, and here that ratio is constant (Ohm’s law, at constant temperature). Check the V/I column in your table.'},
+  {q:'For the filament bulb, V/I gets larger as V increases. Why?',
+   o:['The battery runs down','The filament gets hotter, so its resistance increases','The ammeter becomes less accurate','The bulb becomes a better conductor'],a:1,
+   e:'More current heats the filament. As temperature rises, resistance (voltage per unit current) increases, so each extra volt produces less extra current and the graph curves towards the V axis.'},
+  {q:'R = V/I. What is the unit of resistance, built straight from this equation?',
+   o:['V A⁻¹ (volt per amp), called the ohm','A V⁻¹','V A','W'],a:0,
+   e:'Units of R = units of V ÷ units of I = V/A = V A⁻¹. One ohm is one volt per amp: the pd needed for each amp of current.'},
+  {q:'In forward bias the diode current stays near zero until about 0.6 V, then rises very steeply. Why is a protective resistor used in the real experiment?',
+   o:['To increase the pd across the diode','To limit the current once the diode conducts, so it does not overheat','To reverse the diode','To make the voltmeter more accurate'],a:1,
+   e:'Above about 0.6 V the diode’s resistance becomes very small, so a tiny increase in V gives a huge increase in I. A resistor in series limits the current.'},
+  {q:'In reverse bias, why should the voltmeter be plugged across both the diode and the ammeter, not across the diode alone?',
+   o:['It makes the voltmeter reading larger','The diode’s resistance is far bigger than the voltmeter’s, so with the voltmeter across the diode alone most of the ammeter current would flow through the voltmeter','It protects the diode from a large current','The ammeter only works with this wiring'],a:1,
+   e:'Across the diode alone, the voltmeter is a parallel path with much lower resistance than the reverse-biased diode, so the ammeter measures mostly voltmeter current. Across both, the ammeter carries only diode current, and the ammeter’s pd is tiny compared with the diode’s. Try both ways and compare the ammeter readings. A microammeter (µA) is needed for these small currents.'}
+];
+function renderQs(){
+  $('qs').innerHTML=QS.map((q,i)=>`<div class="q panel"><h3><span class="qn">Q${i+1}</span>${q.q}</h3>
+   ${q.o.map((o,j)=>`<label><input type="radio" name="q${i}" id="q${i}o${j}" value="${j}"> <span>${o}</span></label>`).join('')}
+   <div><button class="btn" data-q="${i}">Check</button></div><p class="fb" id="fb${i}" hidden></p></div>`).join('');
+  $('qs').addEventListener('click',e=>{
+    const i=e.target.dataset.q;if(i==null)return;
+    const sel=document.querySelector(`input[name=q${i}]:checked`),fb=$('fb'+i);fb.hidden=false;
+    if(!sel){fb.className='fb';fb.textContent='Choose an answer first.';return;}
+    const ok=+sel.value===QS[i].a;fb.className='fb '+(ok?'right':'wrong');
+    fb.innerHTML=(ok?'<b>Correct.</b> ':'<b>Not quite.</b> ')+QS[i].e;
+  });
+}
+
+drawStatic();drawComp();renderQs();setTool('wire');setComp('wire');renderReadings();
+})();
+</script>
+
+</body>
+</html>

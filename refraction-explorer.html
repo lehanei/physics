@@ -1,0 +1,460 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Refraction Explorer</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column; ray diagram on top, controls + live equation beneath (side by side when wide). */
+:root{
+  --bg:#f3f6f8; --panel:#ffffff; --fg:#17222b; --muted:#5b6b78; --line:#d3dde4;
+  --ray:#d6452b; --normal:#7a8a96; --medium:#2f7fb8; --tir:#8a3fb8; --win:#c98a00;
+  --shadow:0 10px 30px rgba(20,40,60,.18);
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#16212a; --fg:#e4ecf1; --muted:#93a4b1; --line:#2a3946;
+  --ray:#ff7a5c; --normal:#7f909c; --medium:#5aa9e0; --tir:#c48af0; --win:#f2bd3a; --shadow:0 10px 30px rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#16212a; --fg:#e4ecf1; --muted:#93a4b1; --line:#2a3946;
+  --ray:#ff7a5c; --normal:#7f909c; --medium:#5aa9e0; --tir:#c48af0; --win:#f2bd3a; --shadow:0 10px 30px rgba(0,0,0,.5); color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+.wrap{max-width:960px;margin:0 auto;display:grid;gap:16px}
+h1{font-size:1.35rem;margin:0;font-weight:600;text-wrap:balance}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
+canvas.drag{cursor:grabbing}
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:680px){.lower{grid-template-columns:1fr}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;display:grid;gap:14px;align-content:start;min-width:0}
+label{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:4px}
+select,button{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:6px 8px}
+select{width:100%}
+button{cursor:pointer}
+button:hover:not(:disabled){border-color:var(--medium)}
+button:disabled{opacity:.45;cursor:default}
+button[aria-pressed="true"]{background:var(--medium);border-color:var(--medium);color:var(--panel)}
+:focus-visible{outline:2px solid var(--medium);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.seg{display:flex}.seg button{border-radius:0}.seg button:first-child{border-radius:4px 0 0 4px}.seg button:last-child{border-radius:0 4px 4px 0;border-left:0}
+input[type=range]{width:100%;accent-color:var(--ray)}
+.val{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eq{font-family:var(--mono);font-size:1.05rem;font-variant-numeric:tabular-nums;overflow-x:auto;white-space:nowrap}
+.big{font-size:1.5rem;font-weight:600}
+table{border-collapse:collapse;width:100%;font-family:var(--mono);font-variant-numeric:tabular-nums}
+td{padding:4px 0;border-bottom:1px solid var(--line)}
+td:last-child{text-align:right}
+.note{color:var(--muted);font-size:.9rem;margin:0}
+.tir{color:var(--tir);font-weight:600}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+/* Pop-out guide / question box: non-modal so the simulation stays usable; drag by its header. */
+.pop{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));
+  width:min(400px,calc(100vw - 32px));max-height:min(72vh,580px);display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);z-index:20}
+.pop header{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:move;touch-action:none;user-select:none}
+.pop header div{flex:1;min-width:0}
+.eyebrow,.lab{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block}
+.pop h2{font-size:1.05rem;margin:2px 0 0;font-weight:600;text-wrap:balance}
+.pop .x{padding:2px 9px;font-size:1.1rem;line-height:1.4}
+.pbody{overflow:auto;padding:12px 14px;display:grid;gap:10px;font-size:.95rem;min-height:0}
+.pbody p{margin:0}
+.try,.ans{background:var(--bg);padding:8px 10px;border-radius:4px;display:grid;gap:6px}
+.pbody .tw{overflow-x:auto}
+.pbody table td,.pbody table th{padding:3px 6px;text-align:center;border-bottom:1px solid var(--line);font-weight:400}
+.pbody table th{color:var(--muted);text-align:left}
+.pop footer{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.pop footer .sp{flex:1}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <h1>Refraction: <span class="val"><sub>1</sub>n<sub>2</sub></span> = sin θ<sub>1</sub> / sin θ<sub>2</sub></h1>
+    <div class="btns">
+      <button id="openG" type="button">Student guide</button>
+      <button id="openQ" type="button">Exam questions</button>
+    </div>
+  </div>
+  <div class="stage"><canvas id="cv" aria-label="Ray diagram of light at the boundary between medium 1 and medium 2"></canvas></div>
+  <div class="lower">
+    <div class="box">
+      <div class="seg" role="group" aria-label="Mode">
+        <button id="modeS" type="button" aria-pressed="true">Single ray</button>
+        <button id="modeP" type="button" aria-pressed="false">Rays from a point</button>
+      </div>
+      <div class="row2">
+        <div><label for="m1">Medium 1 (top)</label><select id="m1"></select></div>
+        <div><label for="m2">Medium 2 (bottom)</label><select id="m2"></select></div>
+      </div>
+      <div id="singleCtl" style="display:grid;gap:14px">
+        <div>
+          <label for="ang">θ<sub>1</sub> = <span class="val" id="angv"></span></label>
+          <input id="ang" type="range" min="0" max="90" step="any" value="40">
+        </div>
+        <div><button id="crit" type="button">Go to critical angle</button></div>
+      </div>
+      <div id="pointCtl" hidden style="display:grid;gap:10px">
+        <div class="btns">
+          <button id="add" type="button">Add ray</button>
+          <button id="del" type="button">Remove selected ray</button>
+          <button id="pcrit" type="button">Add rays at ±C</button>
+        </div>
+        <p class="note">Drag the point to move it, into either medium. Drag near a ray to select and turn it.</p>
+      </div>
+    </div>
+    <div class="box">
+      <table>
+        <tr><td>θ<sub>1</sub></td><td id="t1"></td></tr>
+        <tr><td>θ<sub>2</sub></td><td id="t2"></td></tr>
+        <tr><td>sin θ<sub>1</sub></td><td id="s1"></td></tr>
+        <tr><td>sin θ<sub>2</sub></td><td id="s2"></td></tr>
+      </table>
+      <div class="eq" id="eq"></div>
+      <p class="note" id="note"></p>
+    </div>
+  </div>
+</div>
+
+<div class="pop" id="pop" role="dialog" aria-labelledby="popTitle" hidden>
+  <header id="popHead">
+    <div><span class="eyebrow" id="popEy"></span><h2 id="popTitle"></h2></div>
+    <button class="x" id="popX" type="button" aria-label="Close">×</button>
+  </header>
+  <div class="pbody" id="popBody"></div>
+  <footer>
+    <button id="popSet" type="button">Set up the simulation</button>
+    <span class="sp"></span>
+    <button id="popPrev" type="button">Back</button>
+    <button id="popNext" type="button">Next</button>
+  </footer>
+</div>
+
+<script>
+const MEDIA=[["Air",1.00],["Ice",1.31],["Water",1.33],["Ethanol",1.36],["Perspex",1.49],["Glass",1.52],["Diamond",2.42]];
+const $=id=>document.getElementById(id);
+const m1=$("m1"),m2=$("m2"),ang=$("ang"),cv=$("cv"),ctx=cv.getContext("2d");
+MEDIA.forEach(([n,v],i)=>{for(const s of[m1,m2])s.add(new Option(`${n} (n = ${v.toFixed(2)})`,i))});
+m1.value=0;m2.value=5;
+const deg=r=>r*180/Math.PI,rad=d=>d*Math.PI/180,MAXA=rad(89);
+let mode="single",M={};
+// Point mode: P as fractions of canvas; rays as signed angles from the normal on P's side.
+const PT={x:0.5,y:0.8,rays:[0,20,-20,35,-35,50,-50].map(rad),sel:1};
+
+function media(){
+  const n1=MEDIA[m1.value][1],n2=MEDIA[m2.value][1],rel=n2/n1;
+  let C=null,denser=null;
+  if(rel>1){C=Math.asin(1/rel);denser=2}else if(rel<1){C=Math.asin(rel);denser=1}
+  M={n1,n2,rel,C,denser,name1:MEDIA[m1.value][0],name2:MEDIA[m2.value][0]};
+}
+// Given the angle in medium `side`, find the angle in the other medium (Snell's law).
+function solve(side,th){
+  if(side===1){const s=Math.sin(th)/M.rel,tir=s>1+1e-9;return{t1:th,t2:tir?null:Math.asin(Math.min(1,s)),tir}}
+  const s=M.rel*Math.sin(th),tir=s>1+1e-9;return{t1:tir?null:Math.asin(Math.min(1,s)),t2:th,tir};
+}
+
+function readout(R){
+  const f=x=>x.toFixed(3),d=x=>deg(x).toFixed(1)+"°",nn='<sub>1</sub>n<sub>2</sub>';
+  $("angv").textContent=d(+rad(ang.value));
+  $("t1").textContent=R.t1==null?"—":d(R.t1);
+  $("t2").textContent=R.t2==null?"—":d(R.t2);
+  $("s1").textContent=R.t1==null?"—":f(Math.sin(R.t1));
+  $("s2").textContent=R.t2==null?"—":f(Math.sin(R.t2));
+  if(R.tir) $("eq").innerHTML=`${nn} = <span class="big">${M.rel.toFixed(3)}</span>`;
+  else if(R.t1<1e-6) $("eq").innerHTML=`${nn} = <span class="big">${M.rel.toFixed(3)}</span>  (along the normal: no bending)`;
+  else $("eq").innerHTML=`${nn} = ${f(Math.sin(R.t1))} / ${f(Math.sin(R.t2))} = <span class="big">${(Math.sin(R.t1)/Math.sin(R.t2)).toFixed(3)}</span>`;
+  let msg;
+  if(M.rel===1) msg=`Same medium: ${nn} = 1, so θ<sub>2</sub> = θ<sub>1</sub>. No bending, no critical angle.`;
+  else if(M.denser===2) msg=`${nn} &gt; 1: medium 2 is denser, so θ<sub>2</sub> &lt; θ<sub>1</sub>. When θ<sub>1</sub> = 90°, θ<sub>2</sub> = critical angle C = ${d(M.C)}.`;
+  else msg=`${nn} &lt; 1: medium 1 is denser, so θ<sub>1</sub> &lt; θ<sub>2</sub>. Critical angle C = ${d(M.C)}: when θ<sub>1</sub> = C, θ<sub>2</sub> = 90°.`;
+  if(R.tir) msg+=` <span class="tir">Angle in the denser medium is greater than C: total internal reflection.</span>`;
+  $("note").innerHTML=msg;
+}
+
+let W,H;
+function size(){
+  const dpr=window.devicePixelRatio||1;
+  W=cv.parentElement.clientWidth;H=Math.round(Math.min(W*0.62,460));
+  cv.width=W*dpr;cv.height=H*dpr;cv.style.height=H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+let C={};
+function colors(){C={ray:css("--ray"),nor:css("--normal"),med:css("--medium"),fg:css("--fg"),mut:css("--muted"),tir:css("--tir"),win:css("--win"),sans:css("--sans")}}
+
+function line(a,b){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
+function along(p,v,L){return[p[0]+v[0]*L,p[1]+v[1]*L]}
+// Arc at p between direction vectors v1 and v2, labelled.
+function arcBetween(p,v1,v2,r,lab,col){
+  const a1=Math.atan2(v1[1],v1[0]);let df=Math.atan2(v2[1],v2[0])-a1;
+  while(df>Math.PI)df-=2*Math.PI;while(df<=-Math.PI)df+=2*Math.PI;
+  if(Math.abs(df)<1e-3)return;
+  ctx.strokeStyle=col;ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(p[0],p[1],r,a1,a1+df,df<0);ctx.stroke();
+  const am=a1+df/2;ctx.font="italic 600 16px "+C.sans;ctx.fillStyle=col;ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(lab,p[0]+(r+16)*Math.cos(am),p[1]+(r+16)*Math.sin(am));ctx.textAlign="left";
+}
+function dashed(a,b,col){ctx.setLineDash([6,5]);ctx.strokeStyle=col;ctx.lineWidth=1.2;line(a,b);ctx.setLineDash([])}
+
+function background(){
+  const cy=H/2,shade=n=>0.04+Math.min(1,(n-1)/1.5)*0.32;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=C.med;
+  ctx.globalAlpha=shade(M.n1);ctx.fillRect(0,0,W,cy);
+  ctx.globalAlpha=shade(M.n2);ctx.fillRect(0,cy,W,H-cy);ctx.globalAlpha=1;
+  ctx.strokeStyle=C.fg;ctx.lineWidth=1.5;line([0,cy],[W,cy]);
+  ctx.font="600 13px "+C.sans;ctx.fillStyle=C.fg;
+  ctx.textBaseline="top";ctx.fillText(`Medium 1: ${M.name1} (n = ${M.n1.toFixed(2)})`,12,10);
+  ctx.textBaseline="bottom";ctx.fillText(`Medium 2: ${M.name2} (n = ${M.n2.toFixed(2)})`,12,H-10);
+}
+
+/* ---------- single-ray mode ---------- */
+function drawSingle(){
+  const R=solve(1,rad(+ang.value)),cx=W/2,cy=H/2,O=[cx,cy],L=Math.hypot(W,H),r=Math.min(60,H*0.16);
+  background();
+  dashed([cx,0],[cx,H],C.nor);
+  ctx.font="12px "+C.sans;ctx.fillStyle=C.mut;ctx.textBaseline="top";ctx.fillText("normal",cx+6,34);
+  const v1=[-Math.sin(R.t1),-Math.cos(R.t1)];
+  const v2=R.tir?[Math.sin(R.t1),-Math.cos(R.t1)]:[Math.sin(R.t2),Math.cos(R.t2)];
+  ctx.lineWidth=3;ctx.lineCap="round";
+  ctx.strokeStyle=C.ray;line(O,along(O,v1,L));
+  ctx.strokeStyle=R.tir?C.tir:C.ray;line(O,along(O,v2,L));
+  arcBetween(O,[0,-1],v1,r,"θ₁",C.ray);
+  if(R.tir)arcBetween(O,[0,-1],v2,r,"θ₁",C.tir);else arcBetween(O,[0,1],v2,r,"θ₂",C.ray);
+  return R;
+}
+
+/* ---------- point mode ---------- */
+function geo(){
+  const cy=H/2,P=[PT.x*W,PT.y*H],side=P[1]<cy?1:2,dt=side===1?1:-1,d=Math.abs(cy-P[1]);
+  return{cy,P,side,dt,d};
+}
+function rayInfo(a,g){
+  const hit=[g.P[0]+g.d*Math.tan(a),g.cy],R=solve(g.side,Math.abs(a)),sg=Math.sign(a);
+  const vin=[Math.sin(a),g.dt*Math.cos(a)];
+  let out;
+  if(R.tir) out=[Math.sin(a),-g.dt*Math.cos(a)];
+  else{const ph=g.side===1?R.t2:R.t1;out=[sg*Math.sin(ph),g.dt*Math.cos(ph)]}
+  return{hit,R,vin,out};
+}
+function drawPoint(){
+  const g=geo(),L=Math.hypot(W,H)*1.5,other=3-g.side;
+  background();
+  // Snell's window when the point is in the denser medium
+  if(M.C!=null&&g.side===M.denser){
+    const w=g.d*Math.tan(M.C),a=[g.P[0]-w,g.cy],b=[g.P[0]+w,g.cy];
+    dashed(g.P,a,C.win);dashed(g.P,b,C.win);
+    ctx.strokeStyle=C.win;ctx.lineWidth=6;ctx.globalAlpha=.7;line(a,b);ctx.globalAlpha=1;
+    ctx.font="600 13px "+C.sans;ctx.fillStyle=C.win;ctx.textAlign="center";
+    ctx.textBaseline=g.side===1?"bottom":"top";ctx.fillText("Snell's window",g.P[0],g.cy+(g.side===1?-8:8));ctx.textAlign="left";
+    arcBetween(g.P,[0,g.dt],[Math.sin(M.C),g.dt*Math.cos(M.C)],Math.min(44,g.d*0.45),"C",C.win);
+  }
+  dashed(g.P,[g.P[0],g.cy],C.nor);
+  const infos=PT.rays.map(a=>rayInfo(a,g));
+  ctx.lineCap="round";
+  infos.forEach((I,i)=>{
+    if(i===PT.sel)return;
+    ctx.globalAlpha=.55;ctx.lineWidth=2;
+    ctx.strokeStyle=C.ray;line(g.P,I.hit);
+    ctx.strokeStyle=I.R.tir?C.tir:C.ray;line(I.hit,along(I.hit,I.out,L));
+    ctx.globalAlpha=1;
+  });
+  const S=infos[PT.sel];
+  if(S){
+    ctx.lineWidth=3.5;ctx.strokeStyle=C.ray;line(g.P,S.hit);
+    ctx.strokeStyle=S.R.tir?C.tir:C.ray;line(S.hit,along(S.hit,S.out,L));
+    dashed([S.hit[0],g.cy-70],[S.hit[0],g.cy+70],C.nor);
+    const r=Math.min(40,g.d*0.6),labP=g.side===1?"θ₁":"θ₂",labO=g.side===1?"θ₂":"θ₁";
+    arcBetween(S.hit,[0,-g.dt],[-S.vin[0],-S.vin[1]],r,labP,C.ray);
+    if(S.R.tir)arcBetween(S.hit,[0,-g.dt],S.out,r,labP,C.tir);
+    else arcBetween(S.hit,[0,g.dt],S.out,r,labO,C.ray);
+  }
+  ctx.fillStyle=C.fg;ctx.beginPath();ctx.arc(g.P[0],g.P[1],7,0,Math.PI*2);ctx.fill();
+  return S?S.R:solve(1,0);
+}
+
+function update(){
+  media();colors();
+  readout(mode==="single"?drawSingle():drawPoint());
+  $("crit").disabled=M.rel===1;
+  const g=geo();
+  $("pcrit").disabled=M.C==null;
+  $("pcrit").textContent=g.side===M.denser||M.C==null?"Add rays at ±C":"Add grazing rays (±89°)";
+  $("del").disabled=PT.rays.length<2;
+}
+
+function setMode(m){
+  mode=m;$("modeS").setAttribute("aria-pressed",m==="single");$("modeP").setAttribute("aria-pressed",m==="point");
+  $("singleCtl").hidden=m!=="single";$("pointCtl").hidden=m!=="point";
+  $("singleCtl").style.display=m==="single"?"grid":"none";$("pointCtl").style.display=m==="point"?"grid":"none";
+  update();
+}
+$("modeS").onclick=()=>setMode("single");$("modeP").onclick=()=>setMode("point");
+[m1,m2,ang].forEach(e=>e.addEventListener("input",update));
+$("crit").onclick=()=>{ang.value=M.denser===1?deg(M.C):90;update()};
+function addRay(a){
+  const i=PT.rays.findIndex(x=>Math.abs(x-a)<rad(0.5));
+  if(i>=0){PT.sel=i;return}
+  PT.rays.push(a);PT.sel=PT.rays.length-1;
+}
+$("add").onclick=()=>{
+  for(let k=0;k<=88;k+=5)for(const s of[1,-1]){const a=rad(k*s);if(!PT.rays.some(x=>Math.abs(x-a)<rad(2))){addRay(a);update();return}}
+};
+$("del").onclick=()=>{if(PT.rays.length>1){PT.rays.splice(PT.sel,1);PT.sel=Math.min(PT.sel,PT.rays.length-1);update()}};
+$("pcrit").onclick=()=>{
+  const g=geo(),a=g.side===M.denser?M.C:MAXA;
+  addRay(-a);addRay(a);update();
+};
+
+/* ---------- dragging ---------- */
+let drag=null;
+function ptr(e){const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]}
+function distToRay(p,o,v){const t=Math.max(0,(p[0]-o[0])*v[0]+(p[1]-o[1])*v[1]);return Math.hypot(p[0]-o[0]-v[0]*t,p[1]-o[1]-v[1]*t)}
+function signedAngleFromP(p,g){return Math.max(-MAXA,Math.min(MAXA,Math.atan2(p[0]-g.P[0],(p[1]-g.P[1])*g.dt)))}
+
+cv.addEventListener("pointerdown",e=>{
+  const p=ptr(e);cv.setPointerCapture(e.pointerId);cv.classList.add("drag");
+  if(mode==="single"){drag={kind:p[1]<H/2?"s1":"s2"};}
+  else{
+    const g=geo();
+    if(Math.hypot(p[0]-g.P[0],p[1]-g.P[1])<18) drag={kind:"P"};
+    else{
+      // nearest ray, measured to either part of it
+      let best=0,bd=1e9;
+      PT.rays.forEach((a,i)=>{const I=rayInfo(a,g);
+        const dd=Math.min(distToRay(p,g.P,I.vin)*(Math.hypot(p[0]-g.P[0],p[1]-g.P[1])<Math.hypot(I.hit[0]-g.P[0],I.hit[1]-g.P[1])+20?1:9),distToRay(p,I.hit,I.out));
+        if(dd<bd){bd=dd;best=i}});
+      PT.sel=best;const I=rayInfo(PT.rays[best],g);
+      const onPside=(p[1]-g.cy)*(g.P[1]-g.cy)>0;
+      drag=onPside&&!(I.R.tir&&distToRay(p,I.hit,I.out)<distToRay(p,g.P,I.vin))?{kind:"in"}:{kind:"out",hit:I.hit.slice(),tir:I.R.tir};
+    }
+  }
+  move(p);
+});
+function move(p){
+  if(!drag)return;
+  if(drag.kind==="s1"){ang.value=deg(Math.atan2(Math.abs(p[0]-W/2),Math.abs(p[1]-H/2)||1e-6))}
+  else if(drag.kind==="s2"){const th=Math.atan2(Math.abs(p[0]-W/2),Math.abs(p[1]-H/2)||1e-6);ang.value=deg(Math.asin(Math.min(1,M.rel*Math.sin(th))))}
+  else if(drag.kind==="P"){
+    let y=Math.max(0.06*H,Math.min(0.94*H,p[1]));if(Math.abs(y-H/2)<18)y=H/2+(PT.y*H<H/2?-18:18);
+    PT.x=Math.max(0.03,Math.min(0.97,p[0]/W));PT.y=y/H;
+  }
+  else if(drag.kind==="in"){PT.rays[PT.sel]=signedAngleFromP(p,geo())}
+  else{
+    const g=geo(),h=drag.hit,dx=p[0]-h[0],th=Math.atan2(Math.abs(dx),Math.abs(p[1]-g.cy)||1e-6);
+    let a;
+    if(drag.tir){a=Math.min(th,MAXA)}
+    else{const R=solve(3-g.side,th),pa=g.side===1?R.t1:R.t2;a=Math.min(pa==null?MAXA:pa,MAXA)}
+    PT.rays[PT.sel]=(Math.sign(dx)||Math.sign(PT.rays[PT.sel])||1)*a;
+  }
+  update();
+}
+cv.addEventListener("pointermove",e=>move(ptr(e)));
+for(const t of["pointerup","pointercancel"])cv.addEventListener(t,()=>{drag=null;cv.classList.remove("drag")});
+
+/* ---------- student guide and exam questions ---------- */
+const N='<span class="val"><sub>1</sub>n<sub>2</sub></span>',N21='<span class="val"><sub>2</sub>n<sub>1</sub></span>',T1='θ<sub>1</sub>',T2='θ<sub>2</sub>';
+const WIN={m1:0,m2:2,pt:{y:.72,rays:[0,25,-25,48.75,-48.75,65,-65],sel:3}};
+const GUIDE=[
+ {t:"Two angles, two media",
+  b:`<p>${T1} is the angle between the ray and the normal in medium 1. ${T2} is the angle between the ray and the normal in medium 2.</p><p>The rays have no arrows. Light follows the same path whichever way it travels, so all that matters is which medium each angle is in.</p>`,
+  tr:`Drag the ray in medium 1, then drag the ray in medium 2. Whichever one you move, the other follows.`,
+  set:{m1:0,m2:5,a:40}},
+ {t:"Refractive index is a ratio",
+  b:`<p class="val">${N} = sin ${T1} / sin ${T2}</p><p>Read the equation as the definition: the refractive index from medium 1 to medium 2 is the ratio of sin ${T1} to sin ${T2}.</p><p>Units: sin ${T1} has no units and sin ${T2} has no units, so ${N} has no units.</p>`,
+  tr:`Air above glass. Set ${T1} to about 20°, then 40°, then 60°. ${T2} changes each time, but ${N} stays at 1.52. It belongs to the pair of media, not to the angle.`,
+  set:{m1:0,m2:5,a:20}},
+ {t:"A straight line through the origin",
+  b:`<p>Rearrange the equation: sin ${T1} = ${N} × sin ${T2}.</p><p>So sin ${T1} is directly proportional to sin ${T2}. A graph of sin ${T1} (y-axis) against sin ${T2} (x-axis) is a straight line through the origin, and its slope is ${N}.</p><p>This is how the refractive index of glass is found in the experiment.</p>`,
+  tr:`Write down sin ${T1} and sin ${T2} from the table for four different angles. Divide one by the other each time. You get the same answer: the slope.`,
+  set:{m1:0,m2:5,a:30}},
+ {t:`What ${N} depends on`,
+  b:`<p>Refractive index also equals the ratio of the wave speeds: ${N} = v<sub>1</sub> / v<sub>2</sub>.</p><p>v<sub>2</sub> is below the line, so as v<sub>2</sub> gets smaller, ${N} gets bigger. A slower second medium means a bigger ${N} and more bending towards the normal.</p><p>Think of the thumb and forefinger model: the side of the wavefront that enters the slower medium first slows down first, so the wavefront swings round towards the normal.</p>`,
+  tr:`Keep ${T1} at 45°. Set medium 2 to water, then glass, then diamond. ${T2} drops from 32.1° to 27.7° to 17.0°.`,
+  set:{m1:0,m2:2,a:45}},
+ {t:`When ${N} is less than 1`,
+  b:`<p>Put the glass first: ${N} = 1.00 / 1.52 = 0.66. Medium 2 is faster, so the ray bends away from the normal and ${T2} is bigger than ${T1}.</p><p>Swapping the media flips the ratio: ${N21} = 1 / ${N}.</p>`,
+  tr:`Glass above air with ${T1} = 30° gives ${T2} = 49.5°. Now set air above glass with ${T1} = 49.5°: ${T2} = 30°. Same path, same angles.`,
+  set:{m1:5,m2:0,a:30}},
+ {t:"The critical angle",
+  b:`<p>The angle in the less dense medium can't go past 90°. When it is 90°, the angle in the denser medium is the critical angle, C.</p><p>Air above glass: ${T1} = 90° and ${T2} = C, so ${N} = sin 90° / sin C = 1 / sin C.</p><p class="val">sin C = 1 / ${N}</p><p>(here medium 1 is the less dense medium). ${N} is below the line, so as the refractive index gets bigger, C gets smaller.</p>`,
+  tr:`${T1} is set to 90°: C = 41.1° for glass. Change medium 2 to diamond: C = 24.4°.`,
+  set:{m1:0,m2:5,a:90}},
+ {t:"Total internal reflection",
+  b:`<p>Put the denser medium first. Once the angle in the denser medium is bigger than C, no angle in medium 2 satisfies the equation. No light refracts: it all reflects back into medium 1.</p><p>Two conditions: the light is in the denser medium, and the angle there is greater than C.</p>`,
+  tr:`Glass above air. Raise ${T1} slowly past 41.1°. Watch the ray in air flatten to 90°, then turn into a reflected ray.`,
+  set:{m1:5,m2:0,a:35}},
+ {t:"Snell's window",
+  b:`<p>This uses <b>Rays from a point</b>. The point is a small lamp under water, and each ray meets the surface at a different angle.</p><p>Only rays at less than C to the normal get out. Together they leave through a circle on the surface: Snell's window. Outside it, every ray is totally internally reflected.</p><p>Run it the other way: a fish looking up sees the whole sky squeezed into that circle.</p>`,
+  tr:`Drag the lamp deeper. The window gets wider, but C stays at 48.8°.`,
+  set:WIN}
+];
+const QS=[
+ {t:"Snell's law",
+  b:`<p><b>(a)</b> Define refractive index.</p><p><b>(b)</b> State Snell's law of refraction.</p><p><b>(c)</b> A ray of light passes from air into glass. The angle in air is 50° and the angle in glass is 30.3°. Calculate the refractive index of the glass.</p>`,
+  a:`<p><b>(a)</b> The refractive index from medium 1 to medium 2 is the ratio of sin ${T1} to sin ${T2}. (Also accepted: the ratio of the speed of light in medium 1 to the speed of light in medium 2.)</p><p><b>(b)</b> For two given media, sin ${T1} / sin ${T2} is a constant. The incident ray, refracted ray and normal are in the same plane.</p><p><b>(c)</b> ${N} = sin 50° / sin 30.3° = 0.766 / 0.505 = <b>1.52</b></p>`,
+  set:{m1:0,m2:5,a:50}},
+ {t:"Critical angle of water",
+  b:`<p>The refractive index of water is 1.33.</p><p><b>(a)</b> What is meant by the critical angle?</p><p><b>(b)</b> Calculate the critical angle for water.</p><p><b>(c)</b> A ray travelling in water meets the surface at 55° to the normal. Describe and explain what happens to the ray.</p>`,
+  a:`<p><b>(a)</b> The angle in the denser medium for which the angle in the less dense medium is 90°.</p><p><b>(b)</b> sin C = 1 / 1.33 = 0.752, so C = <b>48.8°</b></p><p><b>(c)</b> The light is in the denser medium and 55° is greater than C, so it is totally internally reflected. It reflects back into the water at 55° to the normal.</p>`,
+  set:{m1:2,m2:0,a:55}},
+ {t:"Glass into water",
+  b:`<p>Light passes from glass (n = 1.52) into water (n = 1.33).</p><p><b>(a)</b> Calculate the refractive index from glass to water.</p><p><b>(b)</b> The angle in the glass is 40°. Calculate the angle in the water.</p><p><b>(c)</b> Calculate the critical angle at the glass–water boundary.</p>`,
+  a:`<p><b>(a)</b> ${N} = v<sub>glass</sub> / v<sub>water</sub> = (c / 1.52) / (c / 1.33) = 1.33 / 1.52 = <b>0.875</b>. It is less than 1 because water is the less dense medium.</p><p><b>(b)</b> sin ${T2} = sin 40° / 0.875 = 0.643 / 0.875 = 0.735, so ${T2} = <b>47.3°</b></p><p><b>(c)</b> When ${T2} = 90°: 0.875 = sin C / sin 90°, so sin C = 0.875 and C = <b>61.0°</b></p>`,
+  set:{m1:5,m2:2,a:40}},
+ {t:"Diamond",
+  b:`<p>The refractive index of diamond is 2.42. The speed of light in air is 3.0 × 10<sup>8</sup> m s<sup>−1</sup>.</p><p><b>(a)</b> Calculate the speed of light in diamond.</p><p><b>(b)</b> Calculate the critical angle for diamond.</p><p><b>(c)</b> Use your answer to (b) to explain why a cut diamond sparkles.</p>`,
+  a:`<p><b>(a)</b> n = v<sub>air</sub> / v<sub>diamond</sub>, so v<sub>diamond</sub> = 3.0 × 10<sup>8</sup> / 2.42 = <b>1.24 × 10<sup>8</sup> m s<sup>−1</sup></b></p><p><b>(b)</b> sin C = 1 / 2.42 = 0.413, so C = <b>24.4°</b></p><p><b>(c)</b> C is small, so most light inside the diamond meets a face at more than 24.4° and is totally internally reflected, often several times, before it leaves through the top in bright flashes.</p>`,
+  set:{m1:0,m2:6,a:90}},
+ {t:"A lamp in a pond",
+  b:`<p>A small lamp is 2.0 m below the surface of a pond. The refractive index of water is 1.33.</p><p><b>(a)</b> Draw a ray diagram to show why light leaves the surface only through a circle.</p><p><b>(b)</b> Calculate the radius of this circle.</p>`,
+  a:`<p><b>(a)</b> Rays meeting the surface at less than C refract out into the air. The ray at exactly C leaves along the surface. Rays at more than C are totally internally reflected. The edge of the circle is where the ray at C meets the surface.</p><p><b>(b)</b> C = 48.8° (sin C = 1 / 1.33). tan C = r / 2.0, so r = 2.0 × tan 48.8° = 2.0 × 1.14 = <b>2.28 m</b></p>`,
+  set:WIN},
+ {t:"Optical fibres",
+  b:`<p><b>(a)</b> Describe the structure of an optical fibre and explain how light is kept inside it.</p><p><b>(b)</b> The core has a refractive index of 1.50 and the cladding 1.46. Calculate the critical angle at the core–cladding boundary.</p><p><b>(c)</b> Give one use of optical fibres.</p>`,
+  a:`<p><b>(a)</b> A thin glass core surrounded by cladding of lower refractive index. Light in the core meets the boundary at more than the critical angle, so it is totally internally reflected along the fibre.</p><p><b>(b)</b> Core to cladding: ${N} = 1.46 / 1.50 = 0.973. sin C = 0.973, so C = <b>76.7°</b></p><p><b>(c)</b> Endoscopes in medicine, or telecommunications (broadband, phone lines).</p>`},
+ {t:"Measuring the refractive index of glass",
+  b:`<p>In an experiment, a student measured the angle in air (${T1}) and the angle in glass (${T2}) for a ray entering a glass block.</p><div class="tw"><table><tr><th>${T1} / °</th><td>20</td><td>30</td><td>40</td><td>50</td><td>60</td><td>70</td></tr><tr><th>${T2} / °</th><td>13</td><td>20</td><td>25</td><td>31</td><td>35</td><td>39</td></tr></table></div><p><b>(a)</b> Draw a suitable graph and use it to find the refractive index of the glass.</p><p><b>(b)</b> Explain how your graph verifies Snell's law.</p>`,
+  a:`<div class="tw"><table><tr><th>sin ${T1}</th><td>0.342</td><td>0.500</td><td>0.643</td><td>0.766</td><td>0.866</td><td>0.940</td></tr><tr><th>sin ${T2}</th><td>0.225</td><td>0.342</td><td>0.423</td><td>0.515</td><td>0.574</td><td>0.629</td></tr></table></div><p><b>(a)</b> Plot sin ${T1} (y-axis) against sin ${T2} (x-axis). Draw the best straight line through the origin. Slope = ${N} ≈ <b>1.50</b></p><p><b>(b)</b> A straight line through the origin shows sin ${T1} ∝ sin ${T2}, so sin ${T1} / sin ${T2} is constant. That is Snell's law.</p>`}
+];
+const pop=$("pop");let pk="g",pi=0;
+function applySet(s){
+  m1.value=s.m1;m2.value=s.m2;
+  if(s.pt){PT.x=.5;PT.y=s.pt.y;PT.rays=s.pt.rays.map(rad);PT.sel=s.pt.sel||0;setMode("point")}
+  else{ang.value=s.a;setMode("single")}
+}
+function showPop(){
+  const L=pk==="g"?GUIDE:QS,c=L[pi];
+  $("popEy").textContent=`${pk==="g"?"Guide":"Question"} ${pi+1} of ${L.length}`;
+  $("popTitle").innerHTML=c.t;
+  let h=c.b;
+  if(c.tr)h+=`<div class="try"><span class="lab">Try it</span><p>${c.tr}</p></div>`;
+  if(c.a)h+=`<div><button id="ansBtn" type="button" aria-expanded="false">Show answer</button></div><div class="ans" id="ans" hidden><span class="lab">Answer</span>${c.a}</div>`;
+  const B=$("popBody");B.innerHTML=h;B.scrollTop=0;
+  if(c.a)$("ansBtn").onclick=()=>{const a=$("ans"),o=a.hidden;a.hidden=!o;$("ansBtn").textContent=o?"Hide answer":"Show answer";$("ansBtn").setAttribute("aria-expanded",o)};
+  $("popPrev").disabled=pi===0;$("popNext").disabled=pi===L.length-1;
+  $("popSet").hidden=!c.set;
+  pop.hidden=false;
+}
+function openPop(k){if(pk!==k||pop.hidden){pk=k;pi=0}showPop();if(pk==="g")applySet(GUIDE[0].set);$("popX").focus()}
+$("openG").onclick=()=>openPop("g");$("openQ").onclick=()=>openPop("q");
+$("popX").onclick=()=>{pop.hidden=true};
+$("popPrev").onclick=()=>{pi--;showPop();if(pk==="g")applySet(GUIDE[pi].set)};
+$("popNext").onclick=()=>{pi++;showPop();if(pk==="g")applySet(GUIDE[pi].set)};
+$("popSet").onclick=()=>{const c=(pk==="g"?GUIDE:QS)[pi];if(c.set)applySet(c.set)};
+addEventListener("keydown",e=>{if(e.key==="Escape"&&!pop.hidden)pop.hidden=true});
+// drag the pop-out by its header so it never has to cover the diagram
+let pd=null;const ph=$("popHead");
+ph.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;const r=pop.getBoundingClientRect();pd={dx:e.clientX-r.left,dy:e.clientY-r.top};ph.setPointerCapture(e.pointerId)});
+ph.addEventListener("pointermove",e=>{
+  if(!pd)return;const r=pop.getBoundingClientRect();
+  pop.style.left=Math.max(0,Math.min(innerWidth-r.width,e.clientX-pd.dx))+"px";
+  pop.style.top=Math.max(0,Math.min(innerHeight-40,e.clientY-pd.dy))+"px";
+  pop.style.right="auto";pop.style.bottom="auto";
+});
+for(const t of["pointerup","pointercancel"])ph.addEventListener(t,()=>{pd=null});
+
+addEventListener("resize",()=>{size();update()});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",update);
+size();setMode("single");
+</script>
+
+</body></html>

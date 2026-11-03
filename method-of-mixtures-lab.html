@@ -1,0 +1,759 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Method of Mixtures Lab</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: lab bench — insulated container left, settings + meters right, temperature–time graph and worked solution below */
+:root{
+  --bg:#edf0f3; --panel:#ffffff; --ink:#18212c; --muted:#5a6676; --line:#d3dae2;
+  --chamber:#f6f8fa; --heat:#cf4f17; --cool:#2d6cb0; --soft:#e4e9ef; --bad:#b42318; --mid:#7b4fb3;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --panel:#161d25; --ink:#e5eaf0; --muted:#95a2b1; --line:#2a3542;
+  --chamber:#121920; --heat:#f07a3e; --cool:#6aa6e8; --soft:#1e2731; --bad:#f97066; --mid:#b48ae8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --panel:#161d25; --ink:#e5eaf0; --muted:#95a2b1; --line:#2a3542;
+  --chamber:#121920; --heat:#f07a3e; --cool:#6aa6e8; --soft:#1e2731; --bad:#f97066; --mid:#b48ae8; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+.wrap{max-width:1400px;margin:0 auto;display:grid;gap:16px}
+header h1{font-family:var(--f-display);font-weight:700;font-size:2.1rem;letter-spacing:.01em;margin:0;line-height:1.1}
+header p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+.grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+h2{font-family:var(--f-display);font-weight:600;font-size:1.25rem;margin:0 0 10px;letter-spacing:.02em}
+.lbl{font-family:var(--f-display);font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;color:var(--muted)}
+#chamber,#graph{width:100%;display:block}
+.stage{aspect-ratio:440/350;max-width:100%}
+.stage canvas{width:100%!important;height:100%!important;display:block}
+.eqn math{font-size:1.12em}
+.res math{font-size:1.15em}
+#work p math{font-size:1.05em}
+.note{color:var(--muted);font-size:.85rem;margin:8px 0 0}
+.grad{display:inline-block;width:70px;height:8px;border-radius:4px;vertical-align:middle;margin:0 6px;background:linear-gradient(90deg,hsl(210 70% 55%),hsl(110 55% 48%),hsl(40 85% 52%),hsl(12 80% 52%))}
+
+.panel{display:grid;gap:14px;align-content:start}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink);font:600 1rem var(--f-display);letter-spacing:.03em;padding:6px 14px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--panel)}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+#fields{display:grid;gap:10px}
+fieldset{border:1px solid var(--line);border-radius:8px;margin:0;padding:8px 12px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;min-width:0}
+legend{font-family:var(--f-display);font-weight:600;font-size:1rem;padding:0 6px}
+.fld{display:grid;gap:3px;min-width:0}
+.fld.wide{grid-column:1/-1}
+.inp{display:flex;align-items:center;gap:6px}
+.inp input,.fld select{width:100%;min-width:0;font:500 .95rem var(--f-mono);padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--chamber);color:var(--ink)}
+.fld select{font-family:var(--f-body)}
+.inp .u{font-family:var(--f-mono);font-size:.85rem;color:var(--muted);white-space:nowrap}
+.fixed{font-family:var(--f-mono);font-size:.95rem;padding:6px 0}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:600 1rem var(--f-display);letter-spacing:.04em;padding:8px 16px;border-radius:6px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--heat);border-color:var(--heat);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+.meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.btn.small{font-size:.92rem;padding:5px 12px;justify-self:start}
+legend .btn.small{margin-left:8px;padding:1px 10px;font-size:.85rem}
+.meter{background:var(--chamber);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.meter .v{font-family:var(--f-mono);font-weight:600;font-size:1.3rem;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meter .u{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);margin-left:3px}
+@media (max-width:460px){.meter .v{font-size:1.05rem}}
+
+#work h3{font-family:var(--f-display);font-weight:600;font-size:1.1rem;margin:0 0 8px;text-wrap:balance}
+.eqn{font-family:var(--f-mono);font-size:.92rem;padding:4px 0;overflow-x:auto;white-space:nowrap}
+.res{font-family:var(--f-mono);font-weight:600;font-size:1.25rem;color:var(--heat);margin:6px 0}
+.res.wait{color:var(--muted);font-weight:500;font-size:1rem}
+#work p{margin:8px 0 0;max-width:64ch;color:var(--muted);font-size:.92rem}
+.err{color:var(--bad);font-weight:500}
+footer{color:var(--muted);font-size:.82rem;max-width:90ch}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Method of Mixtures Lab</h1>
+    <p>Bodies at different temperatures share a sealed, insulated container. Energy flows from hotter to cooler until they all reach the same temperature.</p>
+  </header>
+<style>
+/* Student guide: collapsible card above the lab, two tabs (physics notes / questions) */
+.guide{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.g-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.g-head h2{font-family:var(--f-display);font-weight:600;font-size:1.25rem;margin:0;letter-spacing:.02em}
+.gtabs{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.gtabs button{border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink);font:600 1rem var(--f-display);letter-spacing:.03em;padding:5px 14px;cursor:pointer}
+.gtabs button:last-child{border-right:0}
+.gtabs button[aria-selected=true]{background:var(--ink);color:var(--panel)}
+.g-hide{margin-left:auto;font:600 .95rem var(--f-display);letter-spacing:.04em;padding:4px 12px;border-radius:6px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.g-body{margin-top:12px}
+.guide.closed .g-body,.guide.closed .gtabs{display:none}
+.g-intro{margin:0 0 10px;color:var(--muted);max-width:80ch}
+.g-sec{border-top:1px solid var(--line)}
+.g-sec:last-child{border-bottom:1px solid var(--line)}
+.g-sec>summary{cursor:pointer;list-style:none;padding:9px 0;font:600 1.08rem var(--f-display);letter-spacing:.02em;display:flex;gap:8px;align-items:baseline}
+.g-sec>summary::-webkit-details-marker{display:none}
+.g-sec>summary::before{content:"+";font-family:var(--f-mono);color:var(--heat);width:1ch}
+.g-sec[open]>summary::before{content:"−"}
+.g-sec .in{padding:0 0 12px 1.6ch;max-width:80ch}
+.g-sec p,.q p{margin:0 0 8px}
+.g-sec ul{margin:0 0 8px;padding-left:20px}
+.g-sec li{margin:2px 0}
+.fx{font-family:var(--f-mono);font-weight:600;font-size:1.02rem;background:var(--chamber);border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:6px 0 8px;display:inline-block}
+.try{border-left:3px solid var(--heat);padding:4px 0 4px 10px;margin:8px 0;color:var(--ink)}
+.try b{font-family:var(--f-display);letter-spacing:.04em;text-transform:uppercase;font-size:.85rem;color:var(--heat);margin-right:4px}
+.qs{margin:0;padding:0;list-style:none;counter-reset:q;display:grid;gap:12px}
+.q{counter-increment:q;border:1px solid var(--line);border-radius:8px;padding:10px 12px 10px 44px;position:relative;max-width:90ch}
+.q::before{content:counter(q);position:absolute;left:12px;top:9px;font:700 1.1rem var(--f-display);color:var(--panel);background:var(--ink);border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-size:.9rem}
+.q .set{font-size:.88rem;color:var(--muted)}
+.chk{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:6px 0}
+.chk input{width:150px;font:500 .95rem var(--f-mono);padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--chamber);color:var(--ink)}
+.chk .u{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+.chk button{font:600 .95rem var(--f-display);letter-spacing:.04em;padding:4px 12px;border-radius:6px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.fb{font-weight:600;font-size:.92rem}
+.fb.ok{color:var(--cool)}.fb.no{color:var(--heat)}
+.ans>summary{cursor:pointer;font:600 .95rem var(--f-display);letter-spacing:.04em;color:var(--muted);padding:2px 0}
+.ans .in{border-left:3px solid var(--line);padding:4px 0 2px 10px;margin-top:4px}
+.ans .in p{margin:0 0 6px}
+.guide button:focus-visible,.guide input:focus-visible,.guide summary:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+</style>
+<section class="guide" id="guide" aria-label="Student guide">
+  <div class="g-head">
+    <h2>Student guide</h2>
+    <div class="gtabs" role="tablist">
+      <button type="button" role="tab" aria-selected="true" data-g="learn">The physics</button><button type="button" role="tab" aria-selected="false" data-g="qs">Questions</button>
+    </div>
+    <button type="button" class="g-hide" id="gHide">Hide guide</button>
+  </div>
+  <div class="g-body">
+    <div data-pane="learn"><p class="g-intro">Open a section to read it. Each one ends with something to try in the lab.</p>
+<details class="g-sec"><summary>1. Heat flows until the temperatures are equal</summary><div class="in">
+<p>When bodies at different temperatures touch, energy flows from the hotter body to the cooler one. This energy in transit is heat. The flow stops when every body is at the same temperature. That shared temperature is the final temperature, θ<sub>f</sub>.</p>
+<p>The container is insulated, so no energy escapes. Energy is conserved, which gives the key idea of every method-of-mixtures problem:</p>
+<div class="fx">energy lost by the hotter bodies = energy gained by the cooler bodies</div>
+<p class="try"><b>Try</b>Press Mix and watch the glowing dots. They always cross from the hotter body to the cooler one, and they stop when the temperatures match.</p>
+</div></details>
+<details class="g-sec"><summary>2. Q = mcΔθ: what the temperature change depends on</summary><div class="in">
+<p>The energy needed to change the temperature of a body is</p>
+<div class="fx">Q = mcΔθ</div>
+<p>Rearranged for the temperature change: <b>Δθ = Q / (mc)</b>.</p>
+<ul>
+<li>As Q gets bigger, Δθ gets bigger (Q is above the line). Δθ ∝ Q.</li>
+<li>As m gets bigger, Δθ gets smaller (m is under the line). Δθ ∝ 1/m.</li>
+<li>As c gets bigger, Δθ gets smaller (c is under the line). Δθ ∝ 1/c.</li>
+</ul>
+<p><b>Definition from the equation:</b> c = Q / (mΔθ). Specific heat capacity is the energy needed per kilogram per kelvin of temperature change.</p>
+<p><b>Units from the equation:</b> J ÷ (kg × K) = J kg⁻¹ K⁻¹.</p>
+<p class="try"><b>Try</b>Mix 0.5 kg of aluminium at 90 °C with 0.4 kg of water at 20 °C. The same energy leaves the aluminium as enters the water, yet the aluminium's temperature falls much further. Look at the mc values in the worked solution to see why.</p>
+</div></details>
+<details class="g-sec"><summary>3. Heat capacity, mc, decides who wins</summary><div class="in">
+<p>The product mc is the heat capacity of the whole body. From mc = Q / Δθ, it is the energy needed per kelvin of temperature change. Units: J ÷ K = J K⁻¹.</p>
+<p>Every body exchanges the same amount of energy with the others, so the body with the bigger mc changes temperature by less. The final temperature ends up closer to the starting temperature of the body with the bigger mc.</p>
+<p>For any number of bodies, setting the total energy gained to zero gives</p>
+<div class="fx">θ<sub>f</sub> = (m₁c₁θ₁ + m₂c₂θ₂ + …) / (m₁c₁ + m₂c₂ + …)</div>
+<p>This is an average of the starting temperatures, weighted by each body's mc.</p>
+<p class="try"><b>Try</b>Double the mass of the water and mix again. θ<sub>f</sub> moves closer to the water's starting temperature.</p>
+</div></details>
+<details class="g-sec"><summary>4. Changes of state: Q = ml</summary><div class="in">
+<p>Melting ice or condensing steam involves energy but no change in temperature. The energy changes the arrangement of the particles, not how fast they move.</p>
+<div class="fx">Q = ml</div>
+<ul>
+<li>As m gets bigger, Q gets bigger. Q ∝ m.</li>
+<li><b>Definition from the equation:</b> l = Q / m. Specific latent heat is the energy needed per kilogram to change state, with no change in temperature.</li>
+<li><b>Units from the equation:</b> J ÷ kg = J kg⁻¹.</li>
+</ul>
+<p>Ice at 0 °C must first melt (Q = ml<sub>f</sub>) and then warm as water (Q = mc<sub>w</sub>Δθ). Steam at 100 °C first condenses (Q = ml<sub>v</sub>) and then cools as water.</p>
+<p class="try"><b>Try</b>In Find final temperature, set Body 2 (water) to −10 °C. It becomes ice. Mix it with the hot aluminium and watch the temperature of the ice stay at 0 °C while it melts.</p>
+</div></details>
+<details class="g-sec"><summary>5. The copper calorimeter</summary><div class="in">
+<p>In the real experiment the water sits in a copper calorimeter. The calorimeter starts at the water's temperature and finishes at θ<sub>f</sub>, so it gains (or loses) energy too:</p>
+<div class="fx">Q<sub>cal</sub> = m<sub>cal</sub>c<sub>Cu</sub>Δθ</div>
+<p>Its mc is added to the water's mc. If you leave it out, energy is missing from your balance, so the c or l you calculate comes out too small.</p>
+<p>Good practice in the real experiment: lag (insulate) the calorimeter and use a lid, stir the mixture, transfer the hot body quickly, and dry ice or steam before adding it.</p>
+<p class="try"><b>Try</b>In Find c, note the answer, then press + Add copper calorimeter. The answer increases.</p>
+</div></details>
+<details class="g-sec"><summary>6. Reading the temperature–time graph</summary><div class="in">
+<p>Each line shows one body. The lines move towards each other and meet at θ<sub>f</sub>, shown as the dashed line.</p>
+<ul>
+<li>The line that moves less belongs to the body with the bigger mc.</li>
+<li>The lines are steepest at the start, when the temperature difference is biggest, because heat flows fastest then. They level off as the difference shrinks.</li>
+<li>A body that is changing state stays flat at 0 °C or 100 °C while the change happens.</li>
+</ul>
+</div></details>
+</div>
+    <div data-pane="qs" hidden><p class="g-intro">Use the lab to answer each question. Type numbers like 3.34 × 10⁵ as 3.34e5. Try the question before you open the answer.</p><ol class="qs"><li class="q">
+<p class="set">Find final temperature · Body 1: aluminium, 0.5 kg, 90 °C · Body 2: water, 0.4 kg, 20 °C</p>
+<p>Before you press Mix, calculate the final temperature. Then press Mix to check.</p>
+<div class="chk" data-a="34.84" data-tol="0.01"><input aria-label="Final temperature"><span class="u">°C</span><button type="button">Check</button><span class="fb" aria-live="polite"></span></div>
+<details class="ans"><summary>Show answer</summary><div class="in">
+<p>Energy lost by the aluminium = energy gained by the water:</p>
+<p>(0.5)(900)(90 − θ) = (0.4)(4180)(θ − 20)</p>
+<p>40 500 − 450θ = 1672θ − 33 440, so 2122θ = 73 940 and <b>θ = 34.8 °C</b>.</p>
+</div></details>
+</li>
+<li class="q">
+<p class="set">Same mixture as question 1</p>
+<p>How much energy does the water gain? Compare it with the energy the aluminium loses, shown under the worked solution.</p>
+<div class="chk" data-a="24.82" data-tol="0.02"><input aria-label="Energy gained by water"><span class="u">kJ</span><button type="button">Check</button><span class="fb" aria-live="polite"></span></div>
+<details class="ans"><summary>Show answer</summary><div class="in">
+<p>Q = mcΔθ = (0.4)(4180)(34.8 − 20) = <b>24.8 kJ</b>.</p>
+<p>The aluminium loses (0.5)(900)(90 − 34.8) = 24.8 kJ. They are equal because the container is insulated and energy is conserved.</p>
+</div></details>
+</li>
+<li class="q">
+<p class="set">Same mixture as question 1</p>
+<p>The aluminium's temperature changes by more than the water's. How many times bigger is the aluminium's temperature change? Explain using Δθ = Q / (mc).</p>
+<div class="chk" data-a="3.716" data-tol="0.03"><input aria-label="Ratio of temperature changes"><span class="u">times</span><button type="button">Check</button><span class="fb" aria-live="polite"></span></div>
+<details class="ans"><summary>Show answer</summary><div class="in">
+<p>Aluminium: Δθ = 90 − 34.8 = 55.2 K. Water: Δθ = 34.8 − 20 = 14.8 K. Ratio = 55.2 ÷ 14.8 = <b>3.7</b>.</p>
+<p>Both exchange the same Q. In Δθ = Q / (mc), mc is under the line, so the body with the bigger mc changes temperature by less. The water's mc is 1672 J K⁻¹ and the aluminium's is 450 J K⁻¹. 1672 ÷ 450 = 3.7, the same ratio.</p>
+</div></details>
+</li>
+<li class="q">
+<p class="set">Find c · default values: metal 0.2 kg at 100 °C, water 0.1 kg at 15 °C, θ<sub>f</sub> = 28.4 °C</p>
+<p>(a) With no calorimeter, calculate c for the metal.</p>
+<div class="chk" data-a="391.1" data-tol="0.02"><input aria-label="c without calorimeter"><span class="u">J kg⁻¹ K⁻¹</span><button type="button">Check</button><span class="fb" aria-live="polite"></span></div>
+<p>(b) Press + Add copper calorimeter (0.05 kg). Calculate c again, using the same θ<sub>f</sub>.</p>
+<div class="chk" data-a="409.4" data-tol="0.02"><input aria-label="c with calorimeter"><span class="u">J kg⁻¹ K⁻¹</span><button type="button">Check</button><span class="fb" aria-live="polite"></span></div>
+<p>(c) Explain why ignoring the calorimeter gives a value of c that is too small.</p>
+<details class="ans"><summary>Show answer</summary><div class="in">
+<p>(a) (0.2)c(100 − 28.4) = (0.1)(4180)(28.4 − 15), so c = 5601.2 ÷ 14.32 = <b>391 J kg⁻¹ K⁻¹</b>.</p>
+<p>(b) (0.2)c(71.6) = [(0.1)(4180) + (0.05)(390)](13.4) = 5862.5, so c = <b>409 J kg⁻¹ K⁻¹</b>.</p>
+<p>(c) The calorimeter also gains energy from the metal. Leaving it out undercounts the energy the metal lost. Since c = Q / (mΔθ) and Q is above the line, a smaller Q gives a smaller c.</p>
+</div></details>
+</li>
+<li class="q">
+<p class="set">Find l → Fusion (ice) · default values: water 0.2 kg at 30 °C, ice 0.03 kg at 0 °C, θ<sub>f</sub> = 15.7 °C</p>
+<p>Calculate the specific latent heat of fusion of ice. Press Mix and compare with the worked solution.</p>
+<div class="chk" data-a="3.329e5" data-tol="0.02"><input aria-label="Specific latent heat of fusion"><span class="u">J kg⁻¹</span><button type="button">Check</button><span class="fb" aria-live="polite"></span></div>
+<details class="ans"><summary>Show answer</summary><div class="in">
+<p>Energy lost by the warm water = energy to melt the ice + energy to warm the melted ice from 0 °C to θ<sub>f</sub>:</p>
+<p>(0.2)(4180)(30 − 15.7) = (0.03)l + (0.03)(4180)(15.7)</p>
+<p>11 954.8 = 0.03l + 1968.8, so <b>l = 3.33 × 10⁵ J kg⁻¹</b>.</p>
+<p>Students often forget the second term. The melted ice is water at 0 °C, and it still has to warm up to θ<sub>f</sub>.</p>
+</div></details>
+</li>
+<li class="q">
+<p class="set">Find final temperature · Body 1: water, 0.2 kg, 30 °C · Body 2: water, 0.05 kg, −10 °C (ice)</p>
+<p>(a) Will all the ice melt? Compare the energy the ice needs to reach 0 °C and melt with the energy the warm water can give out in cooling to 0 °C. Use c<sub>ice</sub> = 2100 J kg⁻¹ K⁻¹.</p>
+<p>(b) Calculate the final temperature, then press Mix to check.</p>
+<div class="chk" data-a="7.0" data-tol="0.05"><input aria-label="Final temperature with ice"><span class="u">°C</span><button type="button">Check</button><span class="fb" aria-live="polite"></span></div>
+<details class="ans"><summary>Show answer</summary><div class="in">
+<p>(a) Ice needs (0.05)(2100)(10) + (0.05)(3.34 × 10⁵) = 1050 + 16 700 = 17 750 J. The water can give (0.2)(4180)(30) = 25 080 J in cooling to 0 °C. 25 080 J is more than 17 750 J, so <b>all the ice melts</b>.</p>
+<p>(b) Energy lost by the warm water = energy gained by the ice:</p>
+<p>(0.2)(4180)(30 − θ) = 17 750 + (0.05)(4180)(θ − 0)</p>
+<p>25 080 − 836θ = 17 750 + 209θ, so 1045θ = 7330 and <b>θ = 7.0 °C</b>.</p>
+</div></details>
+</li>
+<li class="q">
+<p class="set">Find l → Vaporisation (steam) · default values</p>
+<p>Press Mix. Only 0.01 kg of steam warms 0.3 kg of water by about 20 °C. Calculate the energy given out by 0.01 kg of steam at 100 °C as it condenses and cools to body temperature, 37 °C. Use l<sub>v</sub> = 2.26 × 10⁶ J kg⁻¹. Then explain why a scald from steam is worse than one from boiling water.</p>
+<div class="chk" data-a="25.23" data-tol="0.02"><input aria-label="Energy from steam"><span class="u">kJ</span><button type="button">Check</button><span class="fb" aria-live="polite"></span></div>
+<details class="ans"><summary>Show answer</summary><div class="in">
+<p>Condensing: (0.01)(2.26 × 10⁶) = 22 600 J. Cooling: (0.01)(4180)(100 − 37) = 2633 J. Total = <b>25.2 kJ</b>.</p>
+<p>The same mass of boiling water gives out only the 2633 J from cooling. Steam gives out about ten times as much energy onto the skin, because it releases its latent heat as it condenses.</p>
+</div></details>
+</li>
+</ol></div>
+  </div>
+</section>
+<script>
+(()=>{
+  const g=document.getElementById("guide");
+  g.querySelector(".gtabs").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+    for(const x of g.querySelectorAll(".gtabs button"))x.setAttribute("aria-selected",x===b);
+    for(const p of g.querySelectorAll("[data-pane]"))p.hidden=p.dataset.pane!==b.dataset.g});
+  const hb=document.getElementById("gHide");
+  hb.onclick=()=>{const c=g.classList.toggle("closed");hb.textContent=c?"Show guide":"Hide guide"};
+  const parse=s=>parseFloat(String(s).replace(/\s/g,"").replace(/,/g,"").replace(/[x×*]10\^?/i,"e").replace(/[⁻]/g,"-"));
+  g.addEventListener("click",e=>{const b=e.target.closest(".chk button");if(!b)return;
+    const c=b.parentElement,x=parse(c.querySelector("input").value),a=+c.dataset.a,tol=+(c.dataset.tol||0.05),fb=c.querySelector(".fb");
+    if(!Number.isFinite(x)){fb.className="fb no";fb.textContent="Enter a number.";return}
+    const ok=Math.abs(x-a)<=Math.abs(a)*tol;fb.className="fb "+(ok?"ok":"no");
+    fb.textContent=ok?"Correct.":(x>a?"Too high. Check your working.":"Too low. Check your working.")});
+  g.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.closest(".chk input"))e.target.parentElement.querySelector("button").click()});
+})();
+</script>
+
+
+  <div class="grid">
+    <section class="card" aria-label="Particle view">
+      <div id="chamber" class="stage" role="img" aria-label="Animated particles of each body in the insulated container"></div>
+      <p class="note">Particle colour shows temperature: cool<span class="grad"></span>hot. Glowing dots show energy crossing from a hotter body to a cooler one. Liquid expansion is exaggerated so you can see it.</p>
+    </section>
+
+    <section class="card panel">
+      <div class="seg" id="modes" role="group" aria-label="What to find">
+        <button type="button" data-m="final" aria-pressed="true">Find final temperature</button><button type="button" data-m="c" aria-pressed="false">Find c</button><button type="button" data-m="l" aria-pressed="false">Find l</button>
+      </div>
+      <p class="hint" id="hint"></p>
+      <div id="fields"></div>
+      <div class="btns">
+        <button class="btn primary" id="go" type="button">Mix</button>
+        <button class="btn" id="skip" type="button">Skip to end</button>
+        <button class="btn" id="reset" type="button">Reset</button>
+      </div>
+      <div class="meters" id="meters"></div>
+    </section>
+
+    <section class="card">
+      <h2>Temperature against time</h2>
+      <canvas id="graph"></canvas>
+    </section>
+
+    <section class="card" id="work" aria-live="polite"></section>
+  </div>
+
+  <footer>Typical data values. The container is perfectly insulated, so all energy lost by one body is gained by the others. Its own heat capacity is ignored unless you add a copper calorimeter (c<sub>Cu</sub> = 390 J kg⁻¹ K⁻¹). c<sub>water</sub> = 4180 J kg⁻¹ K⁻¹. Water below 0 °C is ice: c<sub>ice</sub> = 2100 J kg⁻¹ K⁻¹, l<sub>f</sub> = 3.34 × 10⁵ J kg⁻¹. The animation time is slowed down and is not real time.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script>
+const MAT={
+  water:{n:"Water",sym:"H₂O",c:4180,liq:1,lo:-50,hi:99,fp:-Infinity,bp:100,ice:1},
+  ethanol:{n:"Ethanol",sym:"EtOH",c:2440,liq:1,lo:-100,hi:70,fp:-114,bp:78},
+  copper:{n:"Copper",sym:"Cu",c:390},aluminium:{n:"Aluminium",sym:"Al",c:900},iron:{n:"Iron",sym:"Fe",c:450},
+  lead:{n:"Lead",sym:"Pb",c:130},brass:{n:"Brass",sym:"CuZn",c:380},glass:{n:"Glass",sym:"SiO₂",c:670}
+};
+for(const k in MAT)if(!MAT[k].liq){MAT[k].lo=-50;MAT[k].hi=300}
+const CCU=390,CW=4180,CI=2100,LF=3.34e5,LV=2.26e6,TAU=6;
+const V={
+  final:{matA:"aluminium",mA:0.5,tA:90,matB:"water",mB:0.4,tB:20,three:false,matC:"copper",mC:0.1,tC:20},
+  c:{mM:0.2,tM:100,mW:0.1,tW:15,tF:28.4,cal:false,mCal:0.05},
+  fus:{mW:0.2,tW:30,mI:0.03,tF:15.7,cal:false,mCal:0.05},
+  vap:{mS:0.01,mW:0.3,tW:15,tF:35.2,cal:false,mCal:0.05}
+};
+let mode="final",lsub="fus";
+const key=()=>mode==="l"?lsub:mode;
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const n=x=>String(+(+x).toPrecision(6));
+const SUP={"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
+const sci=x=>{const e=Math.floor(Math.log10(Math.abs(x)));return `${(x/10**e).toFixed(2)} × 10${String(e).split("").map(c=>SUP[c]).join("")}`};
+const sub=i=>`<sub>${i}</sub>`;
+
+/* ---------- controls ---------- */
+const HINT={
+  final:"Choose two or three substances and their starting temperatures, then press Mix. Water below 0 °C is ice. In the container the hottest body sits on the left and the coldest on the right.",
+  c:"A metal block is placed in water. Enter the measured final temperature to find c for the metal. You can add a copper calorimeter, which holds the water and starts at the same temperature.",
+  fus:"Ice at 0 °C is added to warm water. Enter the measured final temperature to find the specific latent heat of fusion. You can add a copper calorimeter, which holds the water and starts at the same temperature.",
+  vap:"Steam at 100 °C is passed into cold water. Enter the measured final temperature to find the specific latent heat of vaporisation. You can add a copper calorimeter, which holds the water and starts at the same temperature."
+};
+const num=(k,label,unit,step,lo,hi)=>`<label class="fld"><span class="lbl">${label}</span><span class="inp"><input type="number" id="f-${key()}-${k}" data-k="${k}" step="${step}"${lo!=null?` min="${lo}"`:""}${hi!=null?` max="${hi}"`:""} value="${V[key()][k]}"><span class="u">${unit}</span></span></label>`;
+const fixed=(label,txt)=>`<div class="fld"><span class="lbl">${label}</span><span class="fixed">${txt}</span></div>`;
+const matSel=k=>`<label class="fld wide"><span class="lbl">Material</span><select id="f-final-${k}" data-k="${k}">${Object.entries(MAT).map(([id,m])=>`<option value="${id}"${V.final[k]===id?" selected":""}>${m.ice?"Water / ice (c = 4180 / 2100)":`${m.n} (c = ${m.c})`}</option>`).join("")}</select></label>`;
+const fs=(legend,inner)=>`<fieldset><legend>${legend}</legend>${inner}</fieldset>`;
+const mass=k=>num(k,"Mass, m","kg",0.001,0.001,5);
+const calFs=()=>V[key()].cal?fs(`Body 3: copper calorimeter<button type="button" class="btn small" id="rmCal">Remove</button>`,mass("mCal")+fixed("Start temp, θ","same as the water")+fixed("c","390 J kg⁻¹ K⁻¹"))
+  :`<button type="button" class="btn small" id="addCal">+ Add copper calorimeter</button>`;
+const TKEY={matA:"tA",matB:"tB",matC:"tC"};
+function renderFields(){
+  let h="";const v=V[key()];
+  if(mode==="final"){
+    const body=(K,i)=>{const m=MAT[v["mat"+K]];return matSel("mat"+K)+mass("m"+K)+num("t"+K,"Start temp, θ","°C",0.1,m.lo,m.hi)};
+    h=fs("Body 1",body("A"))+fs("Body 2",body("B"));
+    h+=v.three?fs(`Body 3<button type="button" class="btn small" id="rm3">Remove</button>`,body("C"))
+              :`<button type="button" class="btn small" id="add3">+ Add a third substance</button>`;
+  }else if(mode==="c"){
+    h=fs("Body 1: metal block, c unknown",mass("mM")+num("tM","Start temp, θ","°C",0.1,-50,300))
+     +fs("Body 2: water",mass("mW")+num("tW","Start temp, θ","°C",0.1,1,99))
+     +calFs()+fs("Measured",num("tF","Final temp, θ_f","°C",0.1));
+  }else{
+    h=`<div class="seg" id="lsub" role="group" aria-label="Which latent heat"><button type="button" data-s="fus" aria-pressed="${lsub==="fus"}">Fusion (ice)</button><button type="button" data-s="vap" aria-pressed="${lsub==="vap"}">Vaporisation (steam)</button></div>`;
+    if(lsub==="fus")h+=fs("Body 1: warm water",mass("mW")+num("tW","Start temp, θ","°C",0.1,1,99))
+                      +fs("Body 2: ice",mass("mI")+fixed("Start temp, θ","0 °C"))
+                      +calFs()+fs("Measured",num("tF","Final temp, θ_f","°C",0.1));
+    else h+=fs("Body 1: steam",mass("mS")+fixed("Start temp, θ","100 °C"))
+           +fs("Body 2: cold water",mass("mW")+num("tW","Start temp, θ","°C",0.1,1,99))
+           +calFs()+fs("Measured",num("tF","Final temp, θ_f","°C",0.1));
+  }
+  $("fields").innerHTML=h;$("hint").textContent=HINT[key()];
+}
+$("fields").addEventListener("change",e=>{
+  const k=e.target.dataset.k;if(!k)return;
+  if(e.target.tagName==="SELECT"){V.final[k]=e.target.value;const t=TKEY[k],m=MAT[e.target.value];V.final[t]=clamp(V.final[t],m.lo,m.hi);renderFields()}
+  else{const x=parseFloat(e.target.value);if(Number.isFinite(x))V[key()][k]=x;else e.target.value=V[key()][k]}
+  setup();
+});
+$("fields").addEventListener("click",e=>{
+  if(e.target.id==="addCal"||e.target.id==="rmCal"){V[key()].cal=e.target.id==="addCal";renderFields();setup();return}
+  if(e.target.id==="add3"||e.target.id==="rm3"){V.final.three=e.target.id==="add3";renderFields();setup();return}
+  const b=e.target.closest("#lsub button");if(!b)return;lsub=b.dataset.s;renderFields();setup()});
+$("modes").onclick=e=>{const b=e.target.closest("button");if(!b)return;mode=b.dataset.m;
+  for(const x of $("modes").children)x.setAttribute("aria-pressed",x===b);renderFields();setup()};
+
+/* ---------- model ---------- */
+function build(){
+  const v=V[key()];let list,tf,err="",res=null;
+  const kc=v.cal?v.mCal*CCU:0,calB=()=>({idx:3,name:"Calorimeter",sym:"Cu",kind:"s",ph:"s",m:v.mCal,c:CCU,T0:v.tW});
+  const posM=ms=>{if(!ms.every(m=>m>0))err="Masses must be greater than zero."};
+  if(mode==="final"){
+    list=(v.three?["A","B","C"]:["A","B"]).map((K,i)=>{const mt=MAT[v["mat"+K]],T0=v["t"+K];
+      if(mt.ice)return {idx:i+1,name:T0<0?"Ice":"Water",sym:mt.sym,kind:"w",ph:T0<0?"s":"l",m:v["m"+K],c:T0<0?CI:CW,T0,mt};
+      return {idx:i+1,name:mt.n,sym:mt.sym,kind:"s",ph:mt.liq?"l":"s",m:v["m"+K],c:mt.c,T0,mt}});
+    posM(list.map(b=>b.m));
+    tf=solveFinal(list);
+    for(const b of list){const mt=b.mt,nm=`body ${b.idx} (${mt.n.toLowerCase()})`;
+      if(!err&&(b.T0<mt.lo||b.T0>mt.hi))err=`The start temperature of ${nm} must be between ${mt.lo} °C and ${mt.hi} °C.`;
+      if(!err&&mt.liq&&tf>=mt.bp)err=`${nm[0].toUpperCase()+nm.slice(1)} would reach ${tf.toFixed(1)} °C and boil. This mode does not include changes of state. Lower the hottest temperature or use more ${mt.n.toLowerCase()}.`;
+      if(!err&&mt.liq&&tf<=mt.fp)err=`${nm[0].toUpperCase()+nm.slice(1)} would reach ${tf.toFixed(1)} °C and freeze. This mode does not include changes of state.`;
+    }
+  }else if(mode==="c"){
+    posM(v.cal?[v.mM,v.mW,v.mCal]:[v.mM,v.mW]);
+    const c=(v.mW*CW+kc)*(v.tF-v.tW)/(v.mM*(v.tM-v.tF));
+    if(!err&&(v.tW<1||v.tW>99))err="The water start temperature must be between 1 °C and 99 °C.";
+    if(!err&&!((v.tF-v.tW)*(v.tM-v.tF)>0))err="θ_f must lie between the two starting temperatures.";
+    list=[{idx:1,name:"Metal block",sym:"M",kind:"s",ph:"s",m:v.mM,c:err?400:c,T0:v.tM},{idx:2,name:"Water",kind:"s",ph:"l",m:v.mW,c:CW,T0:v.tW}];
+    if(v.cal)list.push(calB());
+    tf=v.tF;res=c;
+  }else if(lsub==="fus"){
+    posM(v.cal?[v.mW,v.mI,v.mCal]:[v.mW,v.mI]);
+    const l=((v.mW*CW+kc)*(v.tW-v.tF)-v.mI*CW*v.tF)/v.mI;
+    if(!err&&!(v.tF>0&&v.tF<v.tW))err="θ_f must be above 0 °C and below the warm water's start temperature.";
+    if(!err&&l<=0)err="With these values the warm water cannot supply enough energy to melt the ice and reach θ_f, so l would be negative. Check the masses and θ_f.";
+    list=[{idx:1,name:"Water",kind:"s",ph:"l",m:v.mW,c:CW,T0:v.tW},{idx:2,name:"Ice",kind:"ice",ph:"s",m:v.mI,c:CW,l:err?LF:l,T0:0}];
+    if(v.cal)list.unshift(calB());
+    tf=v.tF;res=l;
+  }else{
+    posM(v.cal?[v.mW,v.mS,v.mCal]:[v.mW,v.mS]);
+    const l=((v.mW*CW+kc)*(v.tF-v.tW)-v.mS*CW*(100-v.tF))/v.mS;
+    if(!err&&!(v.tF>v.tW&&v.tF<100))err="θ_f must be above the cold water's start temperature and below 100 °C.";
+    if(!err&&l<=0)err="With these values l would be negative. Check the masses and θ_f.";
+    list=[{idx:1,name:"Steam",kind:"steam",ph:"g",m:v.mS,c:CW,l:err?LV:l,T0:100},{idx:2,name:"Water",kind:"s",ph:"l",m:v.mW,c:CW,T0:v.tW}];
+    if(v.cal)list.push(calB());
+    tf=v.tF;res=l;
+  }
+  for(const b of list){b.e=0;b.sym=b.sym||"H₂O"}
+  return {list,tf,err,res};
+}
+/* water/ice bodies use enthalpy per kg, h: ice below 0, h = 0…LF while melting at 0 °C, liquid above */
+function solveFinal(L){
+  const W=L.filter(b=>b.kind==="w"),O=L.filter(b=>b.kind!=="w");
+  for(const b of W)b.h0=b.T0<0?CI*b.T0:LF+CW*b.T0;
+  const So=O.reduce((s,b)=>s+b.m*b.c,0),SoT=O.reduce((s,b)=>s+b.m*b.c*b.T0,0);
+  if(!W.length)return SoT/So;
+  const mW=W.reduce((s,b)=>s+b.m,0),Hw=W.reduce((s,b)=>s+b.m*b.h0,0);
+  const Gm=-Hw-SoT,Gp=Gm+mW*LF;let tf;
+  if(Gp<0)tf=(Hw-mW*LF+SoT)/(mW*CW+So);
+  else if(Gm>0)tf=(Hw+SoT)/(mW*CI+So);
+  else{tf=0;for(const b of W)b.hF=-Gm/mW}
+  if(tf!==0)for(const b of W)b.hF=tf>0?LF+CW*tf:CI*tf;
+  return tf;
+}
+const hOf=b=>b.h0+b.e/b.m;
+const lfr=b=>b.kind==="w"?clamp(hOf(b)/LF,0,1):b.kind==="ice"?frac(b):b.ph==="l"?1:0;
+const Tb=b=>{
+  if(b.kind==="w"){const h=hOf(b);return h<0?h/CI:h<=LF?0:(h-LF)/CW}
+  if(b.kind==="ice")return b.e<b.m*b.l?0:(b.e-b.m*b.l)/(b.m*b.c);
+  if(b.kind==="steam"){const L=-b.e;return L<b.m*b.l?100:100-(L-b.m*b.l)/(b.m*b.c)}
+  return b.T0+b.e/(b.m*b.c);
+};
+const frac=b=>b.kind==="ice"?clamp(b.e/(b.m*b.l),0,1):b.kind==="steam"?clamp(-b.e/(b.m*b.l),0,1):0;
+const Eat=(b,T)=>b.kind==="w"?b.m*(b.hF-b.h0):b.kind==="ice"?b.m*b.l+b.m*b.c*T:b.kind==="steam"?-(b.m*b.l+b.m*b.c*(100-T)):b.m*b.c*(T-b.T0);
+
+/* container geometry */
+const CWD=440,CHT=350,R=9,WL=26,WR=414,WT=82,FLOOR=330;
+let S,status="ready",t=0,series=[],lastRec=0,Tlo,Thi,dT0,links=[],packets=[],tt=0;
+function setup(){
+  S=build();
+  S.bodies=[...S.list].sort((a,b)=>b.T0-a.T0);           // hottest on the left
+  const nb=S.bodies.length,w=(WR-WL)/nb;
+  S.bodies.forEach((b,i)=>{b.xl=WL+i*w;b.xr=WL+(i+1)*w;b.cx=(b.xl+b.xr)/2;
+    b.col=i===0?"--heat":i===nb-1?"--cool":"--mid";
+    initParts(b,i===0?"r":i===nb-1?"l":"c",nb)});
+  links=[];for(let i=0;i<nb-1;i++){const a=S.bodies[i],c=S.bodies[i+1];const Ca=a.m*a.c,Cc=c.m*c.c,hk=1/(1/Ca+1/Cc);links.push({a,c,x:a.xr,k:(1/TAU)*(nb===2?hk:Math.min(Math.max(Ca,Cc)/2,hk*20))})}
+  t=0;series=[[0,...S.list.map(b=>b.T0)]];lastRec=0;status="ready";packets=[];
+  Tlo=Math.min(...S.list.map(b=>b.T0));Thi=Math.max(...S.list.map(b=>b.T0));dT0=Math.max(Thi-Tlo,1e-6);if(Thi-Tlo<6){Tlo-=3;Thi+=3}
+  $("meters").innerHTML=[...S.list].sort((a,b)=>a.idx-b.idx).map(b=>`<div class="meter"><div class="lbl">${b.idx} · ${b.name} θ</div><div class="v"><span id="tv${b.idx}">0.0</span><span class="u">°C</span></div></div>`).join("")
+    +`<div class="meter"><div class="lbl">Energy transferred, Q</div><div class="v"><span id="qv">0.00</span><span class="u">kJ</span></div></div>`;
+  setButtons();renderWork();drawGraph();buildStatic();
+}
+const spread=()=>{const T=S.bodies.map(Tb);return Math.max(...T)-Math.min(...T)};
+function finish(){for(const b of S.list)b.e=Eat(b,S.tf);series.push([t,...S.list.map(()=>S.tf)]);status="done";setButtons();renderWork()}
+function stepHeat(dt){
+  if(spread()<0.05){finish();return}
+  const dq=links.map(L=>L.k*(Tb(L.a)-Tb(L.c))*dt);
+  links.forEach((L,i)=>{L.a.e-=dq[i];L.c.e+=dq[i]});t+=dt;
+  if(t-lastRec>=0.1){series.push([t,...S.list.map(Tb)]);lastRec=t}
+}
+const Qtot=()=>S.list.reduce((s,b)=>s+Math.max(0,b.e),0);
+function setButtons(){
+  const g=$("go");g.textContent=status==="run"?"Pause":status==="pause"?"Resume":"Mix";
+  g.disabled=!!S.err||status==="done";$("skip").disabled=!!S.err||status==="done";
+}
+$("go").onclick=()=>{status=status==="run"?"pause":"run";setButtons()};
+$("skip").onclick=()=>{let i=0;while(status!=="done"&&i++<300000)stepHeat(0.02);if(status!=="done")finish();drawGraph()};
+$("reset").onclick=()=>setup();
+
+/* ---------- worked solution (KaTeX → MathML) ---------- */
+const kt=(tex,disp)=>window.katex?katex.renderToString((disp?"\\displaystyle ":"")+tex,{output:"mathml",throwOnError:false}):tex;
+const im=tex=>kt(tex,false);
+const eq=tex=>`<div class="eqn">${kt(tex,true)}</div>`;
+const resM=tex=>`<div class="res">${kt(tex,true)}</div>`;
+const tn=x=>x<0?`(${n(x)})`:n(x);
+const sciT=x=>{const e=Math.floor(Math.log10(Math.abs(x)));return `${(x/10**e).toFixed(2)}\\times10^{${e}}`};
+const DEG="\\ ^{\\circ}\\mathrm{C}",UC="\\ \\mathrm{J\\,kg^{-1}\\,K^{-1}}",UL="\\ \\mathrm{J\\,kg^{-1}}";
+const wC=v=>v.cal?`[(${n(v.mW)})(4180)+(${n(v.mCal)})(390)]`:`(${n(v.mW)})(4180)`;
+const calNote=v=>v.cal?`<p>The copper calorimeter holds the water, so it starts and finishes at the same temperatures as the water. Its ${im("mc")} of ${im(`(${n(v.mCal)})(390)=${n(+(v.mCal*CCU).toFixed(1))}\\ \\mathrm{J\\,K^{-1}}`)} is added to the water's, ${im(`(${n(v.mW)})(4180)=${n(+(v.mW*CW).toFixed(1))}\\ \\mathrm{J\\,K^{-1}}`)}. Leaving it out would make the answer too small, because the energy it absorbs would be missing.</p>`:"";
+function renderWork(){
+  const w=$("work"),v=V[key()],done=status==="done";
+  if(S.err){w.innerHTML=`<h2>Worked solution</h2><p class="err">${S.err}</p>`;return}
+  const wait=`<div class="res wait">Press Mix to find out.</div>`;let h="<h2>Worked solution</h2>";
+  if(mode==="final"){
+    const L=S.list,tf=S.tf;
+    if(L.every(b=>b.T0===L[0].T0)){w.innerHTML=h+`<p>All the bodies start at the same temperature, so no energy is transferred.</p>`;return}
+    if(L.some(b=>b.kind==="w"&&(b.T0<0||tf<=0))){w.innerHTML=h+phaseWork(L,tf,done);return}
+    const mcList=`<p>From ${im("\\Delta\\theta=\\dfrac{Q}{mc}")}, mc is under the line, so a body with a bigger mc changes temperature by less. ${L.map(b=>`${b.name} (${b.idx}): ${im(`mc=${n(+(b.m*b.c).toFixed(1))}\\ \\mathrm{J\\,K^{-1}}`)}.`).join(" ")}</p>`;
+    const numT=L.map(b=>`(${n(b.m)})(${b.c})(${tn(b.T0)})`).join("+"),denT=L.map(b=>`(${n(b.m)})(${b.c})`).join("+");
+    if(L.length===2){
+      const [H,C]=S.bodies,i=H.idx,j=C.idx;
+      h+=`<h3>Energy lost by body ${i} (${H.name.toLowerCase()}) = energy gained by body ${j} (${C.name.toLowerCase()})</h3>`
+       +eq(`m_{${i}}c_{${i}}(\\theta_{${i}}-\\theta)=m_{${j}}c_{${j}}(\\theta-\\theta_{${j}})`)
+       +eq(`(${n(H.m)})(${H.c})(${tn(H.T0)}-\\theta)=(${n(C.m)})(${C.c})(\\theta-${tn(C.T0)})`)
+       +eq(`\\theta=\\frac{${numT}}{${denT}}`);
+    }else{
+      h+=`<h3>Energy lost by the hotter bodies = energy gained by the cooler bodies</h3>`
+       +eq(L.map(b=>`m_{${b.idx}}c_{${b.idx}}(\\theta-\\theta_{${b.idx}})`).join("+")+"=0")
+       +eq(L.map(b=>`(${n(b.m)})(${b.c})(\\theta-${tn(b.T0)})`).join("+")+"=0")
+       +eq(`\\theta=\\frac{${numT}}{${denT}}`);
+    }
+    h+=done?resM(`\\theta=${tf.toFixed(1)}${DEG}`)+`<p>${L.map(b=>{const q=Eat(b,tf)/1000;return `Body ${b.idx} (${b.name.toLowerCase()}) ${q<0?"loses":"gains"} ${Math.abs(q).toFixed(2)} kJ.`}).join(" ")}</p>`:wait;
+    h+=mcList;
+  }else if(mode==="c"){
+    const K=v.cal;
+    h+=`<h3>Energy lost by the metal = energy gained by the water${K?" + energy gained by the calorimeter":""}</h3>`
+     +eq(`m_{1}c(\\theta_{1}-\\theta_{f})=m_{2}c_{w}(\\theta_{f}-\\theta_{2})${K?"+m_{3}c_{\\text{Cu}}(\\theta_{f}-\\theta_{2})":""}`)
+     +eq(`(${n(v.mM)})\\,c\\,(${tn(v.tM)}-${tn(v.tF)})=(${n(v.mW)})(4180)(${tn(v.tF)}-${tn(v.tW)})${K?`+(${n(v.mCal)})(390)(${tn(v.tF)}-${tn(v.tW)})`:""}`)
+     +eq(`c=\\frac{${wC(v)}(${n(+(v.tF-v.tW).toFixed(2))})}{(${n(v.mM)})(${n(+(v.tM-v.tF).toFixed(2))})}`);
+    if(done){const best=Object.values(MAT).filter(m=>!m.liq).sort((a,b)=>Math.abs(a.c-S.res)-Math.abs(b.c-S.res))[0];
+      h+=resM(`c=${Math.round(S.res)}${UC}`)+`<p>Closest table value: ${best.n}, ${im(best.c+UC)}.</p>`}else h+=wait;
+    h+=calNote(v)+`<p>${im("c=\\dfrac{Q}{m\\Delta\\theta}")}: the energy per kilogram per kelvin of temperature change. Units: ${im("\\dfrac{\\mathrm{J}}{\\mathrm{kg}\\times\\mathrm{K}}=\\mathrm{J\\,kg^{-1}\\,K^{-1}}")}.</p>`;
+  }else{
+    const fus=lsub==="fus",acc=fus?LF:LV;
+    const K=v.cal,CT=s=>K?`+m_{\\text{cal}}c_{\\text{Cu}}${s}`:"",CN=s=>K?`+(${n(v.mCal)})(390)${s}`:"";
+    if(fus)h+=`<h3>Energy lost by the warm water${K?" + energy lost by the calorimeter":""} = energy to melt the ice + energy to warm the melted ice</h3>`
+     +eq(`m_{w}c_{w}(\\theta_{w}-\\theta_{f})${CT("(\\theta_{w}-\\theta_{f})")}=m_{i}l+m_{i}c_{w}(\\theta_{f}-0)`)
+     +eq(`(${n(v.mW)})(4180)(${tn(v.tW)}-${tn(v.tF)})${CN(`(${tn(v.tW)}-${tn(v.tF)})`)}=(${n(v.mI)})\\,l+(${n(v.mI)})(4180)(${tn(v.tF)})`)
+     +eq(`l=\\frac{${wC(v)}(${n(+(v.tW-v.tF).toFixed(2))})-(${n(v.mI)})(4180)(${tn(v.tF)})}{${n(v.mI)}}`);
+    else h+=`<h3>Energy lost by the steam condensing + the condensed steam cooling = energy gained by the cold water${K?" + energy gained by the calorimeter":""}</h3>`
+     +eq(`m_{s}l+m_{s}c_{w}(100-\\theta_{f})=m_{w}c_{w}(\\theta_{f}-\\theta_{w})${CT("(\\theta_{f}-\\theta_{w})")}`)
+     +eq(`(${n(v.mS)})\\,l+(${n(v.mS)})(4180)(100-${tn(v.tF)})=(${n(v.mW)})(4180)(${tn(v.tF)}-${tn(v.tW)})${CN(`(${tn(v.tF)}-${tn(v.tW)})`)}`)
+     +eq(`l=\\frac{${wC(v)}(${n(+(v.tF-v.tW).toFixed(2))})-(${n(v.mS)})(4180)(${n(+(100-v.tF).toFixed(2))})}{${n(v.mS)}}`);
+    h+=done?resM(`l=${sciT(S.res)}${UL}`)+`<p>Accepted value for ${fus?"ice":"steam"}: ${im(sciT(acc)+UL)} (${(Math.abs(S.res-acc)/acc*100).toFixed(1)}% difference).</p>`:wait;
+    h+=calNote(v)+`<p>${im("l=\\dfrac{Q}{m}")}: the energy per kilogram needed to change state, with no change in temperature. Units: ${im("\\dfrac{\\mathrm{J}}{\\mathrm{kg}}=\\mathrm{J\\,kg^{-1}}")}.</p>`;
+  }
+  w.innerHTML=h;
+}
+
+function phaseWork(L,tf,done){
+  const intro=`<h3>Energy lost by the hotter bodies = energy gained by the cooler bodies</h3>`;
+  const note=`<p>Ice warms to 0 °C (${im("Q=mc_{\\text{ice}}\\Delta\\theta")}), melts at 0 °C with no change in temperature (${im("Q=ml_{f}")}), and the melted ice then warms as water (${im("Q=mc_{w}\\Delta\\theta")}). Freezing is the reverse. Which steps happen depends on the final temperature. ${im("c_{\\text{ice}}=2100"+UC)}, ${im("l_{f}=3.34\\times10^{5}"+UL)}.</p>`;
+  if(!done)return intro+`<div class="res wait">Press Mix to find out.</div>`+note;
+  const reg=tf>1e-9?">":tf<-1e-9?"<":"0",T=reg==="0"?"0":"\\theta",LFs="(3.34\\times10^{5})";
+  const sens=(m,c,from,to)=>`(${n(m)})(${c})(${to}-${tn(from)})`;
+  const expr=b=>{
+    if(b.kind!=="w")return sens(b.m,b.c,b.T0,T);
+    if(reg===">")return b.T0<0?`${sens(b.m,CI,b.T0,"0")}+(${n(b.m)})${LFs}+${sens(b.m,CW,0,"\\theta")}`:sens(b.m,CW,b.T0,"\\theta");
+    if(reg==="<")return b.T0>=0?`${sens(b.m,CW,b.T0,"0")}-(${n(b.m)})${LFs}+${sens(b.m,CI,0,"\\theta")}`:sens(b.m,CI,b.T0,"\\theta");
+    return sens(b.m,b.T0<0?CI:CW,b.T0,"0");
+  };
+  const Qs=L.map(b=>`Q_{${b.idx}}`).join("+");
+  let h=`<h3>${reg==="0"?"Energy gained by each body in reaching 0 °C (a loss is negative)":"Energy gained by each body (a loss is negative). The total is zero."}</h3>`
+    +L.map(b=>eq(`Q_{${b.idx}}=${expr(b)}`)).join("");
+  if(reg!=="0"){
+    h+=eq(`${Qs}=0`)+resM(`\\theta=${tf.toFixed(1)}${DEG}`)
+     +`<p>${L.map(b=>{const q=Eat(b,tf)/1000;return `Body ${b.idx} (${b.name.toLowerCase()}) ${q<0?"loses":"gains"} ${Math.abs(q).toFixed(2)} kJ.`}).join(" ")}</p>`;
+  }else{
+    const S0=L.reduce((s,b)=>s-b.m*b.c*b.T0,0),dm=-S0/LF,ice0=L.filter(b=>b.kind==="w"&&b.T0<0).reduce((s,b)=>s+b.m,0),left=ice0-dm;
+    h+=eq(`${Qs}+\\Delta m\\,l_{f}=0`)+`<p>Δm is the mass of ice that melts (negative if water freezes).</p>`
+     +eq(`\\Delta m=\\frac{${n(+(-S0).toFixed(1))}}{3.34\\times10^{5}}=${n(+dm.toFixed(4))}\\ \\mathrm{kg}`)
+     +resM(`\\theta=0${DEG}`)+`<p>Not all of the ice melts, so the mixture settles at 0 °C. ${dm>=0?`${n(+dm.toFixed(4))} kg of ice melts, leaving ${n(+left.toFixed(4))} kg of ice.`:`${n(+(-dm).toFixed(4))} kg of water freezes, giving ${n(+left.toFixed(4))} kg of ice.`}</p>`;
+  }
+  return h+note;
+}
+
+/* ---------- particles ---------- */
+function initParts(b,align,nb){
+  b.p=[];const {xl,xr}=b;
+  if(b.ph==="s"){
+    const cols=nb===3?5:6,rows=6,s=2*R+2,w=cols*s;
+    const left=align==="r"?xr-1-w:align==="l"?xl+1:(xl+xr-w)/2;
+    const x0=left+s/2,y0=FLOOR-1-s/2-(rows-1)*s;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const hx=x0+c*s,hy=y0+r*s;b.p.push({hx,hy,x:hx,y:hy,vx:0,vy:0,st:"s",ph:[0,1,2,3].map(()=>Math.random()*6.283)})}
+    const mx=x0+(cols-1)*s/2,my=y0+(rows-1)*s/2;
+    b.p.map(p=>[p,Math.hypot(p.hx-mx,p.hy-my)+Math.random()*5]).sort((a,c)=>c[1]-a[1]).forEach(([p],i)=>p.order=i);
+  }else if(b.ph==="l"){
+    const N=nb===3?40:54;
+    for(let i=0;i<N;i++)b.p.push({x:xl+R+Math.random()*(xr-xl-2*R),y:FLOOR-R-Math.random()*110,vx:0,vy:0,st:"l"});
+  }else{
+    for(let i=0;i<36;i++){const a=Math.random()*6.283;b.p.push({x:xl+R+Math.random()*(xr-xl-2*R),y:WT+R+Math.random()*(FLOOR-WT-2*R),vx:Math.cos(a)*250,vy:Math.sin(a)*250,st:"g"})}
+  }
+}
+const fT=T=>clamp((T-Tlo)/(Thi-Tlo),0,1);
+function stepParts(b,dt){
+  const T=Tb(b),f=fT(T),ps=b.p,N=ps.length;
+  if(b.kind==="ice"||b.kind==="w"){const target=Math.round(lfr(b)*N);let nl=ps.filter(p=>p.st==="l").length;
+    if(nl<target){for(const p of ps.filter(p=>p.st==="s").sort((a,c)=>a.order-c.order)){if(nl>=target)break;p.st="l";p.vx=(Math.random()-.5)*40;p.vy=0;nl++}}
+    else if(nl>target){for(const p of ps.filter(p=>p.st==="l").sort((a,c)=>c.y-a.y)){if(nl<=target)break;p.st="s";p.hx=p.x;p.hy=p.y;p.order=-1;p.ph=[0,1,2,3].map(()=>Math.random()*6.283);nl--}}}
+  if(b.kind==="steam"){const nC=Math.round(frac(b)*N);let c=ps.filter(p=>p.st==="l").length;
+    for(const p of ps){if(c>=nC)break;if(p.st==="g"){p.st="l";p.vx*=.2;p.vy*=.2;c++}}}
+  const A=0.6+2.6*f,w=9+6*f,jig=2500+5000*f,vg=200+150*f,vl=30+150*f,RL=R*(1+0.12*f),nsub=2,h=dt/nsub;
+  for(let s=0;s<nsub;s++){
+    for(const p of ps){
+      if(p.st==="s"){p.x=p.hx+A*(.6*Math.sin(w*tt+p.ph[0])+.4*Math.sin(1.7*w*tt+p.ph[1]));p.y=p.hy+A*(.6*Math.sin(1.1*w*tt+p.ph[2])+.4*Math.sin(1.9*w*tt+p.ph[3]));continue}
+      if(p.st==="l"){p.vy+=700*h;const sp=Math.hypot(p.vx,p.vy);if(sp<1){const a=Math.random()*6.283;p.vx=Math.cos(a)*vl;p.vy=Math.sin(a)*vl}else{const r=(Math.random()-.5)*.6,co=Math.cos(r),si=Math.sin(r),g=1+(vl/sp-1)*.08,nx=(p.vx*co-p.vy*si)*g;p.vy=(p.vx*si+p.vy*co)*g;p.vx=nx}}
+      else{const sp=Math.hypot(p.vx,p.vy);if(sp<1){const a=Math.random()*6.283;p.vx=Math.cos(a)*vg;p.vy=Math.sin(a)*vg}else{const g=1+(vg/sp-1)*.1;p.vx*=g;p.vy*=g}}
+      p.x+=p.vx*h;p.y+=p.vy*h;const e=p.st==="s"?.4:.85;
+      if(p.x<b.xl+R){p.x=b.xl+R;p.vx=Math.abs(p.vx)*e}if(p.x>b.xr-R){p.x=b.xr-R;p.vx=-Math.abs(p.vx)*e}
+      if(p.y<WT+R){p.y=WT+R;p.vy=Math.abs(p.vy)*e}if(p.y>FLOOR-R){p.y=FLOOR-R;p.vy=-Math.abs(p.vy)*e}
+    }
+    for(let it=0;it<2;it++)for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){
+      const a=ps[i],c=ps[j];if(a.st==="s"&&c.st==="s")continue;
+      const dx=c.x-a.x,dy=c.y-a.y,d2=dx*dx+dy*dy,rc=a.st==="l"&&c.st==="l"?RL:R;if(d2>=4*rc*rc||d2<1e-6)continue;
+      const d=Math.sqrt(d2),nx=dx/d,ny=dy/d,ov=2*rc-d,wa=a.st==="s"?0:1,wc=c.st==="s"?0:1,tot=wa+wc;
+      a.x-=nx*ov*wa/tot;a.y-=ny*ov*wa/tot;c.x+=nx*ov*wc/tot;c.y+=ny*ov*wc/tot;
+      const rv=(c.vx-a.vx)*nx+(c.vy-a.vy)*ny;
+      if(rv<0){const e=(a.st==="g"||c.st==="g")?1:.9,ka=wa/tot,kc=wc/tot;a.vx+=(1+e)*rv*ka*nx;a.vy+=(1+e)*rv*ka*ny;c.vx-=(1+e)*rv*kc*nx;c.vy-=(1+e)*rv*kc*ny}
+    }
+  }
+}
+const tok=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const isDark=()=>{const t=document.documentElement.dataset.theme;return t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches)};
+function stateTxt(b){
+  if(b.kind==="w"){const f=lfr(b);return f<=0?"solid (ice)":f>=1?"liquid":`ice + water · ${Math.round(f*100)}% liquid`}
+  if(b.kind==="ice"){const f=frac(b);return f<=0?"solid":f<1?`melting ${Math.round(f*100)}%`:"melted"}
+  if(b.kind==="steam"){const f=frac(b);return f<=0?"gas":f<1?`condensing ${Math.round(f*100)}%`:"condensed"}
+  return b.ph==="s"?"solid":"liquid";
+}
+/* ---------- PixiJS stage ---------- */
+const HAS_PIXI=!!window.PIXI,RES=Math.min(3,Math.max(2,window.devicePixelRatio||1)),TS=72;
+const hexN=s=>{s=(s||"#000").replace("#","");if(s.length===3)s=s.split("").map(c=>c+c).join("");return parseInt(s,16)};
+const hslN=(h,s,l)=>{s/=100;l/=100;const k=m=>(m+h/30)%12,a=s*Math.min(l,1-l),f=m=>l-a*Math.max(-1,Math.min(k(m)-3,9-k(m),1));return(Math.round(f(0)*255)<<16)|(Math.round(f(8)*255)<<8)|Math.round(f(4)*255)};
+let app,L_bg,L_hatch,L_glow,L_parts,L_fx,L_fg,L_arrows,L_text,glowTex,labels=[],heatTxt=[],eqTxt,texCache={};
+if(HAS_PIXI){
+  app=new PIXI.Application({width:CWD,height:CHT,resolution:RES,antialias:true,backgroundAlpha:0});
+  $("chamber").appendChild(app.view);
+  L_bg=new PIXI.Graphics();L_hatch=new PIXI.Graphics();L_glow=new PIXI.Container();L_parts=new PIXI.Container();L_fx=new PIXI.Container();
+  L_fg=new PIXI.Graphics();L_arrows=new PIXI.Graphics();L_text=new PIXI.Container();
+  const mask=new PIXI.Graphics().beginFill(0xffffff).drawRect(WL-14,WT-14,WR-WL+28,FLOOR-WT+28).endFill();L_hatch.mask=mask;
+  app.stage.addChild(L_bg,mask,L_hatch,L_glow,L_parts,L_fx,L_fg,L_arrows,L_text);
+  const gc=document.createElement("canvas");gc.width=gc.height=64;const gg=gc.getContext("2d"),rg=gg.createRadialGradient(32,32,0,32,32,32);
+  rg.addColorStop(0,"rgba(255,255,255,1)");rg.addColorStop(.3,"rgba(255,255,255,.5)");rg.addColorStop(1,"rgba(255,255,255,0)");gg.fillStyle=rg;gg.fillRect(0,0,64,64);
+  glowTex=PIXI.Texture.from(gc);
+}else $("chamber").innerHTML=`<p class="err">The particle view needs the PixiJS library, which did not load. Check your internet connection and reload.</p>`;
+function partTex(sym){
+  if(texCache[sym])return texCache[sym];
+  const c=document.createElement("canvas");c.width=c.height=TS;const g=c.getContext("2d"),r=TS/2-3;
+  const grad=g.createRadialGradient(TS*.36,TS*.34,r*.08,TS/2,TS/2,r);grad.addColorStop(0,"#ffffff");grad.addColorStop(.6,"#ececec");grad.addColorStop(1,"#bdbdbd");
+  g.fillStyle=grad;g.beginPath();g.arc(TS/2,TS/2,r,0,6.283);g.fill();g.lineWidth=4;g.strokeStyle="#555";g.stroke();
+  const fz=(sym.length<=2?9.5:sym.length===3?8:6.8)*TS/(2*R);
+  g.font=`700 ${fz}px "Barlow Condensed","Arial Narrow",sans-serif`;g.textAlign="center";g.textBaseline="middle";g.fillStyle="#10161d";g.fillText(sym,TS/2,TS/2+fz*.06);
+  return texCache[sym]=PIXI.Texture.from(c);
+}
+function pool(cont,n,tex,blend){
+  while(cont.children.length<n){const s=new PIXI.Sprite(tex||PIXI.Texture.EMPTY);s.anchor.set(.5);cont.addChild(s)}
+  const ch=cont.children;for(let i=0;i<ch.length;i++){ch[i].visible=i<n;if(blend!=null)ch[i].blendMode=blend}return ch;
+}
+const txt=(s,size,weight,fill,font)=>{const t=new PIXI.Text(s,{fontFamily:font,fontSize:size,fontWeight:weight,fill});t.anchor.set(.5);t.resolution=RES;L_text.addChild(t);return t};
+function buildStatic(){
+  if(!HAS_PIXI||!S)return;
+  const ink=hexN(tok("--ink")),mut=hexN(tok("--muted")),soft=hexN(tok("--soft")),line=hexN(tok("--line")),ch=hexN(tok("--chamber")),heat=hexN(tok("--heat"));
+  const fb=`${tok("--f-body")}`,fm=`${tok("--f-mono")}`;
+  L_bg.clear().beginFill(soft).drawRect(WL-14,WT-14,WR-WL+28,FLOOR-WT+28).endFill().beginFill(ch).drawRect(WL,WT,WR-WL,FLOOR-WT).endFill();
+  const H=FLOOR-WT+28;L_hatch.clear().lineStyle(1.2,line,1);for(let x=WL-14-H;x<WR+14;x+=9){L_hatch.moveTo(x,FLOOR+14);L_hatch.lineTo(x+H,WT-14)}
+  L_hatch.beginFill(ch).lineStyle(0).drawRect(WL,WT,WR-WL,FLOOR-WT).endFill();
+  L_hatch.lineStyle(1.2,mut,.9);for(const L of links)for(let y=WT+4;y<FLOOR;y+=9){L_hatch.moveTo(L.x,y);L_hatch.lineTo(L.x,Math.min(y+4,FLOOR))}
+  L_fg.clear().lineStyle(2,ink,1).drawRect(WL-14,WT-14,WR-WL+28,FLOOR-WT+28).drawRect(WL,WT,WR-WL,FLOOR-WT).lineStyle(5,ink,1).moveTo(WL-22,WT-16).lineTo(WR+22,WT-16);
+  L_text.removeChildren().forEach(c=>c.destroy());
+  const three=S.bodies.length===3;
+  labels=S.bodies.map(b=>({b,
+    a:Object.assign(txt("",three?12:13,"600",ink,fb),{x:b.cx,y:10}),
+    s:Object.assign(txt("",three?11:12,"500",mut,fb),{x:b.cx,y:26}),
+    t:Object.assign(txt("",three?17:20,"600",ink,fm),{x:b.cx,y:48})}));
+  heatTxt=links.map(L=>Object.assign(txt("HEAT",11,"700",heat,fb),{x:L.x,y:WT+12}));
+  eqTxt=Object.assign(txt("EQUILIBRIUM",12,"600",mut,fb),{x:(WL+WR)/2,y:WT+18});
+}
+function renderStage(){
+  if(!HAS_PIXI)return;
+  const dark=isDark(),heat=hexN(tok("--heat")),ADD=PIXI.BLEND_MODES.ADD,NORM=PIXI.BLEND_MODES.NORMAL;
+  const items=[];
+  for(const b of S.bodies){const f=fT(Tb(b)),hue=210-198*f,tint=hslN(hue,dark?78:72,dark?62:60),tex=partTex(b.sym);for(const p of b.p)items.push([p,tint,tex,f])}
+  const ps=pool(L_parts,items.length),gs=pool(L_glow,items.length,glowTex,dark?ADD:NORM),sc=(2*R-.8)/TS;
+  items.forEach(([p,tint,tex,f],i)=>{const s=ps[i];s.texture=tex;s.tint=tint;s.x=p.x;s.y=p.y;s.scale.set(sc);
+    const g=gs[i];g.tint=tint;g.x=p.x;g.y=p.y;g.scale.set(2*R*(1.5+1.6*f)/64);g.alpha=dark?.12+.55*f*f:.05+.32*f*f});
+  // energy packets with glowing trails
+  let nfx=0;for(const k of packets)nfx+=1+k.tr.length;
+  const fx=pool(L_fx,nfx,glowTex,dark?ADD:NORM);let j=0;
+  for(const k of packets){const a=Math.sin(Math.PI*k.age/k.life);
+    k.tr.forEach(([x,y],q)=>{const s=fx[j++];s.tint=heat;s.x=x;s.y=y;s.scale.set((14-q*1.4)/64);s.alpha=a*(.55-q*.06)});
+    const s=fx[j++];s.tint=dark?0xffd2b0:heat;s.x=k.x;s.y=k.y;s.scale.set(22/64);s.alpha=a}
+  // arrows, labels
+  L_arrows.clear();
+  links.forEach((L,i)=>{const d=Tb(L.a)-Tb(L.c),r=Math.min(1,Math.abs(d)/dT0),show=status!=="done"&&!S.err&&r>=0.002;heatTxt[i].visible=show;if(!show)return;
+    const dir=d>0?1:-1,x0=L.x-22*dir,x1=L.x+22*dir,ay=WT+30,th=1.5+4*r,al=.35+.65*r;heatTxt[i].alpha=al;
+    L_arrows.lineStyle(th,heat,al).moveTo(x0,ay).lineTo(x1-6*dir,ay).lineStyle(0).beginFill(heat,al).drawPolygon([x1+2*dir,ay,x1-8*dir,ay-4-th,x1-8*dir,ay+4+th]).endFill()});
+  eqTxt.visible=status==="done";
+  for(const l of labels){l.a.text=`Body ${l.b.idx} · ${l.b.name}`;l.s.text=`${n(l.b.m)} kg · ${stateTxt(l.b)}`;l.t.text=`${Tb(l.b).toFixed(1)} °C`}
+}
+function stepPackets(dt){
+  for(const k of packets){k.age+=dt;k.tr.unshift([k.x,k.y]);if(k.tr.length>7)k.tr.pop();k.x+=k.vx*dt;k.y+=Math.sin(k.age*9+k.ph)*.4}
+  packets=packets.filter(k=>k.age<k.life);
+  if(status!=="run")return;
+  for(const L of links){const d=Tb(L.a)-Tb(L.c),r=Math.abs(d)/dT0;if(r<0.002)continue;
+    L.acc=(L.acc||0)+22*Math.sqrt(Math.min(1,r))*dt;const dir=d>0?1:-1;
+    while(L.acc>=1){L.acc--;packets.push({x:L.x-dir*(10+Math.random()*45),y:FLOOR-8-Math.random()*70,vx:dir*(55+Math.random()*25),age:0,life:1.3+Math.random()*.4,tr:[],ph:Math.random()*6.283})}}
+}
+const rebuild=()=>{drawGraph();buildStatic()};
+new MutationObserver(rebuild).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+if(document.fonts)document.fonts.ready.then(()=>{for(const k in texCache)texCache[k].destroy(true);texCache={};buildStatic()});
+
+/* ---------- graph ---------- */
+const gv=$("graph"),gx=gv.getContext("2d");let GW=600,GH=280;
+function sizeGraph(){const dpr=devicePixelRatio||1;GW=gv.clientWidth||600;GH=clamp(Math.round(GW*.55),220,320);gv.style.height=GH+"px";gv.width=GW*dpr;gv.height=GH*dpr;drawGraph()}
+function niceStep(r,c){const raw=r/c,mg=10**Math.floor(Math.log10(raw)),z=raw/mg;return(z<1.5?1:z<3?2:z<7?5:10)*mg}
+function drawGraph(){
+  if(!S)return;const dpr=gv.width/GW;gx.setTransform(dpr,0,0,dpr,0,0);gx.clearRect(0,0,GW,GH);
+  const ink=tok("--ink"),mut=tok("--muted"),line=tok("--line");
+  const L=50,Rm=14,T=30,Bm=44,pw=GW-L-Rm,ph=GH-T-Bm;
+  const tMax=Math.max(20,t*1.05),pad=(Thi-Tlo)*.08,y0=Tlo-pad,y1=Thi+pad;
+  const X=s=>L+s/tMax*pw,Y=v=>T+(1-(v-y0)/(y1-y0))*ph;
+  gx.font="12px "+tok("--f-mono");gx.lineWidth=1;
+  const xs=niceStep(tMax,GW<500?4:6),ys=niceStep(y1-y0,5);
+  gx.textAlign="center";gx.textBaseline="top";
+  for(let s=0;s<=tMax+1e-9;s+=xs){gx.strokeStyle=line;gx.beginPath();gx.moveTo(X(s),T);gx.lineTo(X(s),T+ph);gx.stroke();gx.fillStyle=mut;gx.fillText(n(s),X(s),T+ph+6)}
+  gx.textAlign="right";gx.textBaseline="middle";
+  for(let v=Math.ceil(y0/ys)*ys;v<=y1;v+=ys){gx.strokeStyle=line;gx.beginPath();gx.moveTo(L,Y(v));gx.lineTo(L+pw,Y(v));gx.stroke();gx.fillStyle=mut;gx.fillText(n(+v.toFixed(6)),L-6,Y(v))}
+  gx.strokeStyle=ink;gx.lineWidth=1.5;gx.beginPath();gx.moveTo(L,T);gx.lineTo(L,T+ph);gx.lineTo(L+pw,T+ph);gx.stroke();
+  gx.fillStyle=ink;gx.font="600 13px "+tok("--f-body");gx.textAlign="center";gx.textBaseline="bottom";gx.fillText("Time, t / s",L+pw/2,GH-2);
+  gx.save();gx.translate(12,T+ph/2);gx.rotate(-Math.PI/2);gx.textBaseline="middle";gx.fillText("θ / °C",0,0);gx.restore();
+  if(status==="done"){gx.setLineDash([5,4]);gx.strokeStyle=mut;gx.beginPath();gx.moveTo(L,Y(S.tf));gx.lineTo(L+pw,Y(S.tf));gx.stroke();gx.setLineDash([]);
+    gx.fillStyle=mut;gx.font="12px "+tok("--f-body");gx.textAlign="right";gx.textBaseline="bottom";gx.fillText(`θ_f = ${S.tf.toFixed(1)} °C`,L+pw-4,Y(S.tf)-3)}
+  const all=status==="done"?series:[...series,[t,...S.list.map(Tb)]];
+  S.list.forEach((b,i)=>{gx.strokeStyle=tok(b.col);gx.lineWidth=2.5;gx.lineJoin="round";gx.beginPath();all.forEach((p,j)=>{j?gx.lineTo(X(p[0]),Y(p[i+1])):gx.moveTo(X(p[0]),Y(p[i+1]))});gx.stroke()});
+  gx.font="600 13px "+tok("--f-body");gx.textAlign="left";gx.textBaseline="middle";let lx=L;
+  for(const b of S.list){const txt=`${b.idx} · ${b.name}`;gx.strokeStyle=tok(b.col);gx.lineWidth=3;gx.beginPath();gx.moveTo(lx,12);gx.lineTo(lx+18,12);gx.stroke();gx.fillStyle=ink;gx.fillText(txt,lx+24,12);lx+=gx.measureText(txt).width+44}
+}
+new ResizeObserver(sizeGraph).observe(gv);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>rebuild());
+
+/* ---------- loop ---------- */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.04,(now-last)/1000);last=now;tt+=dt;
+  if(status==="run"){const steps=Math.ceil(dt/0.02);for(let i=0;i<steps&&status==="run";i++)stepHeat(dt/steps);drawGraph()}
+  stepPackets(dt);for(const b of S.bodies)stepParts(b,dt);renderStage();
+  for(const b of S.list)$("tv"+b.idx).textContent=Tb(b).toFixed(1);
+  $("qv").textContent=(Qtot()/1000).toFixed(2);
+}
+renderFields();setup();
+if(HAS_PIXI)app.ticker.add(()=>frame(performance.now()));else{(function loop(now){frame(now);requestAnimationFrame(loop)})(performance.now())}
+</script>
+
+</body></html>

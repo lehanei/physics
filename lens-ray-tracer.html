@@ -1,0 +1,942 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lens Ray Tracer</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: optical-bench strip on top, presets + calculation ledger below; one column on phones */
+:root{
+  --paper:#f3f6f8; --panel:#ffffff; --ink:#1b2a3a; --muted:#5d6e80; --grid:#dbe4ec; --axis:#8796a6;
+  --lens:#4d7fb3; --lensfill:rgba(77,127,179,.13);
+  --ray1:#d2552b; --ray2:#0f8a7e; --obj:#1b2a3a; --img:#7a3fb8; --ray3:#a87708; --ray4:#2f62c9; --eyefill:rgba(77,127,179,.06); --retina:#c0525e; --iris:#6b5240; --neg:#b4232f; --negbg:#fbe9ea; --line:#d4dde6;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f171f; --panel:#16212c; --ink:#e3eaf1; --muted:#97a8ba; --grid:#1f2c39; --axis:#5f7184;
+  --lens:#7fb0e0; --lensfill:rgba(127,176,224,.14);
+  --ray1:#ff8a5c; --ray2:#3fd0bf; --obj:#e3eaf1; --img:#c39bf2; --ray3:#e9b949; --ray4:#7fa6ff; --eyefill:rgba(127,176,224,.07); --retina:#e88a94; --iris:#b08f74; --neg:#ff7b85; --negbg:#3a1a1f; --line:#273544; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f171f; --panel:#16212c; --ink:#e3eaf1; --muted:#97a8ba; --grid:#1f2c39; --axis:#5f7184;
+  --lens:#7fb0e0; --lensfill:rgba(127,176,224,.14);
+  --ray1:#ff8a5c; --ray2:#3fd0bf; --obj:#e3eaf1; --img:#c39bf2; --ray3:#e9b949; --ray4:#7fa6ff; --eyefill:rgba(127,176,224,.07); --retina:#e88a94; --iris:#b08f74; --neg:#ff7b85; --negbg:#3a1a1f; --line:#273544; color-scheme:dark}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,4vw,2.3rem);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:1.1rem;margin:0}
+.stack{display:grid;gap:18px}
+.doc{max-width:800px;width:100%;margin:0 auto;gap:14px}
+.doc p,.doc li{max-width:68ch}
+.doc p{margin:0}
+.doc ol,.doc ul{margin:0;padding-left:1.4em;display:grid;gap:6px}
+h3{font-family:var(--display);font-weight:600;font-size:1.05rem;margin:0}
+.scroll{overflow-x:auto}
+.tbl{border-collapse:collapse;font-size:.92rem;width:100%}
+.tbl th,.tbl td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.tbl th{background:var(--paper);font-weight:700}
+.tbl td{font-variant-numeric:tabular-nums}
+.tbl.blank td{height:2em;min-width:5em}
+.mk{color:var(--muted);font-family:var(--mono);font-size:.85rem;white-space:nowrap}
+details{border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;font-weight:700;color:var(--lens)}
+details[open] summary{margin-bottom:8px}
+details ol{color:var(--ink)}
+
+#work{gap:12px}
+.try{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.try input{font:inherit;font-family:var(--mono);width:7em;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+.try button,.ghost{font:inherit;font-weight:700;border:1px solid var(--lens);border-radius:7px;padding:6px 14px;cursor:pointer}
+.try button{background:var(--lens);color:var(--panel)}
+.ghost{background:transparent;color:var(--ink);justify-self:start}
+.fb{margin:0;font-weight:700;min-height:1.5em}
+.fb.good{color:var(--ray2)} .fb.bad{color:var(--neg)}
+.lensrow{display:grid;gap:6px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.seg{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.seg b{min-width:4.5em}
+.seg button{font:inherit;font-size:.9rem;border:1px solid var(--line);background:transparent;color:var(--ink);padding:5px 10px;border-radius:7px;cursor:pointer}
+.seg button[aria-pressed="true"]{border-color:var(--lens);background:var(--lensfill);font-weight:700}
+.tabs{flex-wrap:wrap;display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px}
+.tabs button{font:inherit;font-weight:700;border:0;background:transparent;color:var(--muted);padding:8px 14px;border-radius:7px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--lens);outline-offset:2px}
+.bench{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px}
+canvas{width:100%;display:block;touch-action:pan-y;cursor:ew-resize}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.88rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:22px;height:3px;border-radius:2px;display:inline-block}
+.sw.dash{background:repeating-linear-gradient(90deg,var(--muted) 0 4px,transparent 4px 7px)!important}
+.eyeonly .controls{grid-template-columns:1fr}
+.controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:18px}
+@media (max-width:760px){.controls{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;align-content:start;min-width:0}
+.presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.presets button{font:inherit;font-size:.9rem;text-align:left;border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 10px;border-radius:8px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+.presets button b{font-family:var(--mono);color:var(--muted);font-weight:600}
+.presets button[aria-pressed="true"]{border-color:var(--lens);background:var(--lensfill)}
+.slider{display:grid;gap:4px}
+.slider label{font-size:.9rem;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--lens)}
+.nature{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.nature div{border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.nature small{display:block;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.nature strong{font-size:.95rem}
+@media (max-width:420px){.nature{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.calc{font-family:var(--mono);font-size:.9rem;line-height:1.75;font-variant-numeric:tabular-nums;overflow-x:auto;white-space:nowrap}
+.calc .c{color:var(--muted);font-family:var(--body);white-space:normal;display:block;line-height:1.45;margin:2px 0 6px}
+.neg{color:var(--neg);font-weight:600}
+.rule{background:var(--negbg);color:var(--neg);border-radius:8px;padding:8px 12px;font-weight:700;font-size:.95rem}
+.rule[hidden]{display:none!important}
+.note{font-size:.92rem;color:var(--muted);margin:0}
+.read{font-size:.92rem;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:4px}
+.read p{margin:0}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Lens Ray Tracer</h1>
+      <p class="note" id="note">Drag the object pin along the axis, or pick a position. Read <i>v</i> off the cm scale and check it against the calculation.</p>
+    </div>
+    <div class="tabs" role="group" aria-label="Lens type">
+      <button id="tabConv" aria-pressed="true">Converging (convex)</button>
+      <button id="tabDiv" aria-pressed="false">Diverging (concave)</button>
+      <button id="tabComp" aria-pressed="false">Compound lenses</button>
+      <button id="tabEye" aria-pressed="false">The eye</button>
+      <button id="tabGuide" aria-pressed="false">Student guide</button>
+      <button id="tabExam" aria-pressed="false">Exam questions</button>
+    </div>
+  </header>
+
+  <div id="tracer" class="stack">
+  <section class="bench">
+    <canvas id="cv" aria-label="Ray diagram"></canvas>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--ray1)"></i><span id="lg1">Ray 1: in parallel → out through F</span></span>
+      <span><i class="sw" style="background:var(--ray2)"></i>Ray 2: “my favourite ray”, straight through the centre</span>
+      <span><i class="sw dash"></i>Dashed: where rays only appear to come from (virtual)</span>
+    </div>
+  </section>
+
+  <section class="controls">
+    <div class="card">
+      <h2>Object position</h2>
+      <div class="presets" id="presets"></div>
+      <div class="slider">
+        <label for="u">Object distance <i>u</i> = <strong id="uLab">30.0</strong> cm &nbsp;(f = 10 cm, 2F at 20 cm)</label>
+        <input id="u" type="range" min="3" max="50" step="0.5" value="30">
+      </div>
+      <div class="nature" id="nature"></div>
+    </div>
+
+    <div class="card">
+      <h2>Calculation</h2>
+      <p class="note">Use 1/f = 1/u + 1/v to work out v, then check your answer.</p>
+      <form id="tryForm" class="try">
+        <label for="vIn">Your v =</label>
+        <input id="vIn" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. −15">
+        <span>cm</span>
+        <button type="submit">Check</button>
+      </form>
+      <p id="fb" class="fb" aria-live="polite"></p>
+      <button id="showBtn" class="ghost" type="button">Show the working</button>
+      <div id="work" class="stack" hidden>
+        <div class="rule" id="rule">Virtual means negative</div>
+        <div class="calc" id="calc"></div>
+      </div>
+      <div class="read" id="read"></div>
+    </div>
+  </section>
+  </div>
+
+  <div id="comp" class="stack" hidden>
+    <section class="bench">
+      <canvas id="cv2" aria-label="Ray diagram for two lenses"></canvas>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--ray1)"></i><i class="sw" style="background:var(--ray2)"></i>Lens 1: in parallel → out through F₁, and “my favourite ray”</span>
+        <span><i class="sw" style="background:var(--ray3)"></i><i class="sw" style="background:var(--ray4)"></i>Lens 2: the same two rays, starting from I₁</span>
+        <span><i class="sw dash"></i>Dashed: virtual</span>
+      </div>
+    </section>
+    <section class="controls">
+      <div class="card">
+        <h2>Choose an example</h2>
+        <div class="presets" id="scen">
+          <button data-s="micro"><b>1</b>Compound microscope</button>
+          <button data-s="tele"><b>2</b>Astronomical telescope</button>
+        </div>
+        <p class="note" id="desc"></p>
+      </div>
+      <div class="card">
+        <h2>Calculation</h2>
+        <div class="rule">Virtual means negative</div>
+        <div class="calc" id="calc2"></div>
+      </div>
+    </section>
+  </div>
+  <div id="eye" class="stack eyeonly" hidden>
+    <section class="bench">
+      <canvas id="cv3" aria-label="Model eye with cornea, iris, adjustable lens and retina"></canvas>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--ray2)"></i>“My favourite ray” through the centre of the lens</span>
+        <span><i class="sw" style="background:var(--ray1)"></i>Rays through the edges of the pupil</span>
+        <span><i class="sw dash"></i>Dashed: virtual, or where light would meet if the retina weren’t there</span>
+      </div>
+    </section>
+    <section class="controls">
+      <div class="card">
+        <h2>The eye</h2>
+        <div class="seg" id="eyeType" role="group" aria-label="Eye"><b>Eye</b><button data-e="normal">Normal</button><button data-e="short">Short-sighted</button><button data-e="long">Long-sighted</button></div>
+        <div class="slider"><label for="ue">Object distance = <strong id="ueLab"></strong></label>
+          <input id="ue" type="range" min="10" max="301" step="1" value="301"></div>
+        <div class="seg" id="uePre" role="group" aria-label="Look at"><b>Look at</b><button data-u="far">Very far</button><button data-u="100">100 cm</button><button data-u="25">25 cm (reading)</button><button data-u="15">15 cm</button></div>
+        <div class="seg" id="specType" role="group" aria-label="Spectacles"><b>Spectacles</b><button data-t="0">None</button><button data-t="-1">Diverging</button><button data-t="1">Converging</button></div>
+        <div class="slider" id="specRow"><label for="sf">Spectacle focal length = <strong id="sfLab"></strong></label>
+          <input id="sf" type="range" min="10" max="100" step="0.5" value="35"></div>
+        <p class="note" id="eyeDesc"></p>
+        <div class="nature" id="eyeStat" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
+        <p class="note">Model eye, not to scale. All the bending is shown at the lens; in a real eye the cornea does most of it and the lens fine-tunes the focus.</p>
+      </div>
+    </section>
+  </div>
+  <div id="guide" class="stack doc" hidden>
+    <section class="card">
+      <h2>Before you start</h2>
+      <p>You need two rays to find where the image of a point is. The image is where the rays meet.</p>
+      <table class="tbl">
+        <thead><tr><th>Lens</th><th>Ray 1</th><th>Ray 2</th></tr></thead>
+        <tbody>
+          <tr><td>Converging</td><td>In parallel → out through the focus</td><td>“My favourite ray”: straight through the centre of the lens</td></tr>
+          <tr><td>Diverging</td><td>In parallel → out as if from the focus</td><td>“My favourite ray”: straight through the centre of the lens</td></tr>
+        </tbody>
+      </table>
+      <p>If the rays really meet, the image is <b>real</b> and can be caught on a screen. If they only appear to come from a point (draw these lines dashed), the image is <b>virtual</b>.</p>
+      <p class="rule">Virtual means negative: a virtual image has a negative v, and a diverging lens has a negative f.</p>
+      <p>Reading 1/f = 1/u + 1/v: for a fixed lens, f does not change. So as u gets smaller, 1/u gets bigger, 1/v must get smaller and v gets bigger. Move the object in towards the lens and the image moves out away from it.</p>
+    </section>
+
+    <section class="card">
+      <h2>Converging lens</h2>
+      <p>For each of the six positions, in order:</p>
+      <ol>
+        <li>Predict where the image will be and what it will look like.</li>
+        <li>Draw the ray diagram in your copy using the two rays.</li>
+        <li>Calculate v with 1/f = 1/u + 1/v (f = +10 cm) and enter it under <b>Check</b>.</li>
+        <li>Compare your answer with the ray diagram on screen, then press <b>Show the working</b>.</li>
+      </ol>
+      <p>Copy this table and fill it in as you go:</p>
+      <div class="scroll"><table class="tbl blank">
+        <thead><tr><th>Object position</th><th>u (cm)</th><th>v (cm)</th><th>Real or virtual</th><th>Upright or inverted</th><th>Magnified or diminished</th></tr></thead>
+        <tbody>
+          <tr><td>1. Very far away</td><td>∞</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>2. Outside 2F</td><td>30</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>3. On 2F</td><td>20</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>4. Between 2F and F</td><td>15</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>5. On F</td><td>10</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>6. Inside F</td><td>6</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Look for:</b> how the image moves and changes size as the object comes in towards F; what happens to the rays when the object is on F; which row gives a negative v, and what that row's image looks like.</p>
+    </section>
+
+    <section class="card">
+      <h2>Diverging lens</h2>
+      <p>Repeat the six positions with f = −10 cm and fill in a second copy of the table.</p>
+      <p><b>Look for:</b> does the image ever change from virtual to real? Where is the image always found, compared with F? Explain from the equation why v is always negative: f is negative, so 1/f − 1/u is negative wherever the object is.</p>
+    </section>
+
+    <section class="card">
+      <h2>Compound lenses</h2>
+      <p>The image formed by lens 1 (I₁) becomes the object for lens 2.</p>
+      <ul>
+        <li><b>Microscope:</b> where is the object compared with F₁? Is I₁ real or virtual, magnified or diminished? Where is I₁ compared with F₂?</li>
+        <li><b>Telescope:</b> the light from a distant object arrives parallel. Where does the objective form I₁? Why is the eyepiece placed so that I₁ is just inside F₂?</li>
+      </ul>
+      <p>In both, the eyepiece acts as a magnifying glass on I₁. Compare this with position 6 on the converging tab.</p>
+    </section>
+
+    <section class="card">
+      <h2>The eye</h2>
+      <ol>
+        <li><b>Normal eye:</b> move the object from very far to 25 cm. Watch the lens. Does it get thicker or thinner as the object comes closer? Move it to 15 cm. What happens on the retina, and why?</li>
+        <li><b>Short-sighted eye:</b> find the distances where the image is blurred. Is the light focusing in front of or behind the retina? Try each type of spectacle lens and find the one that gives a sharp image of a very distant object.</li>
+        <li><b>Long-sighted eye:</b> look at 25 cm. Where is the light focusing? Find the spectacle lens that fixes it. Then keep the spectacles on and look at something very far away. What happens?</li>
+      </ol>
+      <p>Explain in one sentence each: why a short-sighted eye needs a diverging lens, and why a long-sighted eye needs a converging lens.</p>
+    </section>
+  </div>
+
+  <div id="exam" class="stack doc" hidden>
+    <section class="card">
+      <h2>Exam questions</h2>
+      <p class="note">Leaving Certificate Higher Level style. Answer in your copy first, then open the marking scheme. Mark allocations are a guide only.</p>
+    </section>
+
+    <section class="card q">
+      <h3>Question 1: Converging lens</h3>
+      <p>An object is placed 20 cm from a converging lens of focal length 15 cm.</p>
+      <ol type="i">
+        <li>Draw a ray diagram to show how the image is formed. <span class="mk">(9)</span></li>
+        <li>Calculate the position of the image. <span class="mk">(9)</span></li>
+        <li>Give two characteristics of the image. <span class="mk">(6)</span></li>
+      </ol>
+      <p>The object is now moved to 10 cm from the lens.</p>
+      <ol type="i" start="4">
+        <li>Calculate the new position of the image. <span class="mk">(9)</span></li>
+        <li>What does the sign of your answer tell you about the image? <span class="mk">(6)</span></li>
+      </ol>
+      <details><summary>Show marking scheme</summary>
+        <ol type="i">
+          <li>Ray parallel to the axis, refracted through F (3). Ray through the centre of the lens, undeviated (3). Image shown where the rays meet, inverted, beyond 2F (3).</li>
+          <li>1/15 = 1/20 + 1/v (3) → 1/v = 1/60 (3) → v = 60 cm on the opposite side of the lens (3).</li>
+          <li>Any two (3 + 3): real, inverted, magnified.</li>
+          <li>1/15 = 1/10 + 1/v (3) → 1/v = −1/30 (3) → v = −30 cm (3).</li>
+          <li>Negative, so the image is virtual (3); on the same side of the lens as the object (3). Also accept: upright, magnified.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="card q">
+      <h3>Question 2: Diverging lens</h3>
+      <p>An object is placed 30 cm from a diverging lens of focal length 20 cm.</p>
+      <ol type="i">
+        <li>Draw a ray diagram to show how the image is formed. <span class="mk">(9)</span></li>
+        <li>Calculate the position of the image. <span class="mk">(9)</span></li>
+        <li>Use the lens formula to explain why a diverging lens can never form a real image of a real object. <span class="mk">(6)</span></li>
+      </ol>
+      <details><summary>Show marking scheme</summary>
+        <ol type="i">
+          <li>Ray parallel to the axis, refracted out as if from F, with the dashed line back to F (3). Ray through the centre of the lens, undeviated (3). Upright image between F and the lens, drawn dashed (3).</li>
+          <li>f = −20 cm (3). 1/v = −1/20 − 1/30 = −1/12 (3) → v = −12 cm: virtual, 12 cm from the lens (3).</li>
+          <li>1/v = 1/f − 1/u. f is negative and u is positive, so both terms are negative (3). So 1/v is always negative and v is always negative: the image is always virtual (3).</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="card q">
+      <h3>Question 3: Experiment</h3>
+      <p>In an experiment to measure the focal length of a converging lens, a student recorded these values of the object distance u and the image distance v.</p>
+      <div class="scroll"><table class="tbl">
+        <thead><tr><th>u (cm)</th><td>20.0</td><td>25.0</td><td>30.0</td><td>40.0</td><td>50.0</td></tr></thead>
+        <tbody><tr><th>v (cm)</th><td>60.2</td><td>37.4</td><td>30.1</td><td>23.9</td><td>21.5</td></tr></tbody>
+      </table></div>
+      <ol type="i">
+        <li>Describe how the image distance was found. <span class="mk">(6)</span></li>
+        <li>Use all the data to calculate the focal length of the lens. <span class="mk">(12)</span></li>
+        <li>Explain why a graph of 1/v against 1/u is a straight line, and how f can be found from it. <span class="mk">(6)</span></li>
+        <li>Why can this method not be used directly to find the focal length of a diverging lens? <span class="mk">(6)</span></li>
+      </ol>
+      <details><summary>Show marking scheme</summary>
+        <ol type="i">
+          <li>Move a screen until a sharp image of the object (e.g. a lamp-box crosshair) forms on it (3). Measure the distance from the lens to the screen with a metre stick (3).</li>
+          <li>Use 1/f = 1/u + 1/v for each pair (3): f = 15.01, 14.98, 15.02, 14.96, 15.03 cm (6). Average f = 15.0 cm (3).</li>
+          <li>1/v = −1/u + 1/f has the form y = mx + c, so the graph is a straight line of slope −1 (3). Each intercept equals 1/f ≈ 0.067 cm⁻¹, so f ≈ 15 cm (3).</li>
+          <li>A diverging lens forms a virtual image (3), which cannot be caught on a screen, so v cannot be measured (3).</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="card q">
+      <h3>Question 4: The eye</h3>
+      <ol type="i">
+        <li>Explain how the eye focuses on objects at different distances. <span class="mk">(6)</span></li>
+        <li>A person’s near point is 60 cm. Name this defect and explain why they cannot read a book held 25 cm away. <span class="mk">(6)</span></li>
+        <li>Calculate the focal length of the spectacle lens that lets them read at 25 cm. State the type of lens. Ignore the distance between the lens and the eye. <span class="mk">(9)</span></li>
+        <li>Another person’s far point is 2 m. Calculate the focal length of the lens needed to correct their vision, and state the type of lens. <span class="mk">(9)</span></li>
+      </ol>
+      <details><summary>Show marking scheme</summary>
+        <ol type="i">
+          <li>The ciliary muscles change the shape of the lens, which changes its focal length (3). Near object: the lens becomes more rounded, with a shorter focal length; far object: thinner, with a longer focal length. This is accommodation (3).</li>
+          <li>Long sight (3). The lens cannot become rounded enough, so light from 25 cm would focus behind the retina and the image is blurred (3).</li>
+          <li>The lens must form a virtual image of the book at 60 cm, so v = −60 cm (3). 1/f = 1/25 + 1/(−60) = 7/300 (3) → f = +42.9 cm, converging (3).</li>
+          <li>Short sight. A distant object (u → ∞) must form a virtual image at 200 cm, so v = −200 cm (3). 1/f = 0 + 1/(−200) (3) → f = −200 cm, diverging (3).</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="card q">
+      <h3>Question 5: Compound lenses</h3>
+      <p>A compound microscope has an objective of focal length 5 cm and an eyepiece of focal length 10 cm, placed 25 cm apart. An object is placed 7 cm from the objective.</p>
+      <ol type="i">
+        <li>Calculate the position of the image formed by the objective. <span class="mk">(6)</span></li>
+        <li>Calculate the position of the final image. <span class="mk">(9)</span></li>
+        <li>Explain why the image formed by the objective must lie just inside the focus of the eyepiece. <span class="mk">(6)</span></li>
+      </ol>
+      <p>An astronomical telescope uses an objective of focal length 40 cm.</p>
+      <ol type="i" start="4">
+        <li>Where does the objective form the image of a distant star? Explain. <span class="mk">(6)</span></li>
+      </ol>
+      <details><summary>Show marking scheme</summary>
+        <ol type="i">
+          <li>1/5 = 1/7 + 1/v₁ (3) → v₁ = 17.5 cm from the objective (3).</li>
+          <li>u₂ = 25 − 17.5 = 7.5 cm (3). 1/10 = 1/7.5 + 1/v₂ → 1/v₂ = −1/30 (3) → v₂ = −30 cm: a virtual image 30 cm from the eyepiece, on the objective side (3).</li>
+          <li>The eyepiece then acts as a magnifying glass (3), forming a large virtual image of I₁ (3).</li>
+          <li>At the focal point of the objective, 40 cm from it (3). Light from a distant star arrives parallel, and parallel rays converge to the focus (3).</li>
+        </ol>
+      </details>
+    </section>
+  </div>
+</div>
+
+<script>
+const F = 10, H = 5, XMAX = 55, YMAX = 16;
+let type = 'conv', u = 30, far = false;
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const presetsC = [
+  ['1','Very far away',null],['2','Outside 2F',30],['3','On 2F',20],
+  ['4','Between 2F and F',15],['5','On F',10],['6','Inside F',6]];
+const presetsD = [
+  ['1','Very far away',null],['2','Outside 2F',30],['3','On 2F',20],
+  ['4','Between 2F and F',15],['5','On F',10],['6','Inside F',6]];
+
+const tok = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let W=0,Hpx=0,sx=1,sy=1;
+const X = x => W/2 + x*sx, Y = y => Hpx/2 - y*sy;
+
+function size(){
+  const r = cv.getBoundingClientRect(), d = window.devicePixelRatio||1;
+  W = r.width; Hpx = Math.max(260, Math.min(460, W*0.48));
+  cv.style.height = Hpx+'px'; cv.width = W*d; cv.height = Hpx*d;
+  ctx.setTransform(d,0,0,d,0,0);
+  sx = (W-16)/(2*XMAX); sy = (Hpx-40)/(2*YMAX);
+}
+const fs = () => type==='conv' ? F : -F;
+
+function line(x1,y1,x2,y2,col,w=2,dash=null){
+  ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=w; ctx.setLineDash(dash||[]);
+  ctx.beginPath(); ctx.moveTo(X(x1),Y(y1)); ctx.lineTo(X(x2),Y(y2)); ctx.stroke(); ctx.restore();
+}
+function arrowHead(x1,y1,x2,y2,col){ // small head at midpoint showing direction
+  const mx=(X(x1)+X(x2))/2, my=(Y(y1)+Y(y2))/2, a=Math.atan2(Y(y2)-Y(y1),X(x2)-X(x1));
+  ctx.save(); ctx.fillStyle=col; ctx.translate(mx,my); ctx.rotate(a);
+  ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(-5,-4); ctx.lineTo(-5,4); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function ray(x1,y1,x2,y2,col,dash){ line(x1,y1,x2,y2,col,2,dash); if(!dash) arrowHead(x1,y1,x2,y2,col); }
+function pin(x,h,col,dashed,label){
+  ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=3; ctx.setLineDash(dashed?[5,4]:[]);
+  ctx.beginPath(); ctx.moveTo(X(x),Y(0)); ctx.lineTo(X(x),Y(h)); ctx.stroke(); ctx.setLineDash([]);
+  const dir = h>=0?1:-1;
+  ctx.beginPath(); ctx.moveTo(X(x),Y(h)); ctx.lineTo(X(x)-6,Y(h)+8*dir); ctx.lineTo(X(x)+6,Y(h)+8*dir); ctx.closePath(); ctx.fill();
+  ctx.font='700 13px '+tok('--body'); ctx.textAlign='center';
+  ctx.fillText(label, X(x), Y(h)-(dir>0?8:-18)); ctx.restore();
+}
+const yAt = (x0,y0,s,x) => y0 + s*(x-x0);
+// End point of a ray leaving the lens: stops at the diagram edge but stays on the same straight line
+const out = (x0,y0,s) => { let x=XMAX, y=yAt(x0,y0,s,x); const L=YMAX*1.3;
+  if(Math.abs(y)>L){ y=Math.sign(y)*L; x=x0+(y-y0)/s; } return [x,y]; };
+
+function draw(){
+  const ink=tok('--ink'), muted=tok('--muted'), grid=tok('--grid'), axis=tok('--axis'),
+        r1=tok('--ray1'), r2=tok('--ray2'), img=tok('--img'), lens=tok('--lens');
+  ctx.clearRect(0,0,W,Hpx);
+  // cm grid
+  ctx.strokeStyle=grid; ctx.lineWidth=1;
+  for(let x=-50;x<=50;x+=5){ctx.beginPath();ctx.moveTo(X(x),0);ctx.lineTo(X(x),Hpx);ctx.stroke();}
+  for(let y=-15;y<=15;y+=5){ctx.beginPath();ctx.moveTo(0,Y(y));ctx.lineTo(W,Y(y));ctx.stroke();}
+  // axis + ticks
+  line(-XMAX,0,XMAX,0,axis,1.5);
+  ctx.fillStyle=muted; ctx.font='11px '+tok('--mono'); ctx.textAlign='center';
+  for(let x=-50;x<=50;x++){
+    const big=x%10===0, mid=x%5===0;
+    ctx.fillRect(X(x)-.5,Y(0)-(big?6:mid?4:2),1,(big?12:mid?8:4));
+    if(big && x!==0) ctx.fillText(Math.abs(x), X(x), Hpx-6);
+  }
+  ctx.fillText('cm', X(0), Hpx-6);
+  // lens
+  const lh=YMAX*0.95, bulge=(type==='conv'?1:-1)*1.6;
+  ctx.save(); ctx.fillStyle=tok('--lensfill'); ctx.strokeStyle=lens; ctx.lineWidth=2; ctx.beginPath();
+  if(type==='conv'){
+    ctx.moveTo(X(0),Y(lh)); ctx.quadraticCurveTo(X(bulge*2),Y(0),X(0),Y(-lh));
+    ctx.quadraticCurveTo(X(-bulge*2),Y(0),X(0),Y(lh));
+  } else {
+    const t=1.6;
+    ctx.moveTo(X(-t),Y(lh)); ctx.lineTo(X(t),Y(lh));
+    ctx.quadraticCurveTo(X(0),Y(0),X(t),Y(-lh)); ctx.lineTo(X(-t),Y(-lh));
+    ctx.quadraticCurveTo(X(0),Y(0),X(-t),Y(lh));
+  }
+  ctx.fill(); ctx.stroke(); ctx.restore();
+  // F and 2F marks
+  ctx.font='700 12px '+tok('--body'); ctx.fillStyle=ink;
+  [[-2*F,'2F'],[-F,'F'],[F,'F'],[2*F,'2F']].forEach(([x,l])=>{
+    ctx.beginPath(); ctx.arc(X(x),Y(0),3.5,0,7); ctx.fill(); ctx.fillText(l,X(x),Y(0)+18);
+  });
+
+  const f = fs();
+  if(far){
+    const s=-0.18, y0=7;
+    [[y0,r1],[0,r2]].forEach(([yl,col])=>{
+      ray(-XMAX,yAt(0,yl,s,-XMAX),0,yl,col);
+      const so=s-yl/f; ray(0,yl,...out(0,yl,so),col);
+      if(f<0) ray(0,yl,f,yAt(0,yl,so,f),col,[5,4]);
+    });
+    const yi=s*f;
+    pin(f,yi,img,f<0,'I');
+    ctx.fillStyle=muted; ctx.font='12px '+tok('--body'); ctx.textAlign='left';
+    ctx.fillText('From a very distant point, rays arrive parallel', 8, 16);
+    return;
+  }
+  const xo=-u;
+  pin(xo,H,tok('--obj'),false,'O');
+  const inv=1/f-1/u, v = Math.abs(inv)<1e-9?Infinity:1/inv;
+  // Ray 1: parallel to axis, then deviated
+  ray(xo,H,0,H,r1);
+  const s1=-H/f; ray(0,H,...out(0,H,s1),r1);
+  // Ray 2: through optical centre, undeviated
+  const s2=-H/u; ray(xo,H,0,0,r2); ray(0,0,...out(0,0,s2),r2);
+  if(!isFinite(v)) return;
+  const yi=-H*v/u;
+  if(v<0){
+    const xb=Math.max(v,-XMAX)-1.5;
+    if(f<0){ line(0,H,f,0,r1,1.6,[5,4]); }
+    else { line(0,H,xb,yAt(0,H,s1,xb),r1,1.6,[5,4]); line(0,0,xb,yAt(0,0,s2,xb),r2,1.6,[5,4]); }
+  }
+  if(Math.abs(v)<=XMAX && Math.abs(yi)<=YMAX*1.2) pin(v,yi,img,v<0,'I');
+}
+
+const fmt=(n,d=4)=>(n<0?'−':'')+Math.abs(n).toFixed(d);
+const sg=(n,d=1)=>(n<0?'−':'+')+Math.abs(n).toFixed(d);
+function nature(v){
+  if(far) return type==='conv'
+    ? {pos:'At F',nat:'Real',ori:'Inverted',sz:'Diminished'}
+    : {pos:'At F (same side)',nat:'Virtual',ori:'Upright',sz:'Diminished'};
+  if(!isFinite(v)) return {pos:'At infinity',nat:'No image',ori:'—',sz:'—'};
+  const m=Math.abs(v)/u, sz=Math.abs(m-1)<1e-6?'Same size':m>1?'Magnified':'Diminished';
+  return v>0 ? {pos:'Opposite side',nat:'Real',ori:'Inverted',sz} : {pos:'Same side as object',nat:'Virtual',ori:'Upright',sz};
+}
+function calc(){
+  const f=fs(), el=document.getElementById('calc'), rd=document.getElementById('read');
+  const fLine = type==='conv'
+    ? `f = +10 cm<span class="c">Converging lens: the focus is real, so f is positive.</span>`
+    : `f = <span class="neg">−10 cm</span><span class="c">Diverging lens: the rays only appear to come from F, so the focus is virtual and f is negative.</span>`;
+  let v, html;
+  if(far){
+    v=f;
+    html = fLine + `u → ∞<span class="c">The object is very far away, so 1/u → 0.</span>`+
+      `1/f = 1/u + 1/v<br>1/v = 1/f − 0<br>v = f = ${v>0?'+10 cm':'<span class="neg">−10 cm</span>'}`+
+      `<span class="c">${v>0?'Positive v: a real image, formed at F.':'Negative v: a virtual image at F, on the same side as the object.'} m = v/u → 0, so the image is very small.</span>`;
+  } else {
+    const inv=1/f-1/u; v = Math.abs(inv)<1e-9?Infinity:1/inv;
+    html = fLine + `u = +${u.toFixed(1)} cm<span class="c">A real object, so u is positive.</span>`+
+      `1/f = 1/u + 1/v<br>1/v = 1/f − 1/u<br>1/v = 1/(${sg(f,0)}) − 1/${u.toFixed(1)}<br>`+
+      `1/v = ${fmt(1/f)} − ${fmt(1/u)} = ${inv<0?'<span class="neg">':''}${fmt(inv)}${inv<0?'</span>':''}<br>`;
+    if(!isFinite(v)){
+      html += `v = 1/0 → ∞<span class="c">The rays leave the lens parallel and never meet, so no image is formed (image at infinity).</span>`;
+    } else {
+      const m=Math.abs(v)/u;
+      html += `v = 1/${fmt(inv)} = ${v<0?'<span class="neg">':''}${sg(v)} cm${v<0?'</span>':''}`+
+        `<span class="c">${v>0?'Positive v: a real image on the far side of the lens. Rays really meet there, so it can be caught on a screen.':'Negative v: a virtual image on the same side as the object. The rays only appear to come from it (dashed lines), so it cannot be caught on a screen.'}</span>`+
+        `m = v/u = ${Math.abs(v).toFixed(1)}/${u.toFixed(1)} = ${m.toFixed(2)}`+
+        `<span class="c">Image height = ${m.toFixed(2)} × 5 cm = ${(m*H).toFixed(1)} cm.</span>`;
+    }
+  }
+  el.innerHTML=html;
+  document.getElementById('rule').hidden = !(isFinite(v) && v<0) && f>0;
+  rd.innerHTML = `<p><b>Reading m = v/u:</b> magnification is the ratio of the image distance to the object distance. As v gets bigger, m gets bigger (v is above the line); as u gets bigger, m gets smaller (u is below the line).</p>`+
+    (type==='conv'
+      ? `<p><b>Reading 1/v = 1/f − 1/u:</b> as u gets smaller (object moves in towards F), 1/u gets bigger, so 1/v gets smaller and v gets bigger. The image moves out and grows.</p>`
+      : `<p><b>Reading 1/v = 1/f − 1/u:</b> f is negative, so 1/f − 1/u is negative wherever the object is. v is always negative: every image is virtual, upright and diminished.</p>`);
+  const n=nature(v);
+  document.getElementById('nature').innerHTML=
+    [['Position',n.pos],['Nature',n.nat],['Way up',n.ori],['Size',n.sz]].map(([a,b])=>`<div><small>${a}</small><strong>${b}</strong></div>`).join('');
+}
+function presets(){
+  const list = type==='conv'?presetsC:presetsD;
+  document.getElementById('presets').innerHTML = list.map(([n,l,val])=>
+    `<button data-u="${val===null?'far':val}" aria-pressed="${(far&&val===null)||(!far&&val===u)}"><b>${n}</b>${l}</button>`).join('');
+}
+let revealed=false;
+function setReveal(r){revealed=r;
+  document.getElementById('work').hidden=!r; document.getElementById('nature').hidden=!r;
+  document.getElementById('showBtn').textContent=r?'Hide the working':'Show the working';}
+function expectedV(){ if(far) return fs(); const i=1/fs()-1/u; return Math.abs(i)<1e-9?Infinity:1/i; }
+document.getElementById('showBtn').onclick=()=>setReveal(!revealed);
+document.getElementById('tryForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const raw=document.getElementById('vIn').value.trim(), fb=document.getElementById('fb'), v=expectedV();
+  let msg, ok=false;
+  if(!isFinite(v)){ ok=/inf|∞/i.test(raw);
+    msg = ok ? 'Correct ✓ 1/v = 0, so v is infinite: no image forms.' : 'Not quite. Look at what 1/f − 1/u comes to here. (Type “inf” for infinity.)'; }
+  else { const x=parseFloat(raw.replace(/[−–]/g,'-').replace(',','.'));
+    if(isNaN(x)) msg='Type a number, for example −15.';
+    else if(Math.abs(x-v)<=Math.max(0.15,0.02*Math.abs(v))){ ok=true;
+      msg=`Correct ✓ v = ${sg(v)} cm. ${v<0?'Negative, so the image is virtual.':'Positive, so the image is real.'} Now check it against the ray diagram.`; }
+    else if(Math.abs(Math.abs(x)-Math.abs(v))<=Math.max(0.15,0.02*Math.abs(v)))
+      msg='Right size, wrong sign. Is the image real or virtual? Virtual means negative.';
+    else msg='Not quite. Check 1/v = 1/f − 1/u and the sign of f.'; }
+  fb.textContent=msg; fb.className='fb '+(ok?'good':'bad');
+});
+function update(){
+  setReveal(false); document.getElementById('vIn').value=''; document.getElementById('fb').textContent='';
+  document.getElementById('uLab').textContent = far?'∞':u.toFixed(1);
+  if(!far) document.getElementById('u').value=u;
+  document.getElementById('lg1').textContent = type==='conv'?'Ray 1: in parallel → out through F':'Ray 1: in parallel → out as if from F';
+  presets(); draw(); calc();
+}
+document.getElementById('presets').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.u==='far') far=true; else {far=false; u=+b.dataset.u;}
+  update();
+});
+document.getElementById('u').addEventListener('input',e=>{far=false;u=+e.target.value;update();});
+let tab='conv';
+function setType(t){tab=t;
+  [['tabConv','conv'],['tabDiv','div'],['tabComp','comp'],['tabEye','eye'],['tabGuide','guide'],['tabExam','exam']].forEach(([id,k])=>document.getElementById(id).setAttribute('aria-pressed',t===k));
+  document.getElementById('tracer').hidden = t!=='conv'&&t!=='div';
+  document.getElementById('guide').hidden = t!=='guide';
+  document.getElementById('exam').hidden = t!=='exam';
+  document.getElementById('comp').hidden = t!=='comp';
+  document.getElementById('eye').hidden = t!=='eye';
+  document.getElementById('note').innerHTML = t==='comp'
+    ? 'Two lenses in a row: the image formed by lens 1 becomes the object for lens 2.'
+    : t==='guide' ? 'Work through each tab in order. Answer the questions in your copy.'
+    : t==='exam' ? 'Try each question before you open the marking scheme.'
+    : t==='eye' ? 'Move the object and watch the lens change shape to keep the image on the retina. When it reaches its limit, add spectacles.'
+    : 'Drag the object pin along the axis, or pick a position. Read <i>v</i> off the cm scale and check it against the calculation.';
+  if(t==='comp'){ size2(); upd2(); } else if(t==='eye'){ size3(); upd3(); } else if(t==='conv'||t==='div'){ type=t; size(); update(); }
+}
+document.getElementById('tabConv').onclick=()=>setType('conv');
+document.getElementById('tabDiv').onclick=()=>setType('div');
+document.getElementById('tabComp').onclick=()=>setType('comp');
+document.getElementById('tabEye').onclick=()=>setType('eye');
+document.getElementById('tabGuide').onclick=()=>setType('guide');
+document.getElementById('tabExam').onclick=()=>setType('exam');
+
+/* ---------- Compound lenses ---------- */
+const SC={
+  micro:{lenses:[{x:0,f:5,lab:'Objective'},{x:25,f:10,lab:'Eyepiece'}],obj:{x:-7,h:1},xmin:-12,xmax:42,ymax:12,
+    desc:'The objective has a short focal length. The object sits just outside F₁, so I₁ is real and magnified. I₁ lands just inside F₂, so the eyepiece acts as a magnifying glass on it and the final image is virtual and magnified again.'},
+  tele:{lenses:[{x:0,f:40,lab:'Objective'},{x:48.5,f:10,lab:'Eyepiece'}],far:-0.03,xmin:-14,xmax:66,ymax:9,
+    desc:'Light from a distant object arrives parallel, so the long-focus objective forms a real image I₁ at F₁. The eyepiece is placed so that I₁ is just inside F₂. The eyepiece acts as a magnifying glass on I₁ and forms a large virtual image.'}
+};
+let sc='micro', glasses=false, cfg=SC.micro;
+const cv2=document.getElementById('cv2'), c2=cv2.getContext('2d');
+let W2=0,H2=0,sx2=1,sy2=1;
+const X2=x=>8+(x-cfg.xmin)*sx2, Y2=y=>H2/2-y*sy2;
+function size2(){
+  const r=cv2.getBoundingClientRect(), d=window.devicePixelRatio||1;
+  W2=r.width; H2=Math.max(260,Math.min(460,W2*0.5));
+  cv2.style.height=H2+'px'; cv2.width=W2*d; cv2.height=H2*d; c2.setTransform(d,0,0,d,0,0);
+}
+const lensesNow=()=>cfg.eye&&!glasses?[cfg.lenses[1]]:cfg.lenses;
+function seg2(x1,y1,x2,y2,col,dash,w=2){c2.save();c2.strokeStyle=col;c2.lineWidth=w;c2.setLineDash(dash||[]);c2.beginPath();c2.moveTo(X2(x1),Y2(y1));c2.lineTo(X2(x2),Y2(y2));c2.stroke();c2.restore();}
+function ray2(x1,y1,x2,y2,col){
+  seg2(x1,y1,x2,y2,col);
+  if(Math.abs(X2(x2)-X2(x1))<24) return;
+  const mx=(X2(x1)+X2(x2))/2,my=(Y2(y1)+Y2(y2))/2,a=Math.atan2(Y2(y2)-Y2(y1),X2(x2)-X2(x1));
+  c2.save();c2.fillStyle=col;c2.translate(mx,my);c2.rotate(a);c2.beginPath();c2.moveTo(6,0);c2.lineTo(-5,-4);c2.lineTo(-5,4);c2.closePath();c2.fill();c2.restore();
+}
+const dashed=(x1,y1,x2,y2,col)=>seg2(x1,y1,x2,y2,col,[5,4],1.6);
+function endAt(x0,y0,s,x1){ const y=y0+s*(x1-x0), Lm=cfg.ymax*1.15;
+  if(Math.abs(y)>Lm){ const yy=Math.sign(y)*Lm; return [x0+(yy-y0)/s,yy]; } return [x1,y]; }
+function pin2(x,h,col,dash,label){
+  if(x<cfg.xmin||x>cfg.xmax||Math.abs(h)>cfg.ymax*1.15) return;
+  c2.save();c2.strokeStyle=col;c2.fillStyle=col;c2.lineWidth=3;c2.setLineDash(dash?[5,4]:[]);
+  c2.beginPath();c2.moveTo(X2(x),Y2(0));c2.lineTo(X2(x),Y2(h));c2.stroke();c2.setLineDash([]);
+  const dir=h>=0?1:-1;
+  c2.beginPath();c2.moveTo(X2(x),Y2(h));c2.lineTo(X2(x)-5,Y2(h)+7*dir);c2.lineTo(X2(x)+5,Y2(h)+7*dir);c2.closePath();c2.fill();
+  c2.font='700 13px '+tok('--body');c2.textAlign='center';c2.fillText(label,X2(x),Y2(h)-(dir>0?7:-17));c2.restore();
+}
+function lens2(Ln,lh){
+  const px=X2(Ln.x),t=Ln.f>0,b=9;
+  c2.save();c2.fillStyle=tok('--lensfill');c2.strokeStyle=tok('--lens');c2.lineWidth=2;c2.beginPath();
+  if(t){c2.moveTo(px,Y2(lh));c2.quadraticCurveTo(px+b,Y2(0),px,Y2(-lh));c2.quadraticCurveTo(px-b,Y2(0),px,Y2(lh));}
+  else{const w=6;c2.moveTo(px-w,Y2(lh));c2.lineTo(px+w,Y2(lh));c2.quadraticCurveTo(px,Y2(0),px+w,Y2(-lh));c2.lineTo(px-w,Y2(-lh));c2.quadraticCurveTo(px,Y2(0),px-w,Y2(lh));}
+  c2.fill();c2.stroke();c2.restore();
+}
+function solve(lenses){
+  const st=[]; let ob=cfg.far!==undefined?{far:true,s:cfg.far}:{x:cfg.obj.x,y:cfg.obj.h};
+  for(const Ln of lenses){
+    let u,v,img=null;
+    if(ob.far){u=Infinity;v=Ln.f;img={x:Ln.x+v,y:ob.s*Ln.f};}
+    else{u=Ln.x-ob.x;const inv=1/Ln.f-1/u;v=Math.abs(inv)<1e-9?Infinity:1/inv;if(isFinite(v))img={x:Ln.x+v,y:-ob.y*v/u};}
+    st.push({L:Ln,ob,u,v,img});
+    if(!img) break;
+    ob={x:img.x,y:img.y};
+  }
+  return st;
+}
+function draw2(){
+  cfg=SC[sc]; sx2=(W2-16)/(cfg.xmax-cfg.xmin); sy2=(H2-56)/(2*cfg.ymax);
+  const ink=tok('--ink'),muted=tok('--muted'),grid=tok('--grid'),axis=tok('--axis');
+  const cols=[[tok('--ray1'),tok('--ray2')],[tok('--ray3'),tok('--ray4')]];
+  c2.clearRect(0,0,W2,H2);
+  c2.strokeStyle=grid;c2.lineWidth=1;
+  for(let x=Math.ceil(cfg.xmin/5)*5;x<=cfg.xmax;x+=5){c2.beginPath();c2.moveTo(X2(x),0);c2.lineTo(X2(x),H2);c2.stroke();}
+  for(let y=-Math.floor(cfg.ymax/5)*5;y<=cfg.ymax;y+=5){c2.beginPath();c2.moveTo(0,Y2(y));c2.lineTo(W2,Y2(y));c2.stroke();}
+  seg2(cfg.xmin,0,cfg.xmax,0,axis,null,1.5);
+  c2.fillStyle=muted;c2.font='11px '+tok('--mono');c2.textAlign='center';
+  for(let x=Math.ceil(cfg.xmin/10)*10;x<=cfg.xmax;x+=10){c2.fillRect(X2(x)-.5,Y2(0)-5,1,10);c2.fillText(x,X2(x),H2-6);}
+  const lenses=lensesNow(), n=lenses.length, st=solve(lenses), lh=cfg.ymax*0.85;
+  if(cfg.retina!==undefined){
+    c2.save();c2.strokeStyle=ink;c2.lineWidth=4;c2.beginPath();c2.moveTo(X2(cfg.retina),Y2(lh*0.8));c2.lineTo(X2(cfg.retina),Y2(-lh*0.8));c2.stroke();
+    c2.fillStyle=ink;c2.font='700 12px '+tok('--body');c2.textAlign='center';c2.fillText('Retina',X2(cfg.retina),Y2(-lh*0.8)+16);c2.restore();
+  }
+  lenses.forEach(Ln=>lens2(Ln,lh));
+  c2.font='700 12px '+tok('--body');c2.fillStyle=ink;
+  const close=n>1&&Math.abs(X2(lenses[1].x)-X2(lenses[0].x))<120;
+  lenses.forEach((Ln,i)=>{
+    c2.textAlign=close?(i?'left':'right'):'center';
+    c2.fillText(Ln.lab,X2(Ln.x)+(close?(i?6:-6):0),Y2(lh)-6);
+    const sub=n>1?['₁','₂'][i]:'';
+    [Ln.x+Ln.f,Ln.x-Ln.f].forEach(x=>{ if(x<cfg.xmin||x>cfg.xmax) return;
+      c2.beginPath();c2.arc(X2(x),Y2(0),3.5,0,7);c2.fill();
+      c2.textAlign='center';c2.fillText('F'+sub,X2(x),Y2(0)+(i?-9:18)); });
+  });
+  st.forEach((S,i)=>{
+    const xL=S.L.x,f=S.L.f,xp=i>0?lenses[i-1].x:null,xn=i<n-1?lenses[i+1].x:null;
+    const real=S.img&&S.img.x>xL, last=i===n-1;
+    let stop=xn!==null?((real&&S.img.x<xn)?S.img.x:xn):(cfg.retina!==undefined?cfg.retina:cfg.xmax);
+    const rays=S.ob.far
+      ? [{y0:cfg.ymax*0.5,sin:S.ob.s,col:cols[i][0]},{y0:0,sin:S.ob.s,col:cols[i][1]}]
+      : [{y0:S.ob.y,sin:0,col:cols[i][0]},{y0:0,sin:-S.ob.y/S.u,col:cols[i][1]}];
+    rays.forEach(R=>{
+      const yIn=x=>R.y0+R.sin*(x-xL);
+      if(S.ob.far) ray2(cfg.xmin,yIn(cfg.xmin),xL,R.y0,R.col);
+      else if(i===0) ray2(S.ob.x,yIn(S.ob.x),xL,R.y0,R.col);
+      else{const ox=S.ob.x;
+        if(ox<xp){dashed(ox,yIn(ox),xp,yIn(xp),R.col);ray2(xp,yIn(xp),xL,R.y0,R.col);}
+        else if(ox<xL) ray2(ox,yIn(ox),xL,R.y0,R.col);
+        else{ray2(xp,yIn(xp),xL,R.y0,R.col);dashed(xL,R.y0,ox,yIn(ox),R.col);}
+      }
+      const so=R.sin-R.y0/f, [ex,ey]=endAt(xL,R.y0,so,stop);
+      ray2(xL,R.y0,ex,ey,R.col);
+      if(last&&cfg.retina!==undefined&&real&&S.img.x>cfg.retina){const [bx,by]=endAt(xL,R.y0,so,S.img.x);dashed(ex,ey,bx,by,R.col);}
+      if(S.img&&!real){let xb=S.img.x; if(f<0&&R.sin===0&&!S.ob.far) xb=Math.min(xb,xL+f);
+        xb=Math.max(xb,cfg.xmin);const [bx,by]=endAt(xL,R.y0,so,xb);dashed(xL,R.y0,bx,by,R.col);}
+    });
+  });
+  if(!cfg.far&&cfg.far!==0&&cfg.obj) pin2(cfg.obj.x,cfg.obj.h,tok('--obj'),false,'O');
+  st.forEach((S,i)=>{ if(!S.img) return;
+    const virt=S.img.x<S.L.x, behind=i===n-1&&cfg.retina!==undefined&&S.img.x>cfg.retina+0.2;
+    pin2(S.img.x,S.img.y,tok('--img'),virt||behind,n>1?['I₁','I₂'][i]:'I'); });
+  if(cfg.far!==undefined){c2.fillStyle=muted;c2.font='12px '+tok('--body');c2.textAlign='left';c2.fillText('Rays from a very distant object arrive parallel',8,16);}
+}
+function calc2(){
+  const lenses=lensesNow(),n=lenses.length,st=solve(lenses);
+  const neg=(s,b)=>b?`<span class="neg">${s}</span>`:s;
+  let h='';
+  st.forEach((S,i)=>{
+    const sub=n>1?['₁','₂'][i]:'',f=S.L.f;
+    h+=`<b>${n>1?'Lens '+(i+1)+': ':''}${S.L.lab}</b><br>`;
+    h+=`f${sub} = ${neg(sg(f)+' cm',f<0)}<span class="c">${f>0?'Converging: real focus, so f is positive.':'Diverging: virtual focus, so f is negative.'}</span>`;
+    if(S.ob.far) h+=`u${sub} → ∞<span class="c">Very distant object, so 1/u → 0.</span>`;
+    else if(i===0) h+=`u${sub} = ${sg(S.u)} cm<span class="c">A real object, so u is positive.</span>`;
+    else{const d=S.L.x-lenses[i-1].x,v1=st[i-1].v;
+      h+=`u₂ = d − v₁ = ${d.toFixed(1)} − (${sg(v1)}) = ${neg(sg(S.u),S.u<0)} cm<span class="c">The image from lens 1 is the object for lens 2. d is the distance between the lenses.${v1<0?' v₁ is negative, so I₁ is on the object side of lens 1 and u₂ is bigger than d.':''}</span>`;}
+    if(S.ob.far) h+=`1/v${sub} = 1/f${sub} − 0, so v${sub} = f${sub} = ${neg(sg(S.v)+' cm',S.v<0)}`;
+    else{const inv=1/f-1/S.u;
+      h+=`1/v${sub} = 1/f${sub} − 1/u${sub}<br>1/v${sub} = ${fmt(1/f)} − ${fmt(1/S.u)} = ${neg(fmt(inv),inv<0)}<br>`;
+      h+=isFinite(S.v)?`v${sub} = ${neg(sg(S.v)+' cm',S.v<0)}`:`v${sub} = 1/0 → ∞`;}
+    const c=!isFinite(S.v)?'The light leaves parallel, so the final image is at infinity. A relaxed eye views it.'
+      :S.v>0?'Positive: a real image, where rays really meet.':'Negative: a virtual image, on the same side as the object. Rays only appear to come from it.';
+    h+=`<span class="c">${c}</span>`;
+  });
+  if(sc==='micro'&&n===2){const m1=Math.abs(st[0].v)/st[0].u,m2=Math.abs(st[1].v)/st[1].u;
+    h+=`<b>Magnification</b><br>m₁ = v₁/u₁ = ${Math.abs(st[0].v).toFixed(1)}/${st[0].u.toFixed(1)} = ${m1.toFixed(2)}<br>m₂ = v₂/u₂ = ${Math.abs(st[1].v).toFixed(1)}/${st[1].u.toFixed(1)} = ${m2.toFixed(2)}<br>m = m₁ × m₂ = ${(m1*m2).toFixed(1)}<span class="c">Lens 2 magnifies the image made by lens 1, so the magnifications multiply.</span>`;}
+  if(cfg.eye){const v=st[n-1].v,ok=Math.abs(v-cfg.retina)<0.15;
+    h+=`<b>Check against the retina</b><br>retina = ${cfg.retina.toFixed(1)} cm behind the eye lens<span class="c">${ok?'v equals the retina distance: a sharp image on the retina ✓'
+      :v<cfg.retina?'v is less than the retina distance: the image forms in front of the retina, so it is blurred. A diverging lens is needed.'
+      :'v is more than the retina distance: the image would form behind the retina, so it is blurred. A converging lens is needed.'}</span>`;}
+  document.getElementById('calc2').innerHTML=h;
+}
+function upd2(){
+  cfg=SC[sc];
+  document.querySelectorAll('#scen button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===sc));
+  document.getElementById('desc').textContent=cfg.desc;
+  draw2(); calc2();
+}
+document.getElementById('scen').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;sc=b.dataset.s;glasses=false;upd2();});
+/* ---------- The eye ---------- */
+const RET=10, DS=5, PA=1.3, OH=3, SFAR=-0.08, EX0=-31, EX1=12, EY=6.8, EC=4, ER=6;
+const nearF=np=>1/(1/np+1/RET);
+const EYES={
+  normal:{name:'Normal eye',np:25,fp:Infinity,fmin:nearF(25),fmax:10,
+    desc:'Sees clearly from its near point (25 cm) out to infinity (its far point).',hint:''},
+  short:{name:'Short-sighted eye',np:12,fp:40,fmin:nearF(12),fmax:nearF(40),
+    desc:'Near point 12 cm, far point 40 cm. Beyond 40 cm the lens cannot get thin enough, so light focuses in front of the retina.',
+    hint:'Correct it with a diverging lens. Try f = −35 cm: it makes a distant object appear at the far point.'},
+  long:{name:'Long-sighted eye',np:60,fp:Infinity,fmin:nearF(60),fmax:11,
+    desc:'Near point 60 cm. Closer than 60 cm the lens cannot get round enough, so light would focus behind the retina.',
+    hint:'Correct it with a converging lens. Try f = +31.5 cm: it makes an object at 25 cm appear at the near point. Then look at something very far with the spectacles still on.'}
+};
+let eyeType='normal', uE=Infinity, spec={t:0,f:35}, fd=null, raf=0;
+const cv3=document.getElementById('cv3'), c3=cv3.getContext('2d');
+let W3=0,H3=0,s3=1;
+const X3=x=>8+(x-EX0)*s3, Y3=y=>14+(EY-y)*s3;
+function size3(){
+  const r=cv3.getBoundingClientRect(), d=window.devicePixelRatio||1;
+  W3=r.width; s3=(W3-16)/(EX1-EX0); H3=2*EY*s3+40;
+  cv3.style.height=H3+'px'; cv3.width=W3*d; cv3.height=H3*d; c3.setTransform(d,0,0,d,0,0);
+}
+function eyeSolve(){
+  const E=EYES[eyeType], far=!isFinite(uE); let sp=null,o2;
+  if(spec.t){ const fs=spec.t*spec.f, xs=-DS;
+    if(far){ sp={fs,u:Infinity,v:fs}; o2={x:xs+fs,y:SFAR*fs}; }
+    else { const u1=uE-DS, inv=1/fs-1/u1;
+      if(Math.abs(inv)<1e-9){ sp={fs,u:u1,v:Infinity}; o2={dir:-OH/u1}; }
+      else { const v1=1/inv; sp={fs,u:u1,v:v1}; o2={x:xs+v1,y:-OH*v1/u1}; } }
+  } else o2=far?{dir:SFAR}:{x:-uE,y:OH};
+  const u2=o2.dir!==undefined?Infinity:-o2.x;
+  const k=1/u2+1/RET, need=k>0?1/k:Infinity;
+  const f=Math.min(E.fmax,Math.max(E.fmin,need));
+  const vOf=ff=>{const i=1/ff-1/u2; return Math.abs(i)<1e-9?Infinity:1/i;};
+  const v=vOf(f), sharp=isFinite(v)&&Math.abs(v-RET)<0.12;
+  return {E,far,sp,o2,u2,need,f,v,sharp,vOf};
+}
+function seg3(x1,y1,x2,y2,col,dash,w=2){c3.save();c3.strokeStyle=col;c3.lineWidth=w;c3.setLineDash(dash||[]);c3.beginPath();c3.moveTo(X3(x1),Y3(y1));c3.lineTo(X3(x2),Y3(y2));c3.stroke();c3.restore();}
+function ray3(x1,y1,x2,y2,col){
+  seg3(x1,y1,x2,y2,col);
+  if(Math.abs(X3(x2)-X3(x1))<30) return;
+  const mx=(X3(x1)+X3(x2))/2,my=(Y3(y1)+Y3(y2))/2,a=Math.atan2(Y3(y2)-Y3(y1),X3(x2)-X3(x1));
+  c3.save();c3.fillStyle=col;c3.translate(mx,my);c3.rotate(a);c3.beginPath();c3.moveTo(6,0);c3.lineTo(-5,-4);c3.lineTo(-5,4);c3.closePath();c3.fill();c3.restore();
+}
+function pin3(x,h,col,dash,label){
+  if(x<EX0||x>EX1||Math.abs(h)>EY) return;
+  c3.save();c3.strokeStyle=col;c3.fillStyle=col;c3.lineWidth=3;c3.setLineDash(dash?[5,4]:[]);
+  c3.beginPath();c3.moveTo(X3(x),Y3(0));c3.lineTo(X3(x),Y3(h));c3.stroke();c3.setLineDash([]);
+  const dir=h>=0?1:-1;
+  c3.beginPath();c3.moveTo(X3(x),Y3(h));c3.lineTo(X3(x)-5,Y3(h)+7*dir);c3.lineTo(X3(x)+5,Y3(h)+7*dir);c3.closePath();c3.fill();
+  c3.font='700 13px '+tok('--body');c3.textAlign='center';c3.fillText(label,X3(x),Y3(h)-(dir>0?7:-17));c3.restore();
+}
+function label3(t,x,y,align='center'){c3.fillStyle=tok('--ink');c3.font='700 12px '+tok('--body');c3.textAlign=align;c3.fillText(t,X3(x),Y3(y));}
+function drawEye(){
+  const S=eyeSolve(), f=fd===null?S.f:fd;
+  const muted=tok('--muted'),grid=tok('--grid'),axis=tok('--axis'),r1=tok('--ray1'),r2=tok('--ray2'),neg=tok('--neg');
+  c3.clearRect(0,0,W3,H3);
+  c3.strokeStyle=grid;c3.lineWidth=1;
+  for(let x=-30;x<=EX1;x+=5){c3.beginPath();c3.moveTo(X3(x),0);c3.lineTo(X3(x),H3);c3.stroke();}
+  seg3(EX0,0,EX1,0,axis,null,1.5);
+  c3.fillStyle=muted;c3.font='11px '+tok('--mono');c3.textAlign='center';
+  for(let x=-30;x<=10;x+=10){c3.fillRect(X3(x)-.5,Y3(0)-5,1,10);c3.fillText(Math.abs(x),X3(x),H3-6);}
+  // eyeball, retina, cornea, iris
+  c3.save();c3.fillStyle=tok('--eyefill');c3.strokeStyle=axis;c3.lineWidth=1.5;
+  c3.beginPath();c3.arc(X3(EC),Y3(0),ER*s3,0,7);c3.fill();c3.stroke();
+  c3.strokeStyle=tok('--retina');c3.lineWidth=5;c3.beginPath();c3.arc(X3(EC),Y3(0),ER*s3,-0.95,0.95);c3.stroke();
+  const yc=3.4, xc=EC-Math.sqrt(ER*ER-yc*yc), tip=-3.1;
+  c3.fillStyle=tok('--eyefill');c3.strokeStyle=tok('--lens');c3.lineWidth=2.5;c3.beginPath();
+  c3.moveTo(X3(xc),Y3(yc));c3.quadraticCurveTo(X3(2*tip-xc),Y3(0),X3(xc),Y3(-yc));c3.fill();c3.stroke();
+  const xi=-0.9, ye=Math.sqrt(ER*ER-(xi-EC)**2);
+  c3.strokeStyle=tok('--iris');c3.lineWidth=6;c3.lineCap='round';
+  c3.beginPath();c3.moveTo(X3(xi),Y3(PA*1.2));c3.lineTo(X3(xi),Y3(ye-0.2));c3.moveTo(X3(xi),Y3(-PA*1.2));c3.lineTo(X3(xi),Y3(-ye+0.2));c3.stroke();
+  c3.restore();
+  // adjustable lens: thicker for shorter f
+  const t=Math.max(0.3,0.35+30*(1/f-1/12)), lh=2.3;
+  c3.save();c3.fillStyle=tok('--lensfill');c3.strokeStyle=tok('--lens');c3.lineWidth=2;c3.beginPath();
+  c3.moveTo(X3(0),Y3(lh));c3.quadraticCurveTo(X3(t),Y3(0),X3(0),Y3(-lh));c3.quadraticCurveTo(X3(-t),Y3(0),X3(0),Y3(lh));c3.fill();c3.stroke();c3.restore();
+  // spectacles
+  if(spec.t){ const px=X3(-DS),h=4.5;
+    c3.save();c3.fillStyle=tok('--lensfill');c3.strokeStyle=tok('--lens');c3.lineWidth=2;c3.beginPath();
+    if(spec.t>0){c3.moveTo(px,Y3(h));c3.quadraticCurveTo(px+10,Y3(0),px,Y3(-h));c3.quadraticCurveTo(px-10,Y3(0),px,Y3(h));}
+    else{const w=6;c3.moveTo(px-w,Y3(h));c3.lineTo(px+w,Y3(h));c3.quadraticCurveTo(px,Y3(0),px+w,Y3(-h));c3.lineTo(px-w,Y3(-h));c3.quadraticCurveTo(px,Y3(0),px-w,Y3(h));}
+    c3.fill();c3.stroke();c3.restore();
+    label3('Spectacles',-DS,h+0.5);
+  }
+  // rays: aimed at the top, centre and bottom of the pupil
+  const v=S.vOf(f), hits=[];
+  [PA,0,-PA].forEach((y0,i)=>{
+    const col=i===1?r2:r1;
+    const sin=S.o2.dir!==undefined?S.o2.dir:(y0-S.o2.y)/(0-S.o2.x);
+    const yL=x=>y0+sin*x;
+    if(spec.t){
+      const yh=yL(-DS);
+      if(S.far) ray3(EX0,yh+SFAR*(EX0+DS),-DS,yh,col);
+      else{const ox=-uE,sl=(yh-OH)/(-DS-ox),x0=Math.max(ox,EX0);ray3(x0,OH+sl*(x0-ox),-DS,yh,col);}
+      seg3(-DS,yh,0,y0,col);
+    } else {
+      const x0=S.far?EX0:Math.max(-uE,EX0); ray3(x0,yL(x0),0,y0,col);
+    }
+    const so=sin-y0/f, a=1+so*so, b=2*(y0*so-EC), c=EC*EC+y0*y0-ER*ER;
+    const xh=(-b+Math.sqrt(b*b-4*a*c))/(2*a), yh=y0+so*xh;
+    seg3(0,y0,xh,yh,col); hits.push([xh,yh]);
+    if(isFinite(v)&&v>xh+0.05) seg3(xh,yh,Math.min(v,EX1),y0+so*Math.min(v,EX1),col,[4,4],1.5);
+  });
+  const ys=hits.map(p=>p[1]), spread=Math.max(...ys)-Math.min(...ys);
+  c3.save();
+  if(spread<0.15){ const yi=ys[1]; c3.fillStyle=tok('--img');c3.beginPath();c3.arc(X3(hits[1][0]),Y3(yi),5,0,7);c3.fill();
+    label3('Sharp',EX1,-EY+0.6,'right'); }
+  else{ const lo=Math.min(...ys),hi=Math.max(...ys),a0=Math.asin(-hi/ER),a1=Math.asin(-lo/ER);
+    c3.strokeStyle=neg;c3.lineWidth=9;c3.globalAlpha=.55;c3.beginPath();c3.arc(X3(EC),Y3(0),ER*s3,a0,a1);c3.stroke();c3.globalAlpha=1;
+    c3.fillStyle=neg;c3.font='700 12px '+tok('--body');c3.textAlign='right';c3.fillText('Blurred',X3(EX1),Y3(-EY+0.6)); }
+  c3.restore();
+  label3('Cornea',-3.4,4.2,'right'); label3('Iris',-0.9,ye+0.5); label3('Lens',0,-lh-2.6); label3('Retina',EC+ER*0.7,-ER*0.8,'left');
+  if(!S.far&&uE<=-EX0-1) pin3(-uE,OH,tok('--obj'),false,'O');
+  c3.fillStyle=muted;c3.font='12px '+tok('--body');c3.textAlign='left';
+  if(S.far) c3.fillText('Very distant object: rays arrive parallel',8,14);
+  else if(uE>-EX0-1) c3.fillText(`Object ${uE} cm away (off the diagram to the left)`,8,14);
+}
+function animEye(){
+  cancelAnimationFrame(raf);
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const step=()=>{ const t=eyeSolve().f;
+    if(fd===null||reduce||Math.abs(fd-t)<0.004) fd=t; else fd+=(t-fd)*0.12;
+    drawEye(); if(fd!==t) raf=requestAnimationFrame(step); };
+  step();
+}
+function eyeCalc(){
+  const S=eyeSolve(),E=S.E,ng=(s,b)=>b?`<span class="neg">${s}</span>`:s;
+  let h=`<b>${E.name}</b><span class="c">Near point ${E.np} cm, far point ${isFinite(E.fp)?E.fp+' cm':'infinity'}. The lens can range from f = ${E.fmin.toFixed(2)} cm (most rounded) to f = ${E.fmax.toFixed(2)} cm (thinnest).</span>`;
+  if(S.sp){const p=S.sp,i1=1/p.fs-(isFinite(p.u)?1/p.u:0);
+    h+=`<b>Spectacles</b><br>f = ${ng(sg(p.fs)+' cm',p.fs<0)}<span class="c">${p.fs>0?'Converging: real focus, so f is positive.':'Diverging: virtual focus, so f is negative.'}</span>`;
+    h+=S.far?`u₁ → ∞, so v₁ = f = ${ng(sg(p.v)+' cm',p.v<0)}`
+      :`u₁ = ${uE} − ${DS} = ${sg(p.u)} cm<span class="c">The spectacles sit ${DS} cm in front of the eye lens.</span>1/v₁ = 1/f − 1/u₁ = ${fmt(1/p.fs)} − ${fmt(1/p.u)} = ${ng(fmt(i1),i1<0)}<br>v₁ = ${isFinite(p.v)?ng(sg(p.v)+' cm',p.v<0):'∞'}`;
+    h+=`<span class="c">${!isFinite(p.v)?'The light leaves the spectacles parallel.':p.v<0?'Negative: a virtual image I₁ in front of the spectacles. The eye looks at I₁.':'Positive: the light converges towards a point behind the spectacles.'}</span>`;
+    h+=isFinite(S.u2)?`u for the eye = ${DS} − v₁ = ${ng(sg(S.u2)+' cm',S.u2<0)}<span class="c">${S.u2<0?'Negative: the light is already converging when it reaches the eye lens (a virtual object).':'I₁ is the object for the eye lens.'}</span>`
+      :`u for the eye → ∞<span class="c">Parallel light reaches the eye lens.</span>`;
+  }
+  h+=`<b>Eye lens</b><br>v = +${RET.toFixed(1)} cm<span class="c">The image must land on the retina.</span>`;
+  if(!S.sp) h+=isFinite(S.u2)?`u = ${sg(S.u2)} cm<br>`:`u → ∞, so 1/u → 0<br>`;
+  const iu=isFinite(S.u2)?1/S.u2:0;
+  h+=`1/f = 1/u + 1/v = ${fmt(iu)} + ${fmt(1/RET)} = ${ng(fmt(iu+1/RET),iu+1/RET<0)}<br>f needed = ${isFinite(S.need)?S.need.toFixed(2)+' cm':'—'}`;
+  if(S.sharp) h+=`<span class="c">This is within the lens’s range, so the lens changes shape to f = ${S.f.toFixed(2)} cm. The image is sharp ✓</span>`;
+  else{const thin=S.need>E.fmax;
+    h+=`<span class="c">${thin?`The lens cannot get thinner than f = ${E.fmax.toFixed(2)} cm.`:`The lens cannot get more rounded than f = ${E.fmin.toFixed(2)} cm.`}</span>`;
+    h+=`With f = ${S.f.toFixed(2)} cm:<br>1/v = 1/f − 1/u = ${fmt(1/S.f)} − ${fmt(iu)} = ${fmt(1/S.f-iu)}<br>v = ${isFinite(S.v)?sg(S.v)+' cm':'∞'}`;
+    h+=`<span class="c">${thin?'v is less than 10 cm: the image forms in front of the retina, so it is blurred. A diverging lens moves it back onto the retina.':'v is more than 10 cm: the image would form behind the retina, so it is blurred. A converging lens moves it forward onto the retina.'}</span>`;}
+  const where=S.sharp?'On the retina':(S.need>E.fmax?'In front of the retina':'Behind the retina');
+  const shape=S.sharp?'Adjusted to focus':(S.need>E.fmax?'As thin as it can go':'As round as it can go');
+  document.getElementById('eyeStat').innerHTML=[['Lens',shape],['Image',S.sharp?'Sharp':'Blurred'],['Light focuses',where]]
+    .map(([a,b])=>`<div><small>${a}</small><strong>${b}</strong></div>`).join('');
+}
+function upd3(){
+  const E=EYES[eyeType];
+  document.getElementById('ueLab').textContent=isFinite(uE)?uE+' cm':'∞ (very far)';
+  document.getElementById('ue').value=isFinite(uE)?uE:301;
+  document.querySelectorAll('#eyeType button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.e===eyeType));
+  document.querySelectorAll('#uePre button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.u==='far'?!isFinite(uE):+b.dataset.u===uE));
+  document.querySelectorAll('#specType button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.t===spec.t));
+  document.getElementById('specRow').hidden=!spec.t;
+  document.getElementById('sf').value=spec.f;
+  document.getElementById('sfLab').textContent=sg(spec.t*spec.f)+' cm';
+  document.getElementById('eyeDesc').textContent=E.desc+(E.hint?' '+E.hint:'');
+  eyeCalc(); animEye();
+}
+document.getElementById('eyeType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;eyeType=b.dataset.e;spec.t=0;upd3();});
+document.getElementById('uePre').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;uE=b.dataset.u==='far'?Infinity:+b.dataset.u;upd3();});
+document.getElementById('specType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;spec.t=+b.dataset.t;upd3();});
+document.getElementById('ue').addEventListener('input',e=>{const x=+e.target.value;uE=x>300?Infinity:x;upd3();});
+document.getElementById('sf').addEventListener('input',e=>{spec.f=+e.target.value;upd3();});
+const redraw=()=>{ if(tab==='comp') draw2(); else if(tab==='eye') drawEye(); else if(tab==='conv'||tab==='div') draw(); };
+
+let drag=false;
+cv.addEventListener('pointerdown',e=>{
+  const r=cv.getBoundingClientRect(), x=e.clientX-r.left;
+  if(far || Math.abs(x-X(-u))<22){drag=true; cv.setPointerCapture(e.pointerId); move(e);}
+});
+function move(e){
+  if(!drag) return;
+  const r=cv.getBoundingClientRect(); let xw=(e.clientX-r.left-W/2)/sx;
+  far=false; u=Math.min(50,Math.max(3,Math.round(-xw*2)/2)); update();
+}
+cv.addEventListener('pointermove',move);
+cv.addEventListener('pointerup',()=>drag=false);
+cv.addEventListener('pointercancel',()=>drag=false);
+
+window.addEventListener('resize',()=>{ if(tab==='comp'){size2();draw2();} else if(tab==='eye'){size3();drawEye();} else if(tab==='conv'||tab==='div'){size();draw();} });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redraw);
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+document.fonts && document.fonts.ready.then(redraw);
+size(); update();
+</script>
+
+</body></html>
