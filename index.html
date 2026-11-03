@@ -30,6 +30,18 @@ a.card strong{font-size:16px}
 a.card span{color:var(--muted);font-size:14px}
 a.card .go{color:var(--copper);font-weight:600;font-size:13px;margin-top:auto}
 footer{margin-top:40px;color:var(--muted);font-size:13px}
+/* Start here: the fundamentals feature, above the applet list */
+.feature{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--copper);border-radius:12px;padding:20px 22px;margin:0 0 8px}
+.feature h2{border:0;margin:2px 0 6px;padding:0;font-size:clamp(26px,4.5vw,34px)}
+.feature p{margin:0 0 14px;max-width:68ch}
+.trio{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.trio span{background:var(--band);border-radius:999px;padding:4px 12px;font-weight:600;font-size:14px}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-block;padding:10px 16px;border-radius:8px;font-weight:600;text-decoration:none;border:1px solid var(--copper)}
+.btn.primary{background:var(--copper);color:#fff}
+.btn.ghost{color:var(--copper)}
+.btn:hover,.btn:focus-visible{filter:brightness(1.08);outline:none}
+.feature .note{color:var(--muted);font-size:13px;margin:14px 0 0}
 </style>
 </head>
 <body>
@@ -37,6 +49,17 @@ footer{margin-top:40px;color:var(--muted);font-size:13px}
   <div class="eyebrow">PBC Science · Leaving Certificate Physics</div>
   <h1>Physics Applets</h1>
   <p class="lede">Interactive models and virtual experiments, in the order we cover them. They work on laptops, Chromebooks, tablets and phones.</p>
+  <section class="feature" id="fundamentals">
+    <div class="eyebrow">Start here · The fundamentals</div>
+    <h2>Physics by Log Tables</h2>
+    <p>Everything else on this site is built on one idea: a definition, an equation and a unit are the same statement written three ways. Learn to read the Formulae and Tables booklet and you get the definitions, units and experiment graphs for free.</p>
+    <div class="trio"><span>Definition</span><span>Equation</span><span>Unit</span></div>
+    <div class="btns">
+      <a class="btn primary" href="fundamentals/physics-by-log-tables.pdf">Open Physics by Log Tables</a>
+      <a class="btn ghost" href="fundamentals/physics-by-log-tables.pdf" download>Download PDF</a>
+    </div>
+    <p class="note">Each page is matched to the page of the same number in your Formulae and Tables booklet, so keep your copy open beside it. Yellow is on our course; coloured notes show what is on the new specification.</p>
+  </section>
   <main id="list"></main>
   <footer>New applets are added as the course goes on.</footer>
 </div>
