@@ -1,0 +1,609 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Critical Angle Lab</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap">
+<style>
+/* Layout: a lab-bench page. Sticky equation bar on top, then physics → guided bench → results → graph → questions. */
+:root{
+  --bg:#f5f7f9; --surface:#ffffff; --paper:#fbfcfd; --grid:#e3e9ef;
+  --fg:#16202b; --muted:#5a6675; --line:#d5dde5;
+  --ink:#1f4fa3; --ink-soft:#e4ecf8;
+  --beam:#f2b632; --shadow:#2a2418; --glass:#cfe7ee; --glass-edge:#6aa8b8;
+  --pencil:#3b4450; --mark:#c2412d; --ok:#2f7d4f;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-math:"STIX Two Text", "Cambria Math", "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --surface:#161d25; --paper:#141a21; --grid:#222c37;
+  --fg:#e6ebf1; --muted:#9aa6b4; --line:#2b3642;
+  --ink:#8db4ff; --ink-soft:#1c2a40;
+  --beam:#f2b632; --shadow:#0b0906; --glass:#1e3a44; --glass-edge:#5fa3b5;
+  --pencil:#c3cbd5; --mark:#ff7a63; --ok:#5fc48a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#161d25; --paper:#141a21; --grid:#222c37;
+  --fg:#e6ebf1; --muted:#9aa6b4; --line:#2b3642;
+  --ink:#8db4ff; --ink-soft:#1c2a40;
+  --beam:#f2b632; --shadow:#0b0906; --glass:#1e3a44; --glass-edge:#5fa3b5;
+  --pencil:#c3cbd5; --mark:#ff7a63; --ok:#5fc48a; color-scheme:dark}
+
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,5vw,3rem);font-weight:700}
+h2{font-size:1.6rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:700}
+p{margin:0}
+.eyebrow{font:500 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.m{font-family:var(--f-math);font-style:italic}
+.mono{font-family:var(--f-mono)}
+
+/* Equation bar */
+.eqbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.eqbar .wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-block:10px}
+.eqbar .big{font:400 1.45rem var(--f-math)}
+.eqbar .big i{font-style:italic}
+.eqbar .alt{font:400 1.05rem var(--f-math);color:var(--muted)}
+.eqbar .tag{margin-left:auto;font:500 .72rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+
+header.hero .wrap{padding-block:40px 24px;display:grid;gap:12px}
+header.hero p.lead{font-size:1.1rem;max-width:62ch;color:var(--muted)}
+
+section .wrap{padding-block:36px;display:grid;gap:20px}
+section+section .wrap{border-top:1px solid var(--line)}
+.intro{max-width:66ch;color:var(--muted)}
+
+/* WHAT / HOW / HOW */
+.whh{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px;align-content:start;min-width:0}
+.card .q{font:700 1.3rem var(--f-display);color:var(--ink)}
+.card ul{margin:0;padding-left:1.1em;display:grid;gap:6px}
+.defrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px}
+.formula{font:400 1.25rem var(--f-math);padding:8px 0}
+
+/* Bench */
+.bench{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+.canvasbox{background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+canvas{display:block;width:100%;height:auto}
+.steps{display:grid;gap:14px;min-width:0}
+.stepnav{display:flex;gap:6px;flex-wrap:wrap}
+.stepnav button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:500 .8rem var(--f-mono);cursor:pointer}
+.stepnav button.on{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.stepnav button.done{border-color:var(--ink);color:var(--ink)}
+.steptext{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px}
+.steptext .why{border-left:3px solid var(--ink);padding-left:12px;color:var(--muted);font-size:.95rem}
+.steptext .link{background:var(--ink-soft);border-radius:8px;padding:10px 12px;font-size:.95rem}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:500 .92rem var(--f-body);padding:9px 14px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:focus-visible,.stepnav button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.slider{display:grid;gap:4px}
+.slider label{font-size:.9rem;color:var(--muted)}
+.slider output{font:500 1rem var(--f-mono);color:var(--fg)}
+input[type=range]{width:100%;accent-color:var(--ink)}
+
+/* Table */
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:520px}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line)}
+th{font:500 .78rem var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+th:first-child,td:first-child{text-align:left}
+td{font-family:var(--f-mono);font-size:.92rem}
+tfoot td{font-weight:500;border-bottom:none}
+td button{background:none;border:none;color:var(--mark);cursor:pointer;font:inherit}
+.empty{padding:16px;color:var(--muted)}
+
+/* Graph */
+.graphgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+.readout{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:12px}
+.readout .result{font:400 1.5rem var(--f-math)}
+.compare{display:grid;grid-template-columns:auto auto auto auto auto;gap:4px 10px;justify-content:start;font:400 1.15rem var(--f-math);align-items:center}
+.compare .lbl{font:500 .72rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;text-align:center}
+
+/* Questions */
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 16px}
+details+details{margin-top:10px}
+summary{cursor:pointer;padding:14px 0;font-weight:500;list-style:none;display:flex;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary .n{font:500 .85rem var(--f-mono);color:var(--ink);min-width:2.2em}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .ans{padding:12px 0 16px;display:grid;gap:8px;color:var(--fg)}
+.qgroup h3{margin-bottom:12px}
+.err{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.err .card .val{font:500 1.6rem var(--f-mono);color:var(--ink)}
+.lc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:14px}
+.lc ol{margin:0;padding-left:1.4em;display:grid;gap:8px}
+.lc .marks{font:500 .8rem var(--f-mono);color:var(--muted)}
+.note{font-size:.88rem;color:var(--muted)}
+footer .wrap{padding-block:28px 48px;color:var(--muted);font-size:.85rem}
+
+@media (max-width:860px){
+  .whh,.defrow,.bench,.graphgrid,.err{grid-template-columns:minmax(0,1fr)}
+  .eqbar .tag{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<style>
+[hidden]{display:none!important}
+/* Extra tokens and parts for Experiment 2 */
+:root{--tonic:#eaf0fb; --laser:#2f55ff; --glow:#7f9dff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tonic:#18223a; --laser:#6f8cff; --glow:#9fb6ff}}
+:root[data-theme="dark"]{--tonic:#18223a; --laser:#6f8cff; --glow:#9fb6ff}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{font:600 .95rem var(--f-body);padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.tab:focus-visible,.btn:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.status{display:inline-flex;align-items:center;gap:8px;font:500 .85rem var(--f-mono);padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);justify-self:start}
+.status .dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}
+.status.emerge .dot{background:var(--beam)}
+.status.graze .dot{background:var(--ok)}
+.status.tir .dot{background:var(--mark)}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pair figure{margin:0;display:grid;gap:6px}
+.pair figcaption{font-size:.88rem;color:var(--muted)}
+@media (max-width:860px){.pair{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<div class="eqbar"><div class="wrap">
+  <span class="big"><i>n</i> = 1 / sin <i>C</i></span>
+  <span class="alt">sin <i>C</i> = 1 / <i>n</i></span>
+  <span class="tag">Keep this equation in front of you</span>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">Experiment 2 · Light · Real World Physics 2nd Ed.</span>
+  <h1>The critical angle and n = 1/sin C</h1>
+  <p class="lead">Aim: to measure the critical angle for a transparent material and to verify that <span class="m">n</span> = 1/sin <span class="m">C</span>. There are two versions: a semicircular glass block, and a beaker of tonic water with a blue laser.</p>
+</div></header>
+
+<!-- ============ PHYSICS ============ -->
+<section id="physics"><div class="wrap">
+  <span class="eyebrow">Part A · The physics</span>
+  <h2>What the equation tells you</h2>
+  <div class="whh">
+    <div class="card">
+      <span class="q">WHAT?</span>
+      <p><strong>What does the critical angle depend on?</strong></p>
+      <p class="formula">sin <i>C</i> = 1 / <i>n</i></p>
+      <p>Only one thing: the refractive index <span class="m">n</span> of the material (going into air).</p>
+    </div>
+    <div class="card">
+      <span class="q">HOW?</span>
+      <p><strong>How does it depend on it?</strong></p>
+      <ul>
+        <li>As <span class="m">n</span> gets bigger, sin <span class="m">C</span> gets smaller (<span class="m">n</span> is below the line), so <span class="m">C</span> gets smaller.</li>
+        <li>In words: <strong>sin <span class="m">C</span> is inversely proportional to <span class="m">n</span></strong>, sin <span class="m">C</span> ∝ 1/<span class="m">n</span>.</li>
+        <li>Water, <span class="m">n</span> = 1.33: <span class="m">C</span> = 49°. Glass, 1.50: 42°. Diamond, 2.42: 24°.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="q">HOW?</span>
+      <p><strong>How do we show it in the lab?</strong></p>
+      <p>Increase the angle of incidence inside the material until the refracted ray just skims along the surface (<span class="m">r</span> = 90°). That angle is <span class="m">C</span>.</p>
+      <p>Measure <span class="m">C</span>, calculate <span class="m">n</span> = 1/sin <span class="m">C</span>, and compare with the value from Snell's law in Experiment 1.</p>
+    </div>
+  </div>
+  <div class="defrow">
+    <div class="card">
+      <h3>The equation as a definition, and its units</h3>
+      <p><strong>Critical angle:</strong> the angle of incidence in the denser medium for which the angle of refraction is 90°.</p>
+      <p>Read <span class="m">n</span> = 1/sin <span class="m">C</span> as a definition: the refractive index is the reciprocal of the sine of the critical angle.</p>
+      <p><strong>Units:</strong> sin <span class="m">C</span> is a ratio of two lengths, so it has no units, and neither does <span class="m">n</span>.</p>
+      <p><strong>Beyond <span class="m">C</span>:</strong> no light escapes. All of it reflects back inside. This is total internal reflection.</p>
+    </div>
+    <div class="card">
+      <h3>Where the equation comes from</h3>
+      <p>Start from Experiment 1: <span class="m">sin i = n sin r</span> for light going from air into the material.</p>
+      <p>Light paths are reversible. A ray skimming along the surface in air (<span class="m">i</span> = 90°) enters the material at the critical angle (<span class="m">r</span> = <span class="m">C</span>):</p>
+      <p class="formula">sin 90° = <i>n</i> sin <i>C</i> &nbsp;⇒&nbsp; 1 = <i>n</i> sin <i>C</i> &nbsp;⇒&nbsp; <i>n</i> = 1 / sin <i>C</i></p>
+      <p class="note">Thumb–forefinger: going from glass into air, the leading digit speeds up and pulls ahead, so the ray bends away from the normal. At <span class="m">C</span> it swings round so far that it runs along the surface.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ VERSION SWITCH ============ -->
+<section id="bench"><div class="wrap">
+  <span class="eyebrow">Part B · The experiment</span>
+  <h2>Choose a version</h2>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabA" aria-selected="true" aria-controls="verA">Version 1 · Semicircular glass block</button>
+    <button class="tab" role="tab" id="tabB" aria-selected="false" aria-controls="verB">Version 2 · Tonic water and blue laser</button>
+  </div>
+
+  <!-- Version A -->
+  <div id="verA" role="tabpanel" style="display:grid;gap:20px">
+    <div class="card">
+      <h3>Why a semicircular block, not a rectangular one?</h3>
+      <div class="pair">
+        <figure><div class="canvasbox"><canvas id="whyRect" width="300" height="220" aria-label="Rectangular block: light always escapes from the bottom face"></canvas></div>
+          <figcaption><strong>Rectangular block.</strong> The ray bends towards the normal as it enters the top face. Even at 89° the angle inside is less than <span class="m">C</span>, so the parallel bottom face always lets it out.</figcaption></figure>
+        <figure><div class="canvasbox"><canvas id="whySemi" width="300" height="220" aria-label="Semicircular block: ray aimed at the centre enters undeviated and is totally internally reflected"></canvas></div>
+          <figcaption><strong>Semicircular block.</strong> Aimed at the centre, the ray enters along a radius, which is the normal to the curved surface, so it does not bend. You control the angle at the flat face directly and can go past <span class="m">C</span>.</figcaption></figure>
+      </div>
+    </div>
+    <div class="bench">
+      <div class="canvasbox"><canvas id="simA" width="640" height="520" aria-label="Top view: semicircular glass block, ray box and pin"></canvas></div>
+      <div class="steps">
+        <div class="stepnav" id="navA"></div>
+        <div class="steptext" id="textA" aria-live="polite"></div>
+        <div class="status" id="statA"><span class="dot"></span><span></span></div>
+        <div class="slider" id="ctlA">
+          <label for="iA">Rotate the ray box. Angle of incidence at the flat face: <output id="iAOut">25.0°</output></label>
+          <input type="range" id="iA" min="15" max="60" step="0.5" value="25">
+        </div>
+        <div class="controls">
+          <button class="btn ghost" id="prevA">Back</button>
+          <button class="btn" id="nextA">Next step</button>
+          <button class="btn" id="recA" hidden>Record this trial</button>
+          <button class="btn ghost" id="sideA" hidden>Switch to other side of the normal</button>
+        </div>
+      </div>
+    </div>
+    <h3>Results: semicircular block</h3>
+    <div class="tablebox"><table>
+      <thead><tr><th>Trial</th><th>Side</th><th><span class="m">C</span> (°)</th><th>sin <span class="m">C</span></th><th><span class="m">n</span> = 1/sin <span class="m">C</span></th><th></th></tr></thead>
+      <tbody id="tbA"></tbody><tfoot id="tfA"></tfoot></table>
+      <p class="empty" id="emA">No trials yet. Find the critical angle at least three times on each side of the normal.</p>
+    </div>
+  </div>
+
+  <!-- Version B -->
+  <div id="verB" role="tabpanel" hidden style="display:grid;gap:20px">
+    <div class="bench">
+      <div class="canvasbox"><canvas id="simB" width="640" height="500" aria-label="Side view: beaker of tonic water with a blue laser shining in through the side"></canvas></div>
+      <div class="steps">
+        <div class="stepnav" id="navB"></div>
+        <div class="steptext" id="textB" aria-live="polite"></div>
+        <div class="status" id="statB"><span class="dot"></span><span></span></div>
+        <div class="slider" id="ctlB">
+          <label for="dB">Move the laser up or down. Depth of entry point below the surface, <span class="m">d</span>: <output id="dBOut">7.0 cm</output></label>
+          <input type="range" id="dB" min="2" max="9" step="0.1" value="7">
+        </div>
+        <div class="controls">
+          <button class="btn ghost" id="prevB">Back</button>
+          <button class="btn" id="nextB">Next step</button>
+          <button class="btn" id="recB" hidden>Record this trial</button>
+        </div>
+      </div>
+    </div>
+    <h3>Results: tonic water</h3>
+    <div class="tablebox"><table>
+      <thead><tr><th>Trial</th><th><span class="m">x</span> (cm)</th><th><span class="m">d</span> (cm)</th><th>tan <span class="m">C</span> = <span class="m">x</span>/<span class="m">d</span></th><th><span class="m">C</span> (°)</th><th><span class="m">n</span> = 1/sin <span class="m">C</span></th><th></th></tr></thead>
+      <tbody id="tbB"></tbody><tfoot id="tfB"></tfoot></table>
+      <p class="empty" id="emB">No trials yet. Find the critical position at least three times, approaching it from above and from below.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ QUESTIONS ============ -->
+<section id="questions"><div class="wrap">
+  <span class="eyebrow">Part C · Check your understanding</span>
+  <h2>Questions on this experiment</h2>
+
+  <div class="qgroup">
+    <h3>Version 1 · Semicircular glass block</h3>
+    <details><summary><span class="n">Q1</span>Why is a semicircular block used instead of a rectangular block?</summary><div class="ans"><p>A ray aimed at the centre of the flat face enters the curved side along a radius. A radius is the normal to the curved surface, so the ray does not bend going in. The angle of incidence at the flat face is then set directly by the ray box, and it can be increased past <span class="m">C</span>.</p><p>In a rectangular block the ray bends towards the normal as it enters. The angle inside can never reach <span class="m">C</span>, so the light always escapes through the opposite parallel face.</p></div></details>
+    <details><summary><span class="n">Q2</span>Why must the ray be aimed at the centre of the flat face?</summary><div class="ans"><p>Only a ray aimed at the centre travels along a radius. Any other ray strikes the curved surface at an angle and bends, so the angle at the flat face would not be the angle you set.</p></div></details>
+    <details><summary><span class="n">Q3</span>How do you know you have reached the critical angle?</summary><div class="ans"><p>The refracted ray just skims along the flat face (angle of refraction 90°). Go any further and it disappears, and the reflected ray inside the block suddenly becomes bright.</p></div></details>
+    <details><summary><span class="n">Q4</span>Why repeat on both sides of the normal and take the average?</summary><div class="ans"><p>If the normal is drawn slightly off 90°, one side reads too high and the other too low. Averaging cancels this error. Repeating also reduces random error in judging the exact critical position.</p></div></details>
+    <details><summary><span class="n">Q5</span>What is the main source of error, and how can it be reduced?</summary><div class="ans"><p>Judging exactly when the refracted ray skims the surface: it fades out gradually. Work in a darkened room, use the thin shadow of a pin, rotate the ray box very slowly, and repeat.</p></div></details>
+    <details><summary><span class="n">Q6</span>What happens if the angle of incidence is greater than <span class="m">C</span>?</summary><div class="ans"><p>No light leaves through the flat face. All of it is reflected back into the glass: total internal reflection.</p></div></details>
+  </div>
+
+  <div class="qgroup">
+    <h3>Version 2 · Tonic water and blue laser</h3>
+    <details><summary><span class="n">Q7</span>Why is tonic water used?</summary><div class="ans"><p>Tonic water contains quinine, which fluoresces (glows) when blue or ultraviolet light shines on it. The path of the beam inside the liquid becomes visible.</p></div></details>
+    <details><summary><span class="n">Q8</span>Why a blue laser and not a red one?</summary><div class="ans"><p>Fluorescence needs high-frequency (high-energy) light. Blue light makes quinine glow; red light does not. A laser also gives a narrow beam that is easy to aim and locate.</p></div></details>
+    <details><summary><span class="n">Q9</span>How is the critical angle found from <span class="m">x</span> and <span class="m">d</span>?</summary><div class="ans"><p>The beam inside the liquid, the wall and the surface form a right-angled triangle. At the incident point the angle between the beam and the vertical normal is <span class="m">C</span>. The side opposite <span class="m">C</span> is <span class="m">x</span> (wall to the midpoint) and the side adjacent is <span class="m">d</span> (depth of the entry point), so tan <span class="m">C</span> = <span class="m">x</span>/<span class="m">d</span>.</p></div></details>
+    <details><summary><span class="n">Q10</span>Why does it not matter that the beam bends as it passes through the side of the beaker?</summary><div class="ans"><p>Only the path inside the liquid is used. Its two ends, the entry point on the wall and the midpoint of the surface, are measured directly, so any bending outside the liquid has no effect.</p></div></details>
+    <details><summary><span class="n">Q11</span>Why aim at the midpoint of the surface?</summary><div class="ans"><p>The distance from the wall to the midpoint is half the internal diameter, which is easy to measure accurately. The normal at the surface is vertical everywhere, so any point would work, but the midpoint gives the largest <span class="m">x</span> and so the smallest percentage error.</p></div></details>
+    <details><summary><span class="n">Q12</span>Give one safety precaution.</summary><div class="ans"><p>Never look into the laser or point it at anyone. Watch for reflections from the glass and the liquid surface.</p></div></details>
+    <details><summary><span class="n">Q13</span>Why is the value of <span class="m">n</span> slightly higher than for pure water (1.33)?</summary><div class="ans"><p>Tonic water has sugar and quinine dissolved in it, which raise the refractive index slightly.</p></div></details>
+  </div>
+
+  <div class="qgroup">
+    <h3>Percentage error</h3>
+    <details><summary><span class="n">P1</span>A student measures <span class="m">C</span> = 42° with a protractor that reads to ±0.5°. Calculate the percentage error.</summary><div class="ans"><p>(0.5 / 42) × 100 = <strong>1.2%</strong></p></div></details>
+    <details><summary><span class="n">P2</span>In Version 2, <span class="m">x</span> = 5.0 cm and <span class="m">d</span> = 4.5 cm, each measured to ±0.05 cm. Calculate each percentage error.</summary><div class="ans"><p><span class="m">x</span>: (0.05 / 5.0) × 100 = <strong>1.0%</strong>. <span class="m">d</span>: (0.05 / 4.5) × 100 = <strong>1.1%</strong>.</p></div></details>
+    <details><summary><span class="n">P3</span>How would a wider beaker improve the accuracy of Version 2?</summary><div class="ans"><p><span class="m">x</span> and <span class="m">d</span> would both be larger. The same ±0.05 cm reading error is then a smaller percentage of each length.</p></div></details>
+    <details><summary><span class="n">P4</span>Which error is larger in practice: reading the protractor, or judging the critical position?</summary><div class="ans"><p>Judging the critical position. The refracted ray fades out over a degree or more, which is bigger than the ±0.5° protractor error. That is why the measurement is repeated and averaged.</p></div></details>
+  </div>
+</div></section>
+
+<!-- ============ LC ============ -->
+<section id="lc"><div class="wrap">
+  <span class="eyebrow">Part D · Leaving Certificate question</span>
+  <h2>Exam question on the critical angle</h2>
+  <div class="lc">
+    <h3>LC 2025 Higher Level · Question 14(b) <span class="marks">(28 marks)</span></h3>
+    <p>National Broadband Ireland is responsible for bringing high-speed fibre to all homes across Ireland. An optical fibre consists of a core made from glass surrounded by cladding made from a different type of glass.</p>
+    <div class="tablebox"><table><tbody>
+      <tr><th>Type of glass</th><td>Core</td><td>Y</td><td>Z</td></tr>
+      <tr><th>Refractive index</th><td>1.47</td><td>1.44</td><td>1.50</td></tr>
+    </tbody></table></div>
+    <ol type="i">
+      <li>State which glass, Y or Z, would be suitable for the cladding. Justify your answer.</li>
+      <li>Explain what is meant by critical angle. <span class="marks">(12)</span></li>
+      <li>Explain, with the aid of a labelled diagram, how a signal is transmitted along the optical fibre.</li>
+      <li>Calculate the critical angle between the core and the cladding.</li>
+      <li>Identify the type of glass, from the table, in which light travels fastest. <span class="marks">(16)</span></li>
+    </ol>
+    <details><summary><span class="n">✓</span>Show the solution</summary><div class="ans">
+      <p>(i) <strong>Y</strong>. The cladding must have a lower refractive index than the core, so that total internal reflection can happen at the core–cladding boundary.</p>
+      <p>(ii) The angle of incidence in the denser medium for which the angle of refraction is 90°.</p>
+      <p>(iii) Light enters the core and strikes the core–cladding boundary at an angle greater than <span class="m">C</span>. It is totally internally reflected, again and again, along the fibre.</p>
+      <p>(iv) Between two materials, <span class="m">n</span><sub>core</sub> sin <span class="m">C</span> = <span class="m">n</span><sub>cladding</sub> sin 90°, so sin <span class="m">C</span> = 1.44 / 1.47 = 0.980, <span class="m">C</span> = <strong>78.4°</strong>. (Into air, <span class="m">n</span><sub>cladding</sub> = 1 and this becomes sin <span class="m">C</span> = 1/<span class="m">n</span>.)</p>
+      <p>(v) <strong>Y</strong>. <span class="m">n</span> = <span class="m">c</span>/<span class="m">v</span>: as <span class="m">n</span> gets smaller, <span class="m">v</span> gets bigger, so the lowest <span class="m">n</span> gives the fastest light.</p>
+    </div></details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">PBC Science · LC Physics experiment guides · Experiment 2 of 26</div></footer>
+
+<script>
+(()=>{
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const rad = d => d*Math.PI/180, deg = r => r*180/Math.PI;
+function setup(id){ const cv = document.getElementById(id), W = cv.width, H = cv.height, dpr = Math.max(1, devicePixelRatio||1);
+  cv.width = W*dpr; cv.height = H*dpr; const ctx = cv.getContext('2d'); ctx.scale(dpr,dpr); return {ctx,W,H}; }
+function paper(ctx,W,H){ ctx.clearRect(0,0,W,H); ctx.fillStyle = css('--paper'); ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
+  for(let x=0;x<W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();} }
+function cross(ctx,p,s=7){ ctx.beginPath(); ctx.moveTo(p.x-s,p.y-s); ctx.lineTo(p.x+s,p.y+s); ctx.moveTo(p.x+s,p.y-s); ctx.lineTo(p.x-s,p.y+s); ctx.stroke(); }
+function seg(ctx,a,b,f=1){ ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(a.x+(b.x-a.x)*f, a.y+(b.y-a.y)*f); ctx.stroke(); }
+function label(ctx,t,x,y,font='12px "IBM Plex Mono", monospace',col='--muted'){ ctx.fillStyle = css(col); ctx.font = font; ctx.fillText(t,x,y); }
+function setStatus(el, kind, text){ el.className = 'status '+kind; el.lastElementChild.textContent = text; }
+
+/* ---------- Tabs ---------- */
+const tabA = document.getElementById('tabA'), tabB = document.getElementById('tabB');
+function showTab(b){ tabA.setAttribute('aria-selected', !b); tabB.setAttribute('aria-selected', b);
+  document.getElementById('verA').hidden = b; document.getElementById('verB').hidden = !b; }
+tabA.addEventListener('click',()=>showTab(false)); tabB.addEventListener('click',()=>showTab(true));
+
+/* ---------- Why semicircle diagrams ---------- */
+function drawWhy(){
+  const n = 1.5;
+  { const {ctx,W,H} = whyR; paper(ctx,W,H);
+    ctx.fillStyle = css('--glass'); ctx.fillRect(40,60,220,100); ctx.strokeStyle = css('--glass-edge'); ctx.lineWidth = 2; ctx.strokeRect(40,60,220,100);
+    const i = rad(80), r = Math.asin(Math.sin(i)/n), P = {x:70,y:60}, Q = {x:70+100*Math.tan(r), y:160};
+    ctx.strokeStyle = css('--shadow'); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(P.x-55*Math.sin(i), P.y-55*Math.cos(i)); ctx.lineTo(P.x,P.y); ctx.lineTo(Q.x,Q.y); ctx.lineTo(Q.x+55*Math.sin(i), Q.y+55*Math.cos(i)); ctx.stroke();
+    ctx.strokeStyle = css('--ink'); ctx.setLineDash([4,4]); ctx.lineWidth = 1;
+    seg(ctx,{x:Q.x,y:Q.y-40},{x:Q.x,y:Q.y+40}); ctx.setLineDash([]);
+    label(ctx,`inside: ${deg(r).toFixed(0)}° < C = 42°`, 14, 190);
+    label(ctx,'light escapes', Q.x+40, 212, '12px "IBM Plex Sans", sans-serif', '--mark'); }
+  { const {ctx,W,H} = whyS; paper(ctx,W,H);
+    const O = {x:150,y:70}, R = 110;
+    ctx.fillStyle = css('--glass'); ctx.beginPath(); ctx.moveTo(O.x-R,O.y); ctx.arc(O.x,O.y,R,0,Math.PI); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = css('--glass-edge'); ctx.lineWidth = 2; ctx.stroke();
+    const i = rad(50), u = {x:Math.sin(i), y:-Math.cos(i)};
+    ctx.strokeStyle = css('--shadow'); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(O.x-u.x*150, O.y-u.y*150); ctx.lineTo(O.x,O.y); ctx.lineTo(O.x+u.x*150, O.y-u.y*150); ctx.stroke();
+    ctx.strokeStyle = css('--ink'); ctx.setLineDash([4,4]); ctx.lineWidth = 1; seg(ctx,{x:O.x,y:O.y-50},{x:O.x,y:O.y+R}); ctx.setLineDash([]);
+    label(ctx,'no bending here', 18, 205, '12px "IBM Plex Sans", sans-serif');
+    label(ctx,'50° > C: totally reflected', 160, 40, '12px "IBM Plex Sans", sans-serif', '--mark'); }
+}
+const whyR = setup('whyRect'), whyS = setup('whySemi');
+
+/* ================= VERSION A ================= */
+const simA = setup('simA'), N_A = 1.5, C_A = deg(Math.asin(1/N_A));
+const O = {x:320, y:170}, RA = 150;
+let iA = 25, sideA = 1, stepA = 0, tA = performance.now(); const trialsA = [];
+const STEPS_A = [
+  {t:'Trace the block and mark its centre', b:'Place the semicircular block on a sheet of paper and trace around it. Measure the flat face and mark its midpoint, <strong>O</strong>. Draw the normal at O, at 90° to the flat face.', w:'Every ray you use must pass through O, so O has to be found accurately.'},
+  {t:'Aim the ray at the centre', b:'In a darkened room, shine the ray box at the <strong>curved</strong> side. Stand a thin pin in the beam and aim its shadow at O.', w:'The ray enters along a radius, which is the normal to the curved surface. It goes straight in without bending.'},
+  {t:'Rotate the ray box', b:'Move the ray box slowly around the curved side so the angle of incidence at the flat face increases. Watch the ray that leaves the flat face, and the reflected ray inside the glass.', w:'As <span class="m">i</span> gets bigger, the refracted ray bends further from the normal and gets fainter. The reflected ray gets brighter.'},
+  {t:'Stop at the critical angle', b:'Stop when the refracted ray <strong>just skims along the flat face</strong>. A tiny bit further and it vanishes.', w:'At this point the angle of refraction is 90°, so the angle of incidence is the critical angle <span class="m">C</span>.'},
+  {t:'Mark the incident ray', b:'Put two pencil crosses on the pin\'s shadow line, outside the block, as far apart as you can.', w:'Marks far apart give a smaller error in the direction of the ray.'},
+  {t:'Remove the block and draw the ray', b:'Lift away the block and ray box. Draw a line through the two crosses. It should pass through O.', w:'If the line misses O, the ray was not aimed at the centre. Repeat that trial.'},
+  {t:'Measure C', b:'Use a protractor at O. Measure the angle between the incident ray and the normal. This is the critical angle <span class="m">C</span>.', w:'A protractor reads to the nearest degree: about ±0.5°.'},
+  {t:'Record and repeat', b:'Record <span class="m">C</span>. Repeat on the <strong>other side of the normal</strong>, and then a few more times. Average your values and calculate <span class="m">n</span> = 1/sin <span class="m">C</span>.', w:'Averaging both sides cancels the error from a normal that is not exactly at 90°.'}
+];
+function stateA(){ if(iA > C_A) return 'tir'; if(iA >= C_A-1) return 'graze'; return 'emerge'; }
+function measuredC(){ const k = trialsA.length; const noise = ((((k*7919+104729)%1000)/1000)-0.5)*1.2; return Math.round(iA + noise); }
+function geoA(){
+  const i = rad(iA), u = {x:sideA*Math.sin(i), y:-Math.cos(i)};
+  const at = k => ({x:O.x + u.x*k, y:O.y + u.y*k});
+  return {i,u,at, box:at(-300), front:at(-268), pin:at(-250), x1:at(-235), x2:at(-172)};
+}
+function drawA(now){
+  const {ctx,W,H} = simA, g = geoA(), p = reduce ? 1 : Math.min(1,(now-tA)/700);
+  paper(ctx,W,H);
+  const blockOn = stepA <= 4, boxOn = stepA>=1 && stepA<=4;
+  if(blockOn){ ctx.fillStyle = css('--glass'); ctx.globalAlpha = .85; ctx.beginPath(); ctx.moveTo(O.x-RA,O.y); ctx.arc(O.x,O.y,RA,0,Math.PI); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = css('--glass-edge'); ctx.lineWidth = 2; ctx.stroke(); }
+  // pencil outline
+  ctx.strokeStyle = css('--pencil'); ctx.lineWidth = 1.2; const f0 = stepA===0 ? p : 1;
+  ctx.beginPath(); ctx.moveTo(O.x+RA,O.y); ctx.arc(O.x,O.y,RA,0,Math.PI*f0); if(f0===1) ctx.lineTo(O.x+RA,O.y); ctx.stroke();
+  if(stepA>0 || p===1){ ctx.fillStyle = css('--fg'); ctx.beginPath(); ctx.arc(O.x,O.y,3.5,0,7); ctx.fill(); label(ctx,'O',O.x-16,O.y-8,'600 14px "IBM Plex Sans", sans-serif','--fg');
+    ctx.strokeStyle = css('--ink'); ctx.setLineDash([6,5]); ctx.lineWidth = 1.3; seg(ctx,{x:O.x,y:O.y-150},{x:O.x,y:O.y+RA+40}); ctx.setLineDash([]);
+    label(ctx,'normal',O.x+6,O.y-136,'12px "IBM Plex Mono", monospace','--ink'); }
+  if(boxOn){
+    const st = stateA(), r = st==='tir' ? null : Math.asin(Math.min(1,N_A*Math.sin(g.i)));
+    const reflA = st==='tir' ? 1 : 0.15 + 0.6*Math.pow(Math.sin(g.i)/Math.sin(rad(C_A)),8);
+    const refrA = st==='tir' ? 0 : 1 - 0.85*Math.pow(Math.sin(g.i)/Math.sin(rad(C_A)),8);
+    const refl = {x:O.x + g.u.x*280, y:O.y - g.u.y*280};
+    ctx.lineCap = 'butt';
+    // incident beam
+    ctx.strokeStyle = css('--beam'); ctx.globalAlpha = .38; ctx.lineWidth = 40; seg(ctx,g.front,O); ctx.globalAlpha = 1;
+    ctx.strokeStyle = css('--shadow'); ctx.lineWidth = 2; seg(ctx,g.pin,O);
+    // reflected
+    ctx.strokeStyle = css('--beam'); ctx.globalAlpha = .38*reflA; ctx.lineWidth = 40; seg(ctx,O,refl); ctx.globalAlpha = reflA;
+    ctx.strokeStyle = css('--shadow'); ctx.lineWidth = 2; seg(ctx,O,refl); ctx.globalAlpha = 1;
+    // refracted
+    if(r!==null){ const out = {x:O.x + sideA*Math.sin(r)*260, y:O.y - Math.cos(r)*260};
+      ctx.strokeStyle = css('--beam'); ctx.globalAlpha = .38*refrA; ctx.lineWidth = 40; seg(ctx,O,out); ctx.globalAlpha = Math.max(.35,refrA);
+      ctx.strokeStyle = css('--shadow'); ctx.lineWidth = 2; seg(ctx,O,out); ctx.globalAlpha = 1; }
+    // pin and box
+    ctx.fillStyle = css('--pencil'); ctx.beginPath(); ctx.arc(g.pin.x,g.pin.y,4,0,7); ctx.fill();
+    label(ctx,'pin', g.pin.x+8, g.pin.y+16);
+    ctx.save(); ctx.translate(g.box.x,g.box.y); ctx.rotate(Math.atan2(g.u.y,g.u.x)-Math.PI/2);
+    ctx.fillStyle = css('--fg'); ctx.fillRect(-20,-30,40,60); ctx.fillStyle = css('--beam'); ctx.fillRect(-16,28,32,4); ctx.restore();
+  }
+  ctx.strokeStyle = css('--mark'); ctx.lineWidth = 2;
+  if(stepA>=4){ const f = stepA===4 ? p : 1; if(f>.3) cross(ctx,g.x1); if(f>.7) cross(ctx,g.x2); }
+  if(stepA>=5){ const f = stepA===5 ? p : 1; ctx.strokeStyle = css('--pencil'); ctx.lineWidth = 1.5; seg(ctx,g.at(-250),O,f); }
+  if(stepA>=6){
+    const Rr = 70, Cm = measuredC();
+    ctx.globalAlpha = .12; ctx.fillStyle = css('--ink'); ctx.beginPath(); ctx.arc(O.x,O.y,Rr+18,0,7); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = css('--mark'); ctx.lineWidth = 3;
+    const a0 = rad(90), a1 = Math.atan2(-g.u.y,-g.u.x);
+    ctx.beginPath(); ctx.arc(O.x,O.y,Rr-10, Math.min(a0,a1), Math.max(a0,a1)); ctx.stroke();
+    ctx.fillStyle = css('--surface'); ctx.strokeStyle = css('--line'); ctx.lineWidth = 1; ctx.fillRect(W-150,16,134,40); ctx.strokeRect(W-150,16,134,40);
+    label(ctx,`C = ${Cm}°`, W-132, 43, '600 18px "STIX Two Text", serif', '--fg');
+  }
+  label(ctx,'n = 1 / sin C', W-110, H-14, 'italic 14px "STIX Two Text", serif');
+}
+function goA(k){
+  stepA = k; tA = performance.now(); const s = STEPS_A[k];
+  let extra = '';
+  const st = stateA();
+  if(k===3 && st!=='graze') extra = `<p class="link">${st==='tir' ? 'You have gone past <span class="m">C</span>: the refracted ray has vanished. Rotate back slowly.' : 'Not there yet: the ray still leaves the flat face at an angle. Keep rotating slowly.'}</p>`;
+  if(k>=6){ const Cm = measuredC(); extra = `<p class="link">Reading: <span class="m">C</span> = ${Cm}°. So <span class="m">n</span> = 1 / sin ${Cm}° = ${(1/Math.sin(rad(Cm))).toFixed(2)}${st!=='graze' ? '. <strong>Check:</strong> the ray was not skimming the surface when you marked it, so this is not the critical angle.' : ''}</p>`; }
+  document.getElementById('textA').innerHTML = `<span class="eyebrow">Step ${k+1} of ${STEPS_A.length}</span><h3>${s.t}</h3><p>${s.b}</p><p class="why"><strong>Why:</strong> ${s.w}</p>${extra}`;
+  [...navA.children].forEach((b,j)=>b.className = j===k ? 'on' : (j<k ? 'done' : ''));
+  document.getElementById('prevA').disabled = k===0;
+  document.getElementById('nextA').textContent = k===STEPS_A.length-1 ? 'Start the next trial' : 'Next step';
+  document.getElementById('recA').hidden = k!==7; document.getElementById('sideA').hidden = k!==7;
+  document.getElementById('ctlA').hidden = k<2;
+  document.getElementById('statA').hidden = k<2 || k>4;
+}
+function updStatA(){ const st = stateA();
+  setStatus(document.getElementById('statA'), st, st==='tir' ? 'Total internal reflection: no ray leaves the flat face' : st==='graze' ? 'Refracted ray skims the surface: critical angle' : 'Refracted ray leaves the flat face'); }
+const navA = document.getElementById('navA');
+STEPS_A.forEach((s,k)=>{ const b = document.createElement('button'); b.textContent = k+1; b.title = s.t; b.addEventListener('click',()=>goA(k)); navA.appendChild(b); });
+const iAEl = document.getElementById('iA');
+iAEl.addEventListener('input',()=>{ iA = +iAEl.value; document.getElementById('iAOut').textContent = iA.toFixed(1)+'°'; updStatA(); if(stepA>3) goA(2); else if(stepA===3) goA(3); });
+document.getElementById('prevA').addEventListener('click',()=>goA(Math.max(0,stepA-1)));
+document.getElementById('nextA').addEventListener('click',()=>goA(stepA===STEPS_A.length-1 ? 1 : stepA+1));
+document.getElementById('sideA').addEventListener('click',()=>{ sideA *= -1; iA = 25; iAEl.value = 25; document.getElementById('iAOut').textContent = '25.0°'; updStatA(); goA(1); });
+document.getElementById('recA').addEventListener('click',()=>{ trialsA.push({side: sideA>0 ? 'Left' : 'Right', C: measuredC()}); renderA();
+  iA = 25; iAEl.value = 25; document.getElementById('iAOut').textContent = '25.0°'; updStatA(); goA(1); });
+function renderA(){
+  document.getElementById('emA').hidden = trialsA.length>0;
+  const tb = document.getElementById('tbA');
+  tb.innerHTML = trialsA.map((t,k)=>`<tr><td>${k+1}</td><td>${t.side}</td><td>${t.C}</td><td>${Math.sin(rad(t.C)).toFixed(3)}</td><td>${(1/Math.sin(rad(t.C))).toFixed(2)}</td><td><button data-k="${k}" aria-label="Remove trial ${k+1}">Remove</button></td></tr>`).join('');
+  tb.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ trialsA.splice(+b.dataset.k,1); renderA(); }));
+  const tf = document.getElementById('tfA');
+  if(trialsA.length){ const avg = trialsA.reduce((s,t)=>s+t.C,0)/trialsA.length;
+    tf.innerHTML = `<tr><td colspan="2">Average</td><td>${avg.toFixed(1)}</td><td>${Math.sin(rad(avg)).toFixed(3)}</td><td>${(1/Math.sin(rad(avg))).toFixed(2)}</td><td></td></tr>`; } else tf.innerHTML = '';
+}
+
+/* ================= VERSION B ================= */
+const simB = setup('simB'), N_B = 1.34, C_B = deg(Math.asin(1/N_B)), X_CM = 5.0, PX = 30;
+const BK = {l:170, r:470, s:150, b:435};   // inner walls, liquid surface, inner bottom
+const M = {x:(BK.l+BK.r)/2, y:BK.s};
+let dB = 7, stepB = 0, tB = performance.now(); const trialsB = [];
+const STEPS_B = [
+  {t:'Measure the beaker', b:'Measure the internal diameter of the beaker with a ruler. Half of it, <span class="m">x</span>, is the horizontal distance from the wall to the midpoint of the surface. Here <span class="m">x</span> = 5.0 cm.', w:'<span class="m">x</span> is one side of the triangle you will use to find <span class="m">C</span>.'},
+  {t:'Shine the laser through the side', b:'Fill the beaker with tonic water and darken the room. Shine the blue laser through the side wall, aimed up at the <strong>midpoint</strong> of the liquid surface. The tonic water glows where the beam passes. <strong>Never look into the laser.</strong>', w:'Quinine in tonic water fluoresces in blue light, so you can see the beam inside the liquid.'},
+  {t:'Change the height of the laser', b:'Move the laser up or down, always keeping the beam aimed at the midpoint. Watch the beam leaving the surface.', w:'As <span class="m">d</span> gets smaller, the beam meets the surface at a bigger angle of incidence.'},
+  {t:'Find the critical position', b:'Adjust until the emerging beam <strong>just skims along the surface</strong> of the liquid. Any higher and the beam reflects back down into the tonic water.', w:'Here the angle of refraction is 90°, so the angle of incidence at the surface is the critical angle <span class="m">C</span>.'},
+  {t:'Measure the depth d', b:'Mark the point where the beam enters the liquid at the wall. Measure its depth <span class="m">d</span> below the surface.', w:'Only the path inside the liquid matters. Any bending in the glass wall has no effect on <span class="m">x</span> or <span class="m">d</span>.'},
+  {t:'Calculate C by trigonometry', b:'The beam, the wall and the surface form a right-angled triangle. At the midpoint, the side opposite <span class="m">C</span> is <span class="m">x</span> and the side adjacent is <span class="m">d</span>.', w:'tan <span class="m">C</span> = opposite / adjacent = <span class="m">x</span> / <span class="m">d</span>.'},
+  {t:'Calculate n, record and repeat', b:'Use <span class="m">n</span> = 1/sin <span class="m">C</span>. Record the trial. Repeat, approaching the critical position from above and from below, and average.', w:'Approaching from both directions balances the error in judging the exact skimming position.'}
+];
+function iB(){ return deg(Math.atan(X_CM/dB)); }
+function stateB(){ const i = iB(); if(i > C_B) return 'tir'; if(i >= C_B-1.2) return 'graze'; return 'emerge'; }
+function drawB(now){
+  const {ctx,W,H} = simB, p = reduce ? 1 : Math.min(1,(now-tB)/700);
+  ctx.clearRect(0,0,W,H); ctx.fillStyle = css('--paper'); ctx.fillRect(0,0,W,H);
+  // liquid and beaker
+  if(stepB>=1){ ctx.fillStyle = css('--tonic'); ctx.fillRect(BK.l,BK.s,BK.r-BK.l,BK.b-BK.s); }
+  ctx.strokeStyle = css('--glass-edge'); ctx.lineWidth = 8;
+  ctx.beginPath(); ctx.moveTo(BK.l-4,60); ctx.lineTo(BK.l-4,BK.b+4); ctx.lineTo(BK.r+4,BK.b+4); ctx.lineTo(BK.r+4,60); ctx.stroke();
+  if(stepB>=1){ ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; seg(ctx,{x:BK.l,y:BK.s},{x:BK.r,y:BK.s}); label(ctx,'tonic water', BK.r-100, BK.b-14); }
+  // x dimension
+  ctx.strokeStyle = css('--muted'); ctx.lineWidth = 1;
+  if(stepB===0 || stepB>=5){ const yy = stepB===0 ? 110 : BK.s-24; seg(ctx,{x:BK.l,y:yy},{x:M.x,y:yy}); seg(ctx,{x:BK.l,y:yy-5},{x:BK.l,y:yy+5}); seg(ctx,{x:M.x,y:yy-5},{x:M.x,y:yy+5});
+    label(ctx,'x = 5.0 cm', (BK.l+M.x)/2-36, yy-8, '13px "IBM Plex Mono", monospace', '--fg'); }
+  if(stepB===0){ seg(ctx,{x:BK.l,y:80},{x:BK.r,y:80}); label(ctx,'internal diameter = 10.0 cm', 230, 72, '13px "IBM Plex Mono", monospace', '--fg'); }
+  ctx.fillStyle = css('--fg'); ctx.beginPath(); ctx.arc(M.x,M.y,3.5,0,7); ctx.fill();
+  if(stepB>=1){
+    const E = {x:BK.l, y:BK.s + dB*PX}, v = {x:M.x-E.x, y:M.y-E.y}, L = Math.hypot(v.x,v.y); v.x/=L; v.y/=L;
+    const body = {x:E.x - v.x*60, y:E.y - v.y*60};
+    // laser body
+    ctx.save(); ctx.translate(body.x,body.y); ctx.rotate(Math.atan2(v.y,v.x));
+    ctx.fillStyle = css('--fg'); ctx.fillRect(-60,-9,60,18); ctx.restore();
+    label(ctx,'blue laser', body.x-95, body.y+42);
+    // beam outside & in liquid
+    ctx.strokeStyle = css('--laser'); ctx.lineWidth = 2; seg(ctx,{x:body.x+v.x*2,y:body.y+v.y*2},E);
+    ctx.save(); ctx.shadowColor = css('--glow'); ctx.shadowBlur = 14; ctx.strokeStyle = css('--glow'); ctx.lineWidth = 4; seg(ctx,E,M);
+    const st = stateB(), i = rad(iB());
+    // reflected in liquid
+    const refl = {x:Math.sin(i), y:Math.cos(i)}; const tWall = (BK.r - M.x)/refl.x, tBot = (BK.b - M.y)/refl.y, tR = Math.min(tWall,tBot);
+    ctx.globalAlpha = st==='tir' ? 1 : 0.25; seg(ctx,M,{x:M.x+refl.x*tR, y:M.y+refl.y*tR}); ctx.globalAlpha = 1; ctx.restore();
+    if(st!=='tir'){ const r = Math.asin(Math.min(1,N_B*Math.sin(i)));
+      ctx.strokeStyle = css('--laser'); ctx.lineWidth = 2; ctx.globalAlpha = st==='graze' ? 1 : 0.9;
+      seg(ctx,M,{x:M.x+Math.sin(r)*200, y:M.y-Math.cos(r)*200}); ctx.globalAlpha = 1; }
+    // normal
+    ctx.strokeStyle = css('--ink'); ctx.setLineDash([6,5]); ctx.lineWidth = 1.2; seg(ctx,{x:M.x,y:M.y-110},{x:M.x,y:M.y+170}); ctx.setLineDash([]);
+    label(ctx,'normal', M.x+6, M.y-96, '12px "IBM Plex Mono", monospace', '--ink');
+    if(stepB>=4){ // d dimension
+      ctx.fillStyle = css('--mark'); ctx.fillRect(BK.l-12,E.y-2,12,4);
+      ctx.strokeStyle = css('--mark'); ctx.lineWidth = 1.5; const xx = BK.l+18, f = stepB===4 ? p : 1;
+      seg(ctx,{x:xx,y:BK.s},{x:xx,y:BK.s+(E.y-BK.s)*f});
+      if(f===1){ seg(ctx,{x:xx-5,y:BK.s},{x:xx+5,y:BK.s}); seg(ctx,{x:xx-5,y:E.y},{x:xx+5,y:E.y});
+        label(ctx,`d = ${dB.toFixed(1)} cm`, xx+8, BK.s+20, '13px "IBM Plex Mono", monospace', '--mark'); }
+    }
+    if(stepB>=5){ // triangle and angle C
+      ctx.fillStyle = css('--ink'); ctx.globalAlpha = .08; ctx.beginPath(); ctx.moveTo(BK.l,BK.s); ctx.lineTo(M.x,M.y); ctx.lineTo(E.x,E.y); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = css('--beam'); ctx.lineWidth = 3; const a1 = Math.atan2(E.y-M.y, E.x-M.x);
+      ctx.beginPath(); ctx.arc(M.x,M.y,46,Math.PI/2,a1); ctx.stroke();
+      label(ctx,'C', M.x-30, M.y+66, 'italic 600 18px "STIX Two Text", serif', '--fg');
+      ctx.fillStyle = css('--surface'); ctx.strokeStyle = css('--line'); ctx.lineWidth = 1; ctx.fillRect(W-178,16,162,64); ctx.strokeRect(W-178,16,162,64);
+      label(ctx,`tan C = ${X_CM.toFixed(1)} / ${dB.toFixed(1)}`, W-166, 40, '15px "STIX Two Text", serif', '--fg');
+      label(ctx,`C = ${iB().toFixed(1)}°`, W-166, 66, '600 17px "STIX Two Text", serif', '--fg');
+    }
+  }
+  label(ctx,'n = 1 / sin C', W-110, H-14, 'italic 14px "STIX Two Text", serif');
+}
+function goB(k){
+  stepB = k; tB = performance.now(); const s = STEPS_B[k], st = stateB();
+  let extra = '';
+  if(k===3 && st!=='graze') extra = `<p class="link">${st==='tir' ? 'Too far: the beam is reflected back into the liquid. Lower the laser slightly (increase <span class="m">d</span>).' : 'Not there yet: the beam still leaves the surface at an angle. Raise the laser (decrease <span class="m">d</span>).'}</p>`;
+  if(k>=5){ const C = iB(); extra = `<p class="link">tan <span class="m">C</span> = ${X_CM.toFixed(1)} / ${dB.toFixed(1)} = ${(X_CM/dB).toFixed(3)} ⇒ <span class="m">C</span> = ${C.toFixed(1)}°${k===6 ? `<br><span class="m">n</span> = 1 / sin ${C.toFixed(1)}° = <strong>${(1/Math.sin(rad(C))).toFixed(2)}</strong>` : ''}${st!=='graze' ? '<br><strong>Check:</strong> the beam was not skimming the surface, so this is not the critical angle.' : ''}</p>`; }
+  document.getElementById('textB').innerHTML = `<span class="eyebrow">Step ${k+1} of ${STEPS_B.length}</span><h3>${s.t}</h3><p>${s.b}</p><p class="why"><strong>Why:</strong> ${s.w}</p>${extra}`;
+  [...navB.children].forEach((b,j)=>b.className = j===k ? 'on' : (j<k ? 'done' : ''));
+  document.getElementById('prevB').disabled = k===0;
+  document.getElementById('nextB').textContent = k===STEPS_B.length-1 ? 'Start the next trial' : 'Next step';
+  document.getElementById('recB').hidden = k!==6;
+  document.getElementById('ctlB').hidden = k<2;
+  document.getElementById('statB').hidden = k<2 || k>4;
+}
+function updStatB(){ const st = stateB();
+  setStatus(document.getElementById('statB'), st, st==='tir' ? 'Total internal reflection: beam reflected back into the liquid' : st==='graze' ? 'Beam skims the surface: critical angle' : 'Beam leaves the surface'); }
+const navB = document.getElementById('navB');
+STEPS_B.forEach((s,k)=>{ const b = document.createElement('button'); b.textContent = k+1; b.title = s.t; b.addEventListener('click',()=>goB(k)); navB.appendChild(b); });
+const dEl = document.getElementById('dB');
+dEl.addEventListener('input',()=>{ dB = +dEl.value; document.getElementById('dBOut').textContent = dB.toFixed(1)+' cm'; updStatB(); if(stepB>3) goB(2); else if(stepB===3) goB(3); });
+document.getElementById('prevB').addEventListener('click',()=>goB(Math.max(0,stepB-1)));
+document.getElementById('nextB').addEventListener('click',()=>goB(stepB===STEPS_B.length-1 ? 2 : stepB+1));
+document.getElementById('recB').addEventListener('click',()=>{ trialsB.push({d:dB}); renderB();
+  const start = trialsB.length%2 ? 3.0 : 7.0; dB = start; dEl.value = start; document.getElementById('dBOut').textContent = start.toFixed(1)+' cm'; updStatB(); goB(2); });
+function renderB(){
+  document.getElementById('emB').hidden = trialsB.length>0;
+  const tb = document.getElementById('tbB');
+  tb.innerHTML = trialsB.map((t,k)=>{ const C = deg(Math.atan(X_CM/t.d));
+    return `<tr><td>${k+1}</td><td>${X_CM.toFixed(1)}</td><td>${t.d.toFixed(1)}</td><td>${(X_CM/t.d).toFixed(3)}</td><td>${C.toFixed(1)}</td><td>${(1/Math.sin(rad(C))).toFixed(2)}</td><td><button data-k="${k}" aria-label="Remove trial ${k+1}">Remove</button></td></tr>`; }).join('');
+  tb.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ trialsB.splice(+b.dataset.k,1); renderB(); }));
+  const tf = document.getElementById('tfB');
+  if(trialsB.length){ const avgC = trialsB.reduce((s,t)=>s+deg(Math.atan(X_CM/t.d)),0)/trialsB.length;
+    tf.innerHTML = `<tr><td colspan="4">Average</td><td>${avgC.toFixed(1)}</td><td>${(1/Math.sin(rad(avgC))).toFixed(2)}</td><td></td></tr>`; } else tf.innerHTML = '';
+}
+
+/* ---------- loop ---------- */
+goA(0); goB(0); updStatA(); updStatB(); renderA(); renderB();
+function frame(now){ drawWhy(); drawA(now); drawB(now); }
+if(reduce){ const redraw = ()=>frame(performance.now()); document.addEventListener('input',redraw); document.addEventListener('click',()=>setTimeout(redraw,0)); redraw(); }
+else { const loop = now=>{ frame(now); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+})();
+</script>
+
+</body></html>

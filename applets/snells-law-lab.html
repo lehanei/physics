@@ -1,0 +1,757 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Snell's Law Lab</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap">
+<style>
+/* Layout: a lab-bench page. Sticky equation bar on top, then physics → guided bench → results → graph → questions. */
+:root{
+  --bg:#f5f7f9; --surface:#ffffff; --paper:#fbfcfd; --grid:#e3e9ef;
+  --fg:#16202b; --muted:#5a6675; --line:#d5dde5;
+  --ink:#1f4fa3; --ink-soft:#e4ecf8;
+  --beam:#f2b632; --shadow:#2a2418; --glass:#cfe7ee; --glass-edge:#6aa8b8;
+  --pencil:#3b4450; --mark:#c2412d; --ok:#2f7d4f;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-math:"STIX Two Text", "Cambria Math", "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --surface:#161d25; --paper:#141a21; --grid:#222c37;
+  --fg:#e6ebf1; --muted:#9aa6b4; --line:#2b3642;
+  --ink:#8db4ff; --ink-soft:#1c2a40;
+  --beam:#f2b632; --shadow:#0b0906; --glass:#1e3a44; --glass-edge:#5fa3b5;
+  --pencil:#c3cbd5; --mark:#ff7a63; --ok:#5fc48a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#161d25; --paper:#141a21; --grid:#222c37;
+  --fg:#e6ebf1; --muted:#9aa6b4; --line:#2b3642;
+  --ink:#8db4ff; --ink-soft:#1c2a40;
+  --beam:#f2b632; --shadow:#0b0906; --glass:#1e3a44; --glass-edge:#5fa3b5;
+  --pencil:#c3cbd5; --mark:#ff7a63; --ok:#5fc48a; color-scheme:dark}
+
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,5vw,3rem);font-weight:700}
+h2{font-size:1.6rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:700}
+p{margin:0}
+.eyebrow{font:500 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.m{font-family:var(--f-math);font-style:italic}
+.mono{font-family:var(--f-mono)}
+
+/* Equation bar */
+.eqbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.eqbar .wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-block:10px}
+.eqbar .big{font:400 1.45rem var(--f-math)}
+.eqbar .big i{font-style:italic}
+.eqbar .alt{font:400 1.05rem var(--f-math);color:var(--muted)}
+.eqbar .tag{margin-left:auto;font:500 .72rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+
+header.hero .wrap{padding-block:40px 24px;display:grid;gap:12px}
+header.hero p.lead{font-size:1.1rem;max-width:62ch;color:var(--muted)}
+
+section .wrap{padding-block:36px;display:grid;gap:20px}
+section+section .wrap{border-top:1px solid var(--line)}
+.intro{max-width:66ch;color:var(--muted)}
+
+/* WHAT / HOW / HOW */
+.whh{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px;align-content:start;min-width:0}
+.card .q{font:700 1.3rem var(--f-display);color:var(--ink)}
+.card ul{margin:0;padding-left:1.1em;display:grid;gap:6px}
+.defrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px}
+.formula{font:400 1.25rem var(--f-math);padding:8px 0}
+
+/* Bench */
+.bench{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+.canvasbox{background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+canvas{display:block;width:100%;height:auto}
+.steps{display:grid;gap:14px;min-width:0}
+.stepnav{display:flex;gap:6px;flex-wrap:wrap}
+.stepnav button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:500 .8rem var(--f-mono);cursor:pointer}
+.stepnav button.on{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.stepnav button.done{border-color:var(--ink);color:var(--ink)}
+.steptext{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px}
+.steptext .why{border-left:3px solid var(--ink);padding-left:12px;color:var(--muted);font-size:.95rem}
+.steptext .link{background:var(--ink-soft);border-radius:8px;padding:10px 12px;font-size:.95rem}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:500 .92rem var(--f-body);padding:9px 14px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:focus-visible,.stepnav button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.slider{display:grid;gap:4px}
+.slider label{font-size:.9rem;color:var(--muted)}
+.slider output{font:500 1rem var(--f-mono);color:var(--fg)}
+input[type=range]{width:100%;accent-color:var(--ink)}
+
+/* Table */
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:520px}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line)}
+th{font:500 .78rem var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+th:first-child,td:first-child{text-align:left}
+td{font-family:var(--f-mono);font-size:.92rem}
+tfoot td{font-weight:500;border-bottom:none}
+td button{background:none;border:none;color:var(--mark);cursor:pointer;font:inherit}
+.empty{padding:16px;color:var(--muted)}
+
+/* Graph */
+.graphgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+.readout{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:12px}
+.readout .result{font:400 1.5rem var(--f-math)}
+.compare{display:grid;grid-template-columns:auto auto auto auto auto;gap:4px 10px;justify-content:start;font:400 1.15rem var(--f-math);align-items:center}
+.compare .lbl{font:500 .72rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;text-align:center}
+
+/* Questions */
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 16px}
+details+details{margin-top:10px}
+summary{cursor:pointer;padding:14px 0;font-weight:500;list-style:none;display:flex;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary .n{font:500 .85rem var(--f-mono);color:var(--ink);min-width:2.2em}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .ans{padding:12px 0 16px;display:grid;gap:8px;color:var(--fg)}
+.qgroup h3{margin-bottom:12px}
+.err{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.err .card .val{font:500 1.6rem var(--f-mono);color:var(--ink)}
+.lc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:14px}
+.lc ol{margin:0;padding-left:1.4em;display:grid;gap:8px}
+.lc .marks{font:500 .8rem var(--f-mono);color:var(--muted)}
+.note{font-size:.88rem;color:var(--muted)}
+footer .wrap{padding-block:28px 48px;color:var(--muted);font-size:.85rem}
+
+@media (max-width:860px){
+  .whh,.defrow,.bench,.graphgrid,.err{grid-template-columns:minmax(0,1fr)}
+  .eqbar .tag{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="eqbar"><div class="wrap">
+  <span class="big">sin <i>i</i> = <i>n</i> sin <i>r</i></span>
+  <span class="alt"><i>n</i> = sin <i>i</i> / sin <i>r</i></span>
+  <span class="tag" id="eqTag">Keep this equation in front of you</span>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">Experiment 1 · Light · Real World Physics 2nd Ed.</span>
+  <h1>Snell's law and the refractive index of glass</h1>
+  <p class="lead">Aim: to verify Snell's law and to determine the refractive index of a glass block. Read the physics first, then work through the bench one step at a time.</p>
+</div></header>
+
+<!-- ============ THE PHYSICS ============ -->
+<section id="physics"><div class="wrap">
+  <span class="eyebrow">Part A · The physics</span>
+  <h2>What the equation tells you</h2>
+  <p class="intro">Every equation answers two questions: what does the phenomenon depend on, and how does it depend on it. Then we ask how we test that in the lab.</p>
+
+  <div class="whh">
+    <div class="card">
+      <span class="q">WHAT?</span>
+      <p><strong>What does the angle of refraction depend on?</strong></p>
+      <p>Write the equation for <span class="m">r</span>:</p>
+      <p class="formula">sin <i>r</i> = sin <i>i</i> / <i>n</i></p>
+      <p>So <span class="m">r</span> depends on two things: the angle of incidence <span class="m">i</span> and the refractive index <span class="m">n</span> of the glass.</p>
+    </div>
+    <div class="card">
+      <span class="q">HOW?</span>
+      <p><strong>How does it depend on them?</strong></p>
+      <ul>
+        <li>As <span class="m">i</span> gets bigger, <span class="m">r</span> gets bigger (sin <span class="m">i</span> is above the line).</li>
+        <li>As <span class="m">n</span> gets bigger, <span class="m">r</span> gets smaller (<span class="m">n</span> is below the line): the ray bends more towards the normal.</li>
+        <li>In words: <strong>sin <span class="m">i</span> is directly proportional to sin <span class="m">r</span></strong>, sin <span class="m">i</span> ∝ sin <span class="m">r</span>.</li>
+        <li>Careful: <span class="m">i</span> is <em>not</em> proportional to <span class="m">r</span>. The sines are.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="q">HOW?</span>
+      <p><strong>How do we show it in the lab?</strong></p>
+      <p>Measure pairs of <span class="m">i</span> and <span class="m">r</span>. Plot sin <span class="m">i</span> on the y-axis against sin <span class="m">r</span> on the x-axis.</p>
+      <p>Direct proportion gives <strong>a straight line through the origin</strong>. Compare with <span class="m">y</span> = <span class="m">m</span><span class="m">x</span>: the slope <span class="m">m</span> is the refractive index <span class="m">n</span>.</p>
+    </div>
+  </div>
+
+  <div class="defrow">
+    <div class="card">
+      <h3>The equation as a definition, and its units</h3>
+      <p class="formula"><i>n</i> = sin <i>i</i> / sin <i>r</i> = <i>v</i><sub>1</sub> / <i>v</i><sub>2</sub></p>
+      <p><strong>Definition:</strong> the refractive index is the ratio of the sine of the angle of incidence to the sine of the angle of refraction. Equally, it is the ratio of the speed of light in the first medium to the speed of light in the second.</p>
+      <p><strong>Units:</strong> units of <span class="m">v</span><sub>1</sub> over units of <span class="m">v</span><sub>2</sub> = m s⁻¹ / m s⁻¹. They cancel, so <span class="m">n</span> has <strong>no units</strong>. (A sine is a ratio of two lengths, so it has no units either.)</p>
+      <p>As <span class="m">v</span><sub>2</sub> gets smaller, <span class="m">n</span> gets bigger (<span class="m">v</span><sub>2</sub> is below the line). Slower glass means more bending.</p>
+    </div>
+    <div class="card">
+      <h3>Why does it bend? Thumb and forefinger</h3>
+      <div class="canvasbox"><canvas id="wave" width="480" height="300" aria-label="Animation of a wavefront, shown as two dots joined by a line, bending as it crosses from air into glass"></canvas></div>
+      <div class="slider">
+        <label for="nSlide">Refractive index of the lower medium: <output id="nOut">1.50</output></label>
+        <input type="range" id="nSlide" min="1" max="2.4" step="0.05" value="1.5">
+      </div>
+      <p class="note">The digit that reaches the glass first slows down first. It lags behind, so the wavefront swings round towards the normal. Set <span class="m">n</span> = 1.00: no change of speed, no lag, no bending.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ THE BENCH ============ -->
+<section id="bench"><div class="wrap">
+  <span class="eyebrow">Part B · The experiment</span>
+  <h2>Do it on the bench</h2>
+  <div class="bench">
+    <div class="canvasbox"><canvas id="sim" width="640" height="460" aria-label="Top view of a sheet of paper on the bench with a glass block and a ray box"></canvas></div>
+    <div class="steps">
+      <div class="stepnav" id="stepNav" aria-label="Steps"></div>
+      <div class="steptext" id="stepText" aria-live="polite"></div>
+      <div class="slider" id="angleCtl">
+        <label for="iSlide">Turn the ray box. Angle of incidence <span class="m">i</span>: <output id="iOut">30°</output></label>
+        <input type="range" id="iSlide" min="15" max="75" step="5" value="30">
+      </div>
+      <div class="controls">
+        <button class="btn ghost" id="prevBtn">Back</button>
+        <button class="btn" id="nextBtn">Next step</button>
+        <button class="btn" id="recordBtn" hidden>Record this trial</button>
+      </div>
+    </div>
+  </div>
+
+  <h3>Results table</h3>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Trial</th><th><span class="m">i</span> (°)</th><th><span class="m">r</span> (°)</th><th>sin <span class="m">i</span></th><th>sin <span class="m">r</span></th><th>sin <span class="m">i</span> / sin <span class="m">r</span></th><th></th></tr></thead>
+      <tbody id="tbody"></tbody>
+      <tfoot id="tfoot"></tfoot>
+    </table>
+    <p class="empty" id="emptyMsg">No trials yet. Work through the steps and press <strong>Record this trial</strong>. Aim for at least six different angles between 20° and 75°.</p>
+  </div>
+</div></section>
+
+<!-- ============ THE GRAPH ============ -->
+<section id="graph"><div class="wrap">
+  <span class="eyebrow">Part C · The graph</span>
+  <h2>Show the relationship: sin <span class="m">i</span> against sin <span class="m">r</span></h2>
+  <p class="intro">The equation says sin <span class="m">i</span> ∝ sin <span class="m">r</span>. If that is true, your points lie on a straight line through the origin. Build the graph one stage at a time.</p>
+  <div class="graphgrid">
+    <div class="canvasbox"><canvas id="plot" width="640" height="440" aria-label="Graph of sin i against sin r"></canvas></div>
+    <div class="readout">
+      <div class="controls">
+        <button class="btn" id="gPlot">1 · Plot the points</button>
+        <button class="btn" id="gFit" disabled>2 · Line of best fit</button>
+        <button class="btn" id="gSlope" disabled>3 · Find the slope</button>
+      </div>
+      <div class="controls">
+        <button class="btn ghost" id="gSample">Use sample data</button>
+        <button class="btn ghost" id="gMine">Use my results</button>
+      </div>
+      <p class="note" id="gSource">Data: your results table.</p>
+      <div id="gExplain" class="note">Press <strong>Plot the points</strong>. You need at least three trials, or use the sample data.</div>
+      <div id="gResult" hidden>
+        <p class="eyebrow">Equation of the graph</p>
+        <p class="result" id="gEq"></p>
+        <div class="compare" aria-label="Comparing the graph equation with y = mx">
+          <span>y</span><span>=</span><span>m</span><span>x</span><span></span>
+          <span>sin <i>i</i></span><span>=</span><span><i>n</i></span><span>sin <i>r</i></span><span></span>
+        </div>
+        <p id="gSlopeText"></p>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ QUESTIONS ============ -->
+<section id="questions"><div class="wrap">
+  <span class="eyebrow">Part D · Check your understanding</span>
+  <h2>Questions on this experiment</h2>
+
+  <div class="qgroup">
+    <h3>The usual questions</h3>
+    <details><summary><span class="n">Q1</span>Why follow the shadow of a thin pin rather than the edge of the beam?</summary><div class="ans"><p>The shadow of a thin pin is a thin, sharp line. The edge of a beam is wide and fuzzy, so you cannot say exactly where it is. A sharp line lets you place each mark accurately.</p></div></details>
+    <details><summary><span class="n">Q2</span>Why place the two marks on each ray as far apart as possible?</summary><div class="ans"><p>Each mark has a small error in its position (about ±0.5 mm). Over a long distance between marks, that error makes a smaller difference to the direction of the line. The percentage error in the direction is smaller.</p></div></details>
+    <details><summary><span class="n">Q3</span>How was the refracted ray found? How was the angle of refraction measured?</summary><div class="ans"><p>Remove the block. Join the marks on the incident side and extend the line to the outline: this gives the point of incidence. Do the same on the emergent side to get the point of emergence. Join the two points: this is the refracted ray. Draw the normal at the point of incidence. Measure the angle between the refracted ray and the normal with a protractor.</p></div></details>
+    <details><summary><span class="n">Q4</span>Why plot sin <span class="m">i</span> against sin <span class="m">r</span>, and not <span class="m">i</span> against <span class="m">r</span>?</summary><div class="ans"><p>The equation sin <span class="m">i</span> = <span class="m">n</span> sin <span class="m">r</span> says the sines are directly proportional, not the angles. Plotting the sines gives a straight line through the origin. Plotting the angles gives a curve.</p></div></details>
+    <details><summary><span class="n">Q5</span>How does the graph verify Snell's law?</summary><div class="ans"><p>It is a straight line through the origin. So sin <span class="m">i</span> is directly proportional to sin <span class="m">r</span>, which is Snell's law.</p></div></details>
+    <details><summary><span class="n">Q6</span>Why does the slope of the graph equal the refractive index?</summary><div class="ans"><p>Compare sin <span class="m">i</span> = <span class="m">n</span> sin <span class="m">r</span> with <span class="m">y</span> = <span class="m">m</span><span class="m">x</span>. sin <span class="m">i</span> is <span class="m">y</span>, sin <span class="m">r</span> is <span class="m">x</span>, so the slope <span class="m">m</span> is <span class="m">n</span>.</p></div></details>
+    <details><summary><span class="n">Q7</span>What would you observe if the angle of incidence were 0°?</summary><div class="ans"><p>The ray travels along the normal and passes straight through without bending, so <span class="m">r</span> = 0°. Its speed still changes, but its direction does not. (In the thumb–forefinger model, both digits reach the glass together, so neither lags.)</p></div></details>
+    <details><summary><span class="n">Q8</span>Why is the angle measured from the normal and not from the surface of the block?</summary><div class="ans"><p>Snell's law is defined using angles to the normal. The normal is the same reference line for the incident and refracted rays at that point.</p></div></details>
+    <details><summary><span class="n">Q9</span>How does the emergent ray compare with the incident ray?</summary><div class="ans"><p>It is parallel to the incident ray but shifted sideways (laterally displaced). Light bends towards the normal entering the glass and away from the normal by the same amount leaving it. This is a useful check on your drawing.</p></div></details>
+    <details><summary><span class="n">Q10</span>Give two precautions for this experiment.</summary><div class="ans"><p>Use a sharp pencil and thin lines. Trace the outline of the block carefully and make sure the block does not move. Work in a darkened room so the shadow line is clear. Use large angles of incidence. Repeat for at least six angles.</p></div></details>
+    <details><summary><span class="n">Q11</span>What are the units of refractive index?</summary><div class="ans"><p>None. <span class="m">n</span> = <span class="m">v</span><sub>1</sub>/<span class="m">v</span><sub>2</sub>, so its units are m s⁻¹ / m s⁻¹, which cancel.</p></div></details>
+  </div>
+
+  <div class="qgroup">
+    <h3>Percentage error</h3>
+    <p class="intro" style="margin-bottom:14px">A protractor reads to the nearest degree, so each angle has an error of about ±0.5°. Each pencil mark is placed to about ±0.5 mm. Use the sliders to see how the size of the measurement changes the percentage error.</p>
+    <div class="err">
+      <div class="card">
+        <h3>Size of the angle</h3>
+        <p class="formula">% error = (0.5° / angle) × 100</p>
+        <div class="slider">
+          <label for="angErr">Angle of refraction measured: <output id="angOut">20°</output></label>
+          <input type="range" id="angErr" min="5" max="45" step="1" value="20">
+        </div>
+        <p>Percentage error: <span class="val" id="angVal">2.5%</span></p>
+        <p class="note">The same ±0.5° is a bigger fraction of a small angle. This is why large angles of incidence give more accurate results.</p>
+      </div>
+      <div class="card">
+        <h3>Distance the ray travels through the glass</h3>
+        <p class="formula">error in direction ≈ (1 mm / length of ray) rad</p>
+        <div class="slider">
+          <label for="lenErr">Length of refracted ray on the page: <output id="lenOut">60 mm</output></label>
+          <input type="range" id="lenErr" min="20" max="120" step="5" value="60">
+        </div>
+        <p>Error in direction: <span class="val" id="lenVal">±0.95°</span></p>
+        <p class="note" id="lenNote"></p>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <details><summary><span class="n">P1</span>A student measures <span class="m">r</span> = 12°. Calculate the percentage error.</summary><div class="ans"><p>(0.5 / 12) × 100 = <strong>4.2%</strong></p></div></details>
+      <details><summary><span class="n">P2</span>Another student measures <span class="m">r</span> = 38°. Calculate the percentage error and compare.</summary><div class="ans"><p>(0.5 / 38) × 100 = <strong>1.3%</strong>. The larger angle has about a third of the percentage error.</p></div></details>
+      <details><summary><span class="n">P3</span>Why would using a smaller angle of incidence lead to a less accurate value of <span class="m">r</span>? (LC 2020)</summary><div class="ans"><p>A smaller <span class="m">i</span> gives a smaller <span class="m">r</span>. The error in reading the protractor stays the same, so it is a larger percentage of a small angle.</p></div></details>
+      <details><summary><span class="n">P4</span>Why does a thicker block (or a larger angle of incidence) give a more accurate refracted ray?</summary><div class="ans"><p>The ray travels further through the glass, so the points of incidence and emergence are further apart. The same ±0.5 mm error in locating each point makes a smaller error in the direction of the line joining them.</p></div></details>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ LC QUESTIONS ============ -->
+<section id="lc"><div class="wrap">
+  <span class="eyebrow">Part E · Leaving Certificate questions</span>
+  <h2>Exam questions on this experiment</h2>
+  <p class="intro">These are from past Higher Level papers (old syllabus, Section A). The wording is shortened in places.</p>
+
+  <div class="lc">
+    <h3>LC 2020 Higher Level · Section A, Question 2 <span class="marks">(40 marks)</span></h3>
+    <p>In an experiment to determine the refractive index of glass, light was passed through a glass block and the angles of incidence <span class="m">i</span> and refraction <span class="m">r</span> were measured for different values of <span class="m">i</span>. The following data were recorded.</p>
+    <div class="tablebox"><table>
+      <tbody>
+        <tr><th><span class="m">i</span> (°)</th><td>30</td><td>40</td><td>50</td><td>60</td><td>70</td><td>80</td></tr>
+        <tr><th><span class="m">r</span> (°)</th><td>19</td><td>25</td><td>31</td><td>35</td><td>39</td><td>41</td></tr>
+      </tbody>
+    </table></div>
+    <ol type="i">
+      <li>Explain how the refracted ray and the angle of refraction were determined. (A labelled diagram may help your answer.)</li>
+      <li>Why would using a smaller angle of incidence have led to a less accurate measurement of the angle of refraction? <span class="marks">(15)</span></li>
+      <li>Use the data to draw a suitable graph to verify Snell's law.</li>
+      <li>Explain how your graph verifies Snell's law.</li>
+      <li>Use your graph to calculate the refractive index of the glass. <span class="marks">(25)</span></li>
+    </ol>
+    <div class="controls"><button class="btn ghost" id="load2020">Plot this data on the graph</button></div>
+    <details><summary><span class="n">✓</span>Show the solution</summary><div class="ans">
+      <p>(i) Trace the block. Mark the incident and emergent rays. Remove the block, join the marks to find the points of incidence and emergence, and join these to get the refracted ray. Draw the normal and measure <span class="m">r</span> with a protractor.</p>
+      <p>(ii) A smaller <span class="m">r</span> results, and the ±0.5° protractor error is a larger percentage of a smaller angle.</p>
+      <div class="tablebox"><table><tbody>
+        <tr><th>sin <span class="m">i</span></th><td>0.500</td><td>0.643</td><td>0.766</td><td>0.866</td><td>0.940</td><td>0.985</td></tr>
+        <tr><th>sin <span class="m">r</span></th><td>0.326</td><td>0.423</td><td>0.515</td><td>0.574</td><td>0.629</td><td>0.656</td></tr>
+      </tbody></table></div>
+      <p>(iii) Plot sin <span class="m">i</span> (y-axis) against sin <span class="m">r</span> (x-axis).</p>
+      <p>(iv) A straight line through the origin shows sin <span class="m">i</span> ∝ sin <span class="m">r</span>.</p>
+      <p>(v) Slope = <span class="m">n</span> ≈ <strong>1.5</strong></p>
+    </div></details>
+  </div>
+
+  <div class="lc">
+    <h3>LC 2022 Higher Level · Section A, Question 3</h3>
+    <p>A student verified Snell's law by measuring the angle of incidence <span class="m">i</span> and the angle of refraction <span class="m">r</span> for light passing from air into glass, for six values of <span class="m">i</span>.</p>
+    <ol type="i">
+      <li>Draw a labelled diagram of the apparatus used.</li>
+      <li>Describe how the angle of refraction was determined.</li>
+      <li>Draw a suitable graph to verify Snell's law.</li>
+      <li>Use your graph to calculate the refractive index of the glass.</li>
+      <li>What would be observed if the angle of incidence were zero?</li>
+    </ol>
+    <p class="note">The paper's data table is not reproduced here. Use six of your own results from the bench for parts (iii) and (iv).</p>
+    <details><summary><span class="n">✓</span>Show the key points</summary><div class="ans">
+      <p>(i) Ray box, glass block, sheet of paper, pencil, protractor. Show the incident ray, normal, refracted ray and emergent ray.</p>
+      <p>(ii) As in the 2020 question: trace the block, mark the rays, join the points of incidence and emergence, draw the normal, measure <span class="m">r</span>.</p>
+      <p>(iii)–(iv) sin <span class="m">i</span> against sin <span class="m">r</span>: a straight line through the origin; slope = <span class="m">n</span> ≈ 1.5.</p>
+      <p>(v) The light passes straight through without bending: <span class="m">r</span> = 0°.</p>
+    </div></details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">PBC Science · LC Physics experiment guides · Experiment 1 of 26</div></footer>
+
+<script>
+(()=>{
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const rad = d => d*Math.PI/180, deg = r => r*180/Math.PI;
+const N_GLASS = 1.5;
+
+function setupCanvas(cv){
+  const W = cv.width, H = cv.height, dpr = Math.max(1, window.devicePixelRatio||1);
+  cv.width = W*dpr; cv.height = H*dpr;
+  const ctx = cv.getContext('2d'); ctx.scale(dpr,dpr);
+  return {ctx, W, H};
+}
+
+/* ---------------- Thumb–forefinger wave model ---------------- */
+const wv = setupCanvas(document.getElementById('wave'));
+let nWave = 1.5, wT0 = performance.now();
+const nSlide = document.getElementById('nSlide');
+nSlide.addEventListener('input', ()=>{ nWave = +nSlide.value; document.getElementById('nOut').textContent = nWave.toFixed(2); });
+function digitPos(start, iAng, n, t){
+  // moves along incident direction at speed 1 until boundary y=by, then along refracted at 1/n
+  const by = 150, d = {x:Math.sin(iAng), y:Math.cos(iAng)};
+  const tHit = (by - start.y)/d.y;
+  if (t <= tHit) return {x:start.x + d.x*t, y:start.y + d.y*t, inGlass:false};
+  const hit = {x:start.x + d.x*tHit, y:by};
+  const r = Math.asin(Math.sin(iAng)/n), s = (t - tHit)/n;
+  return {x:hit.x + Math.sin(r)*s, y:by + Math.cos(r)*s, inGlass:true};
+}
+function drawWave(now){
+  const {ctx, W, H} = wv;
+  const iAng = rad(45), period = 330;
+  const t = reduce ? 170 : ((now - wT0)/16) % period;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = css('--paper'); ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = css('--glass'); ctx.fillRect(0,150,W,H-150);
+  ctx.strokeStyle = css('--glass-edge'); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0,150); ctx.lineTo(W,150); ctx.stroke();
+  ctx.fillStyle = css('--muted'); ctx.font = '12px "IBM Plex Mono", monospace';
+  ctx.fillText('air  (fast)', 10, 20); ctx.fillText('glass  (slow)', 10, H-12);
+  // two digits start on a wavefront perpendicular to the incident direction
+  const sep = 70, c0 = {x:110, y:30};
+  const perp = {x:Math.cos(iAng), y:-Math.sin(iAng)};
+  const A = {x:c0.x - perp.x*sep/2, y:c0.y - perp.y*sep/2}; // trailing (thumb)
+  const B = {x:c0.x + perp.x*sep/2, y:c0.y + perp.y*sep/2}; // leading (forefinger)
+  // ghost trails
+  ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
+  for(let k=0;k<=t;k+=36){
+    const a = digitPos(A,iAng,nWave,k), b = digitPos(B,iAng,nWave,k);
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  }
+  const a = digitPos(A,iAng,nWave,t), b = digitPos(B,iAng,nWave,t);
+  ctx.strokeStyle = css('--ink'); ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  [[a,'thumb'],[b,'finger']].forEach(([p,l])=>{
+    ctx.fillStyle = css('--mark'); ctx.beginPath(); ctx.arc(p.x,p.y,6,0,7); ctx.fill();
+    ctx.fillStyle = css('--fg'); ctx.fillText(l, p.x+9, p.y-8);
+  });
+}
+
+/* ---------------- The bench simulation ---------------- */
+const sim = setupCanvas(document.getElementById('sim'));
+const BLOCK = {x:150, y:190, w:340, h:150};
+const B0 = {x:250, y:190};
+let iDeg = 30, step = 0, stepStart = performance.now();
+const trials = [];
+
+function measuredR(i){
+  const rT = deg(Math.asin(Math.sin(rad(i))/N_GLASS));
+  const noise = ((((i*9301+49297)%233280)/233280) - 0.5)*1.4;
+  return Math.round(rT + noise);
+}
+function geo(){
+  const i = rad(iDeg), r = Math.asin(Math.sin(i)/N_GLASS);
+  const d = {x:Math.sin(i), y:Math.cos(i)};
+  const B = B0, C = {x:B.x + BLOCK.h*Math.tan(r), y:B.y + BLOCK.h};
+  const at = (P,k)=>({x:P.x + d.x*k, y:P.y + d.y*k});
+  return {i, r, d, B, C, at,
+    box: at(B,-150), x1: at(B,-100), x2: at(B,-35), x3: at(C,35), x4: at(C,140), end: at(C,260)};
+}
+
+const STEPS = [
+  {t:'Trace the glass block',
+   b:'Place the glass block in the middle of a sheet of A4 paper. Draw around it carefully with a sharp pencil.',
+   w:'You will remove the block later. The outline tells you exactly where the surfaces of the glass were.'},
+  {t:'Aim the ray box',
+   b:'Switch on the ray box in a darkened room and aim it at the top face of the block. Stand a <strong>thin pin</strong> upright in the beam, between the ray box and the block. Its thin dark <strong>shadow</strong> is the ray you will follow.',
+   w:'The shadow is a thin, sharp line. The edge of the beam is wide and fuzzy.',
+   l:'The ray box sets the angle of incidence <span class="m">i</span>. Use the slider to choose it.'},
+  {t:'Mark the incident ray',
+   b:'Put two pencil crosses on the shadow line on the incident side, as far apart as you can.',
+   w:'Marks far apart reduce the error in the direction of the line you draw through them.'},
+  {t:'Mark the emergent ray',
+   b:'Put two more crosses on the shadow line where it leaves the block, again far apart.',
+   w:'The emergent ray should come out parallel to the incident ray. That is a check on your work.'},
+  {t:'Remove the block and ray box',
+   b:'Switch off and lift away the ray box and the block. Draw straight lines through each pair of crosses and extend them to the outline. Where they meet the outline are the <strong>point of incidence</strong> and the <strong>point of emergence</strong>.',
+   w:'The light is gone, but your marks hold its path.'},
+  {t:'Draw the normals',
+   b:'At the point of incidence and the point of emergence, draw a dashed line at 90° to the surface. These are the normals.',
+   w:'Snell\'s law uses angles measured from the normal, never from the surface.'},
+  {t:'Draw the refracted ray',
+   b:'Join the point of incidence to the point of emergence with a ruler. This line is the path of the light inside the glass: the refracted ray.',
+   w:'A thicker block, or a larger <span class="m">i</span>, gives a longer refracted ray, so a smaller error in its direction.'},
+  {t:'Measure i and r',
+   b:'Put the protractor on the normal at the point of incidence. Measure the angle between the incident ray and the normal (<span class="m">i</span>) and the angle between the refracted ray and the normal (<span class="m">r</span>).',
+   w:'A protractor reads to the nearest degree: about ±0.5°.'},
+  {t:'Record and repeat',
+   b:'Record <span class="m">i</span> and <span class="m">r</span> in the table. Then go back to step 2, turn the ray box to a new angle on a fresh sheet, and repeat. Do at least six angles.',
+   w:'Repeating over a range of angles lets you draw a graph instead of trusting one reading.'}
+];
+
+const nav = document.getElementById('stepNav');
+STEPS.forEach((s,k)=>{
+  const b = document.createElement('button'); b.textContent = k+1; b.title = s.t; b.id = 'step'+k;
+  b.addEventListener('click', ()=>goStep(k)); nav.appendChild(b);
+});
+const iSlide = document.getElementById('iSlide');
+iSlide.addEventListener('input', ()=>{
+  iDeg = +iSlide.value; document.getElementById('iOut').textContent = iDeg+'°';
+  if(step>1) goStep(1); else drawSim(performance.now());
+});
+document.getElementById('prevBtn').addEventListener('click', ()=>goStep(Math.max(0,step-1)));
+document.getElementById('nextBtn').addEventListener('click', ()=>goStep(step===STEPS.length-1 ? 1 : step+1));
+document.getElementById('recordBtn').addEventListener('click', record);
+
+function goStep(k){
+  step = k; stepStart = performance.now();
+  const s = STEPS[k], rM = measuredR(iDeg);
+  let link = s.l ? `<p class="link">${s.l}</p>` : '';
+  if(k===7) link = `<p class="link">Reading: <span class="m">i</span> = ${iDeg}°, <span class="m">r</span> = ${rM}°. Check with the equation: <span class="m">n</span> = sin ${iDeg}° / sin ${rM}° = ${(Math.sin(rad(iDeg))/Math.sin(rad(rM))).toFixed(2)}</p>`;
+  if(k===8) link = `<p class="link">This trial: <span class="m">i</span> = ${iDeg}°, <span class="m">r</span> = ${rM}°.</p>`;
+  document.getElementById('stepText').innerHTML =
+    `<span class="eyebrow">Step ${k+1} of ${STEPS.length}</span><h3>${s.t}</h3><p>${s.b}</p><p class="why"><strong>Why:</strong> ${s.w}</p>${link}`;
+  [...nav.children].forEach((b,j)=>{ b.className = j===k ? 'on' : (j<k ? 'done' : ''); });
+  document.getElementById('prevBtn').disabled = k===0;
+  document.getElementById('nextBtn').textContent = k===STEPS.length-1 ? 'Choose another angle' : 'Next step';
+  document.getElementById('recordBtn').hidden = k!==8;
+  document.getElementById('angleCtl').hidden = k<1;
+}
+
+function cross(ctx,p,s=7){
+  ctx.beginPath(); ctx.moveTo(p.x-s,p.y-s); ctx.lineTo(p.x+s,p.y+s); ctx.moveTo(p.x+s,p.y-s); ctx.lineTo(p.x-s,p.y+s); ctx.stroke();
+}
+function seg(ctx,a,b,frac=1){
+  ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(a.x+(b.x-a.x)*frac, a.y+(b.y-a.y)*frac); ctx.stroke();
+}
+function drawSim(now){
+  const {ctx, W, H} = sim, g = geo();
+  const p = reduce ? 1 : Math.min(1,(now - stepStart)/700);
+  ctx.clearRect(0,0,W,H);
+  // paper with faint grid
+  ctx.fillStyle = css('--paper'); ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
+  for(let x=0;x<W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  const blockOn = step <= 3, boxOn = step>=1 && step<=3;
+  // glass block
+  if(blockOn){
+    ctx.fillStyle = css('--glass'); ctx.globalAlpha = .85;
+    ctx.fillRect(BLOCK.x,BLOCK.y,BLOCK.w,BLOCK.h); ctx.globalAlpha = 1;
+    ctx.strokeStyle = css('--glass-edge'); ctx.lineWidth = 2; ctx.strokeRect(BLOCK.x,BLOCK.y,BLOCK.w,BLOCK.h);
+  }
+  // pencil outline
+  ctx.strokeStyle = css('--pencil'); ctx.lineWidth = 1.2;
+  const per = 2*(BLOCK.w+BLOCK.h), frac = step===0 ? p : 1;
+  let rem = per*frac; ctx.beginPath(); ctx.moveTo(BLOCK.x,BLOCK.y);
+  const pts = [[BLOCK.x+BLOCK.w,BLOCK.y],[BLOCK.x+BLOCK.w,BLOCK.y+BLOCK.h],[BLOCK.x,BLOCK.y+BLOCK.h],[BLOCK.x,BLOCK.y]];
+  let cur = [BLOCK.x,BLOCK.y];
+  for(const q of pts){ const L = Math.hypot(q[0]-cur[0], q[1]-cur[1]); if(rem<=0) break;
+    const f = Math.min(1, rem/L); ctx.lineTo(cur[0]+(q[0]-cur[0])*f, cur[1]+(q[1]-cur[1])*f); rem -= L; cur = q; }
+  ctx.stroke();
+
+  // beam + pillar shadow
+  if(boxOn){
+    const front = g.at(g.B,-120);
+    ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = css('--beam'); ctx.globalAlpha = .38; ctx.lineWidth = 46;
+    ctx.beginPath(); ctx.moveTo(front.x,front.y); ctx.lineTo(g.B.x,g.B.y); ctx.lineTo(g.C.x,g.C.y); ctx.lineTo(g.end.x,g.end.y); ctx.stroke();
+    // thin pin standing in the beam; its shadow is the ray we follow
+    const pin = g.at(g.B,-112);
+    ctx.globalAlpha = 1; ctx.strokeStyle = css('--shadow'); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(pin.x,pin.y); ctx.lineTo(g.B.x,g.B.y); ctx.lineTo(g.C.x,g.C.y); ctx.lineTo(g.end.x,g.end.y); ctx.stroke();
+    ctx.fillStyle = css('--pencil'); ctx.beginPath(); ctx.arc(pin.x,pin.y,4,0,7); ctx.fill();
+    ctx.fillStyle = css('--muted'); ctx.font = '12px "IBM Plex Mono", monospace';
+    ctx.fillText('pin', pin.x-30, pin.y+4);
+    // ray box
+    ctx.save(); ctx.translate(g.box.x,g.box.y); ctx.rotate(-g.i);
+    ctx.fillStyle = css('--fg'); ctx.fillRect(-20,-30,40,60);
+    ctx.fillStyle = css('--beam'); ctx.fillRect(-16,28,32,4);
+    ctx.restore();
+    ctx.fillStyle = css('--muted'); ctx.font = '12px "IBM Plex Mono", monospace';
+    ctx.fillText('ray box', g.box.x+28, g.box.y-10);
+  }
+  // crosses
+  ctx.strokeStyle = css('--mark'); ctx.lineWidth = 2;
+  if(step>=2){ const f = step===2 ? p : 1; if(f>.3) cross(ctx,g.x1); if(f>.7) cross(ctx,g.x2); }
+  if(step>=3){ const f = step===3 ? p : 1; if(f>.3) cross(ctx,g.x3); if(f>.7) cross(ctx,g.x4); }
+  // construction lines
+  if(step>=4){
+    const f = step===4 ? p : 1;
+    ctx.strokeStyle = css('--pencil'); ctx.lineWidth = 1.5;
+    seg(ctx, g.at(g.B,-130), g.B, f); seg(ctx, g.at(g.C,170), g.C, f);
+    if(f===1){
+      ctx.fillStyle = css('--fg'); ctx.beginPath(); ctx.arc(g.B.x,g.B.y,4,0,7); ctx.arc(g.C.x,g.C.y,4,0,7); ctx.fill();
+      ctx.font = '12px "IBM Plex Sans", sans-serif'; ctx.fillStyle = css('--fg');
+      ctx.fillText('point of incidence', g.B.x+10, g.B.y-8);
+      ctx.fillText('point of emergence', g.C.x+10, g.C.y+18);
+    }
+  }
+  if(step>=5){
+    const f = step===5 ? p : 1;
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.3; ctx.setLineDash([6,5]);
+    seg(ctx,{x:g.B.x,y:g.B.y-110},{x:g.B.x,y:g.B.y+120},f);
+    seg(ctx,{x:g.C.x,y:g.C.y-110},{x:g.C.x,y:g.C.y+110},f);
+    ctx.setLineDash([]);
+    if(f===1){ ctx.fillStyle = css('--ink'); ctx.font='12px "IBM Plex Mono", monospace'; ctx.fillText('normal', g.B.x+6, g.B.y-96); }
+  }
+  if(step>=6){
+    const f = step===6 ? p : 1;
+    ctx.strokeStyle = css('--mark'); ctx.lineWidth = 2.5; seg(ctx,g.B,g.C,f);
+    if(f===1){ ctx.fillStyle = css('--mark'); ctx.font='12px "IBM Plex Sans", sans-serif';
+      const m = {x:(g.B.x+g.C.x)/2, y:(g.B.y+g.C.y)/2}; ctx.fillText('refracted ray', m.x+10, m.y); }
+  }
+  if(step>=7){
+    const R = 70, rM = measuredR(iDeg);
+    // protractor (semi-transparent circle)
+    ctx.globalAlpha = .12; ctx.fillStyle = css('--ink'); ctx.beginPath(); ctx.arc(g.B.x,g.B.y,R+18,0,7); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1;
+    for(let a=0;a<360;a+=10){ const t1 = rad(a); const r1 = a%30===0 ? R+6 : R+12;
+      ctx.beginPath(); ctx.moveTo(g.B.x+Math.cos(t1)*r1, g.B.y+Math.sin(t1)*r1); ctx.lineTo(g.B.x+Math.cos(t1)*(R+18), g.B.y+Math.sin(t1)*(R+18)); ctx.stroke(); }
+    // i arc: from incident ray (up-left) to normal (up)
+    ctx.lineWidth = 3; ctx.strokeStyle = css('--beam');
+    ctx.beginPath(); ctx.arc(g.B.x,g.B.y,R-12,rad(-90-iDeg),rad(-90)); ctx.stroke();
+    ctx.strokeStyle = css('--mark');
+    ctx.beginPath(); ctx.arc(g.B.x,g.B.y,R-12,rad(90-deg(g.r)),rad(90)); ctx.stroke();
+    // reading card, top right, colour-keyed to the arcs
+    ctx.fillStyle = css('--surface'); ctx.strokeStyle = css('--line'); ctx.lineWidth = 1;
+    ctx.fillRect(W-150,16,134,64); ctx.strokeRect(W-150,16,134,64);
+    ctx.font = '600 17px "STIX Two Text", serif';
+    ctx.fillStyle = css('--beam'); ctx.fillRect(W-138,32,14,4);
+    ctx.fillStyle = css('--mark'); ctx.fillRect(W-138,60,14,4);
+    ctx.fillStyle = css('--fg');
+    ctx.fillText(`i = ${iDeg}°`, W-116, 40); ctx.fillText(`r = ${rM}°`, W-116, 68);
+  }
+  // equation stamp
+  ctx.fillStyle = css('--muted'); ctx.font = 'italic 14px "STIX Two Text", serif';
+  ctx.fillText('sin i = n sin r', W-120, H-14);
+}
+
+function record(){
+  const r = measuredR(iDeg);
+  const idx = trials.findIndex(t=>t.i===iDeg);
+  if(idx>=0) trials[idx].r = r; else trials.push({i:iDeg, r});
+  trials.sort((a,b)=>a.i-b.i);
+  renderTable();
+  if(gSource==='mine') resetGraph();
+  // suggest the next untried angle
+  const next = [20,30,40,50,60,70,25,35,45,55,65,75,15].find(a=>!trials.some(t=>t.i===a));
+  if(next){ iDeg = next; iSlide.value = next; document.getElementById('iOut').textContent = next+'°'; }
+  goStep(1);
+}
+function renderTable(){
+  const tb = document.getElementById('tbody'), tf = document.getElementById('tfoot');
+  document.getElementById('emptyMsg').hidden = trials.length>0;
+  tb.innerHTML = trials.map((t,k)=>{
+    const si = Math.sin(rad(t.i)), sr = Math.sin(rad(t.r));
+    return `<tr><td>${k+1}</td><td>${t.i}</td><td>${t.r}</td><td>${si.toFixed(3)}</td><td>${sr.toFixed(3)}</td><td>${(si/sr).toFixed(2)}</td><td><button data-k="${k}" aria-label="Remove trial ${k+1}">Remove</button></td></tr>`;
+  }).join('');
+  tb.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ trials.splice(+b.dataset.k,1); renderTable(); if(gSource==='mine') resetGraph(); }));
+  if(trials.length){
+    const avg = trials.reduce((s,t)=>s+Math.sin(rad(t.i))/Math.sin(rad(t.r)),0)/trials.length;
+    tf.innerHTML = `<tr><td colspan="5">Average of sin <span class="m">i</span> / sin <span class="m">r</span></td><td>${avg.toFixed(2)}</td><td></td></tr>`;
+  } else tf.innerHTML = '';
+}
+
+/* ---------------- Graph ---------------- */
+const pl = setupCanvas(document.getElementById('plot'));
+const SAMPLE = [{i:20,r:13},{i:30,r:20},{i:40,r:25},{i:50,r:31},{i:60,r:35},{i:70,r:39}];
+const LC2020 = [{i:30,r:19},{i:40,r:25},{i:50,r:31},{i:60,r:35},{i:70,r:39},{i:80,r:41}];
+let gSource = 'mine', gStage = 0, gT0 = 0;
+const GX = {l:64, r:610, t:24, b:384, xmax:0.8, ymax:1.0};
+const px = x => GX.l + x/GX.xmax*(GX.r-GX.l), py = y => GX.b - y/GX.ymax*(GX.b-GX.t);
+function data(){
+  const src = gSource==='sample' ? SAMPLE : gSource==='lc' ? LC2020 : trials;
+  return src.map(t=>({x:Math.sin(rad(t.r)), y:Math.sin(rad(t.i))}));
+}
+function fit(d){ const sxy = d.reduce((s,p)=>s+p.x*p.y,0), sxx = d.reduce((s,p)=>s+p.x*p.x,0); return sxy/sxx; }
+function resetGraph(){
+  gStage = 0;
+  document.getElementById('gFit').disabled = true; document.getElementById('gSlope').disabled = true;
+  document.getElementById('gResult').hidden = true;
+  document.getElementById('gSource').textContent = 'Data: ' + ({mine:'your results table.', sample:'sample class results.', lc:'LC 2020 Higher Level, Q2.'})[gSource];
+  document.getElementById('gExplain').innerHTML = 'Press <strong>Plot the points</strong>.' + (gSource==='mine' && trials.length<3 ? ' You need at least three trials, or use the sample data.' : '');
+}
+function drawPlot(now){
+  const {ctx, W, H} = pl, d = data();
+  ctx.clearRect(0,0,W,H); ctx.fillStyle = css('--paper'); ctx.fillRect(0,0,W,H);
+  // grid
+  ctx.lineWidth = 1;
+  for(let x=0;x<=GX.xmax+1e-9;x+=0.05){ ctx.strokeStyle = Math.round(x*100)%10===0 ? css('--line') : css('--grid'); ctx.beginPath(); ctx.moveTo(px(x),GX.t); ctx.lineTo(px(x),GX.b); ctx.stroke(); }
+  for(let y=0;y<=GX.ymax+1e-9;y+=0.05){ ctx.strokeStyle = Math.round(y*100)%10===0 ? css('--line') : css('--grid'); ctx.beginPath(); ctx.moveTo(GX.l,py(y)); ctx.lineTo(GX.r,py(y)); ctx.stroke(); }
+  ctx.strokeStyle = css('--fg'); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(GX.l,GX.t); ctx.lineTo(GX.l,GX.b); ctx.lineTo(GX.r,GX.b); ctx.stroke();
+  ctx.fillStyle = css('--muted'); ctx.font = '12px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
+  for(let x=0;x<=GX.xmax+1e-9;x+=0.1) ctx.fillText(x.toFixed(1), px(x), GX.b+18);
+  ctx.textAlign = 'right';
+  for(let y=0;y<=GX.ymax+1e-9;y+=0.1) ctx.fillText(y.toFixed(1), GX.l-8, py(y)+4);
+  ctx.textAlign = 'center'; ctx.fillStyle = css('--fg'); ctx.font = 'italic 16px "STIX Two Text", serif';
+  ctx.fillText('sin r', (GX.l+GX.r)/2, H-14);
+  ctx.save(); ctx.translate(18,(GX.t+GX.b)/2); ctx.rotate(-Math.PI/2); ctx.fillText('sin i', 0, 0); ctx.restore();
+  ctx.textAlign = 'left';
+  if(gStage===0){
+    ctx.fillStyle = css('--muted'); ctx.font = '14px "IBM Plex Sans", sans-serif';
+    ctx.fillText(d.length<3 ? 'Record at least three trials, or use the sample data.' : `${d.length} points ready. Press "Plot the points".`, GX.l+20, GX.t+30);
+    return;
+  }
+  const el = reduce ? 1e9 : now - gT0;
+  // points
+  const shown = gStage===1 ? Math.min(d.length, Math.floor(el/250)+1) : d.length;
+  ctx.strokeStyle = css('--ink'); ctx.lineWidth = 2;
+  d.slice(0,shown).forEach(p=>{ cross(ctx,{x:px(p.x),y:py(p.y)},5); });
+  if(gStage>=2){
+    const m = fit(d), f = gStage===2 ? Math.min(1, el/600) : 1;
+    const xEnd = Math.min(GX.xmax, GX.ymax/m);
+    ctx.strokeStyle = css('--mark'); ctx.lineWidth = 2;
+    seg(ctx,{x:px(0),y:py(0)},{x:px(xEnd),y:py(m*xEnd)},f);
+    ctx.fillStyle = css('--fg'); ctx.beginPath(); ctx.arc(px(0),py(0),4,0,7); ctx.fill();
+    if(f===1){ ctx.fillStyle = css('--mark'); ctx.font = 'italic 16px "STIX Two Text", serif';
+      ctx.fillText(`sin i = ${m.toFixed(2)} sin r`, px(xEnd*0.42)-150, py(m*xEnd*0.42)-6); }
+    if(gStage>=3){
+      const x1 = 0.10, x2 = Math.min(0.60, xEnd*0.92), y1 = m*x1, y2 = m*x2;
+      ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.moveTo(px(x1),py(y1)); ctx.lineTo(px(x2),py(y1)); ctx.lineTo(px(x2),py(y2)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = css('--ink'); ctx.font = '13px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'center'; ctx.fillText(`Δx = ${(x2-x1).toFixed(2)}`, (px(x1)+px(x2))/2, py(y1)+18);
+      ctx.textAlign = 'left'; ctx.fillText(`Δy = ${(y2-y1).toFixed(3)}`, px(x2)+8, (py(y1)+py(y2))/2);
+    }
+  }
+}
+document.getElementById('gPlot').addEventListener('click',()=>{
+  if(data().length<3){ document.getElementById('gExplain').innerHTML = 'Not enough data. Record at least three trials on the bench, or press <strong>Use sample data</strong>.'; return; }
+  gStage = 1; gT0 = performance.now(); document.getElementById('gFit').disabled = false;
+  document.getElementById('gExplain').innerHTML = 'Look at the pattern before you draw anything. Do the points lie close to a straight line? Does that line look as if it would pass through the origin?';
+});
+document.getElementById('gFit').addEventListener('click',()=>{
+  gStage = 2; gT0 = performance.now(); document.getElementById('gSlope').disabled = false;
+  const m = fit(data());
+  document.getElementById('gExplain').innerHTML = 'The line of best fit is <strong>straight and passes through the origin</strong>. So sin <span class="m">i</span> is directly proportional to sin <span class="m">r</span>. That is Snell\'s law, verified.';
+  document.getElementById('gResult').hidden = false;
+  document.getElementById('gEq').innerHTML = `sin <i>i</i> = ${m.toFixed(2)} sin <i>r</i>`;
+  document.getElementById('gSlopeText').innerHTML = 'Line them up with <span class="m">y</span> = <span class="m">m</span><span class="m">x</span>: sin <span class="m">i</span> is on the y-axis, sin <span class="m">r</span> on the x-axis, so the slope <span class="m">m</span> is the refractive index <span class="m">n</span>. Press <strong>Find the slope</strong>.';
+});
+document.getElementById('gSlope').addEventListener('click',()=>{
+  gStage = 3; const d = data(), m = fit(d);
+  const xEnd = Math.min(GX.xmax, GX.ymax/m), x1 = 0.10, x2 = Math.min(0.60, xEnd*0.92);
+  const dy = m*(x2-x1);
+  document.getElementById('gSlopeText').innerHTML =
+    `Pick two points on the line, far apart (not data points). Slope = Δy / Δx = ${dy.toFixed(3)} / ${(x2-x1).toFixed(2)} = <strong>${m.toFixed(2)}</strong>.<br>So the refractive index of the glass is <strong><span class="m">n</span> = ${m.toFixed(2)}</strong>. No units: it is a ratio of two sines.`;
+});
+document.getElementById('gSample').addEventListener('click',()=>{ gSource='sample'; resetGraph(); });
+document.getElementById('gMine').addEventListener('click',()=>{ gSource='mine'; resetGraph(); });
+document.getElementById('load2020').addEventListener('click',()=>{ gSource='lc'; resetGraph(); document.getElementById('graph').scrollIntoView({behavior: reduce?'auto':'smooth'}); });
+
+/* ---------------- % error sliders ---------------- */
+const angErr = document.getElementById('angErr'), lenErr = document.getElementById('lenErr');
+function errs(){
+  const a = +angErr.value; document.getElementById('angOut').textContent = a+'°';
+  document.getElementById('angVal').textContent = (50/a).toFixed(1)+'%';
+  const L = +lenErr.value, e = deg(1/L);
+  document.getElementById('lenOut').textContent = L+' mm';
+  document.getElementById('lenVal').textContent = '±'+e.toFixed(2)+'°';
+  document.getElementById('lenNote').textContent = `Each end of the ray is located to ±0.5 mm, so the ends can be up to 1 mm out of place. For r ≈ 25°, that is about ${(e/25*100).toFixed(1)}% error. A longer ray through the glass gives a smaller error.`;
+}
+angErr.addEventListener('input',errs); lenErr.addEventListener('input',errs); errs();
+
+/* ---------------- loop ---------------- */
+function loop(now){ drawWave(now); drawSim(now); drawPlot(now); if(!reduce) requestAnimationFrame(loop); }
+goStep(0); renderTable(); resetGraph();
+if(reduce){
+  const redraw = ()=>{ const n = performance.now(); drawWave(n); drawSim(n); drawPlot(n); };
+  document.addEventListener('input', redraw); document.addEventListener('click', ()=>setTimeout(redraw,0)); redraw();
+} else requestAnimationFrame(loop);
+})();
+</script>
+
+</body></html>

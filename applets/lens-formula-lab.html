@@ -1,0 +1,595 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lens Formula Lab</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap">
+<style>
+/* Layout: a lab-bench page. Sticky equation bar on top, then physics → guided bench → results → graph → questions. */
+:root{
+  --bg:#f5f7f9; --surface:#ffffff; --paper:#fbfcfd; --grid:#e3e9ef;
+  --fg:#16202b; --muted:#5a6675; --line:#d5dde5;
+  --ink:#1f4fa3; --ink-soft:#e4ecf8;
+  --beam:#f2b632; --shadow:#2a2418; --glass:#cfe7ee; --glass-edge:#6aa8b8;
+  --pencil:#3b4450; --mark:#c2412d; --ok:#2f7d4f;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-math:"STIX Two Text", "Cambria Math", "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --surface:#161d25; --paper:#141a21; --grid:#222c37;
+  --fg:#e6ebf1; --muted:#9aa6b4; --line:#2b3642;
+  --ink:#8db4ff; --ink-soft:#1c2a40;
+  --beam:#f2b632; --shadow:#0b0906; --glass:#1e3a44; --glass-edge:#5fa3b5;
+  --pencil:#c3cbd5; --mark:#ff7a63; --ok:#5fc48a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#161d25; --paper:#141a21; --grid:#222c37;
+  --fg:#e6ebf1; --muted:#9aa6b4; --line:#2b3642;
+  --ink:#8db4ff; --ink-soft:#1c2a40;
+  --beam:#f2b632; --shadow:#0b0906; --glass:#1e3a44; --glass-edge:#5fa3b5;
+  --pencil:#c3cbd5; --mark:#ff7a63; --ok:#5fc48a; color-scheme:dark}
+
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,5vw,3rem);font-weight:700}
+h2{font-size:1.6rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:700}
+p{margin:0}
+.eyebrow{font:500 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.m{font-family:var(--f-math);font-style:italic}
+.mono{font-family:var(--f-mono)}
+
+/* Equation bar */
+.eqbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.eqbar .wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-block:10px}
+.eqbar .big{font:400 1.45rem var(--f-math)}
+.eqbar .big i{font-style:italic}
+.eqbar .alt{font:400 1.05rem var(--f-math);color:var(--muted)}
+.eqbar .tag{margin-left:auto;font:500 .72rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+
+header.hero .wrap{padding-block:40px 24px;display:grid;gap:12px}
+header.hero p.lead{font-size:1.1rem;max-width:62ch;color:var(--muted)}
+
+section .wrap{padding-block:36px;display:grid;gap:20px}
+section+section .wrap{border-top:1px solid var(--line)}
+.intro{max-width:66ch;color:var(--muted)}
+
+/* WHAT / HOW / HOW */
+.whh{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px;align-content:start;min-width:0}
+.card .q{font:700 1.3rem var(--f-display);color:var(--ink)}
+.card ul{margin:0;padding-left:1.1em;display:grid;gap:6px}
+.defrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px}
+.formula{font:400 1.25rem var(--f-math);padding:8px 0}
+
+/* Bench */
+.bench{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+.canvasbox{background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+canvas{display:block;width:100%;height:auto}
+.steps{display:grid;gap:14px;min-width:0}
+.stepnav{display:flex;gap:6px;flex-wrap:wrap}
+.stepnav button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:500 .8rem var(--f-mono);cursor:pointer}
+.stepnav button.on{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.stepnav button.done{border-color:var(--ink);color:var(--ink)}
+.steptext{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px}
+.steptext .why{border-left:3px solid var(--ink);padding-left:12px;color:var(--muted);font-size:.95rem}
+.steptext .link{background:var(--ink-soft);border-radius:8px;padding:10px 12px;font-size:.95rem}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:500 .92rem var(--f-body);padding:9px 14px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:focus-visible,.stepnav button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.slider{display:grid;gap:4px}
+.slider label{font-size:.9rem;color:var(--muted)}
+.slider output{font:500 1rem var(--f-mono);color:var(--fg)}
+input[type=range]{width:100%;accent-color:var(--ink)}
+
+/* Table */
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;min-width:520px}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line)}
+th{font:500 .78rem var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+th:first-child,td:first-child{text-align:left}
+td{font-family:var(--f-mono);font-size:.92rem}
+tfoot td{font-weight:500;border-bottom:none}
+td button{background:none;border:none;color:var(--mark);cursor:pointer;font:inherit}
+.empty{padding:16px;color:var(--muted)}
+
+/* Graph */
+.graphgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+.readout{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:12px}
+.readout .result{font:400 1.5rem var(--f-math)}
+.compare{display:grid;grid-template-columns:auto auto auto auto auto;gap:4px 10px;justify-content:start;font:400 1.15rem var(--f-math);align-items:center}
+.compare .lbl{font:500 .72rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;text-align:center}
+
+/* Questions */
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 16px}
+details+details{margin-top:10px}
+summary{cursor:pointer;padding:14px 0;font-weight:500;list-style:none;display:flex;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary .n{font:500 .85rem var(--f-mono);color:var(--ink);min-width:2.2em}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .ans{padding:12px 0 16px;display:grid;gap:8px;color:var(--fg)}
+.qgroup h3{margin-bottom:12px}
+.err{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.err .card .val{font:500 1.6rem var(--f-mono);color:var(--ink)}
+.lc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:14px}
+.lc ol{margin:0;padding-left:1.4em;display:grid;gap:8px}
+.lc .marks{font:500 .8rem var(--f-mono);color:var(--muted)}
+.note{font-size:.88rem;color:var(--muted)}
+footer .wrap{padding-block:28px 48px;color:var(--muted);font-size:.85rem}
+
+@media (max-width:860px){
+  .whh,.defrow,.bench,.graphgrid,.err{grid-template-columns:minmax(0,1fr)}
+  .eqbar .tag{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<style>
+[hidden]{display:none!important}
+.status{display:inline-flex;align-items:center;gap:8px;font:500 .85rem var(--f-mono);padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);justify-self:start}
+.status .dot{width:10px;height:10px;border-radius:50%;background:var(--beam)}
+.status.sharp .dot{background:var(--ok)}
+.status.none .dot{background:var(--mark)}
+.seg{display:inline-flex;justify-self:start;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:500 .88rem var(--f-body);padding:8px 14px;border:none;background:var(--surface);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.seg button:focus-visible{outline:2px solid var(--mark);outline-offset:-2px}
+.compare{grid-template-columns:auto auto auto auto auto auto auto}
+</style>
+
+<div class="eqbar"><div class="wrap">
+  <span class="big">1/<i>f</i> = 1/<i>u</i> + 1/<i>v</i></span>
+  <span class="alt"><i>f</i> = <i>uv</i> / (<i>u</i> + <i>v</i>)</span>
+  <span class="tag">Keep this equation in front of you</span>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">Experiment 3 · Light · Real World Physics 2nd Ed.</span>
+  <h1>The lens formula for a converging lens</h1>
+  <p class="lead">Aim: to verify the mathematical model 1/<span class="m">f</span> = 1/<span class="m">u</span> + 1/<span class="m">v</span> for a converging lens, and to find its focal length.</p>
+</div></header>
+
+<!-- ============ PHYSICS ============ -->
+<section id="physics"><div class="wrap">
+  <span class="eyebrow">Part A · The physics</span>
+  <h2>What the equation tells you</h2>
+  <div class="whh">
+    <div class="card">
+      <span class="q">WHAT?</span>
+      <p><strong>What does the image distance depend on?</strong></p>
+      <p class="formula">1/<i>v</i> = 1/<i>f</i> − 1/<i>u</i></p>
+      <p>Two things: the object distance <span class="m">u</span> and the focal length <span class="m">f</span> of the lens.</p>
+    </div>
+    <div class="card">
+      <span class="q">HOW?</span>
+      <p><strong>How does it depend on them?</strong></p>
+      <ul>
+        <li>As <span class="m">u</span> gets bigger, 1/<span class="m">u</span> gets smaller, so 1/<span class="m">v</span> gets bigger and <span class="m">v</span> gets smaller. Move the object away and the image moves in towards <span class="m">f</span>.</li>
+        <li>As <span class="m">u</span> gets close to <span class="m">f</span>, 1/<span class="m">v</span> gets close to zero and <span class="m">v</span> gets very large.</li>
+        <li>1/<span class="m">v</span> is <em>not</em> proportional to 1/<span class="m">u</span>: it falls by the same amount as 1/<span class="m">u</span> rises. That is a straight line of slope −1.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="q">HOW?</span>
+      <p><strong>How do we show it in the lab?</strong></p>
+      <p>Measure <span class="m">v</span> for a range of <span class="m">u</span> values. Plot 1/<span class="m">v</span> against 1/<span class="m">u</span>: a straight line of slope −1 that cuts both axes at 1/<span class="m">f</span>.</p>
+      <p>Or rearrange to <span class="m">uv</span> = <span class="m">f</span>(<span class="m">u</span> + <span class="m">v</span>) and plot <span class="m">uv</span> against <span class="m">u</span> + <span class="m">v</span>: a straight line through the origin with slope <span class="m">f</span>.</p>
+    </div>
+  </div>
+  <div class="defrow">
+    <div class="card">
+      <h3>The equation as a definition, and its units</h3>
+      <p><strong>Focal length</strong> <span class="m">f</span>: the distance from the centre of the lens to the principal focus, where rays parallel to the axis meet after passing through the lens.</p>
+      <p>1/<span class="m">f</span> is the <strong>power</strong> of the lens: <span class="m">P</span> = 1/<span class="m">f</span>. The power of a lens is the reciprocal of its focal length.</p>
+      <p><strong>Units:</strong> 1 over the units of <span class="m">f</span> = 1/m = m⁻¹, called the dioptre (D). Every term in the equation, 1/<span class="m">f</span>, 1/<span class="m">u</span> and 1/<span class="m">v</span>, has units of m⁻¹, so the equation balances.</p>
+    </div>
+    <div class="card">
+      <h3>Before you start</h3>
+      <p><strong>u</strong> is the distance from the object to the centre of the lens. <strong>v</strong> is the distance from the centre of the lens to the image.</p>
+      <p><strong>Real is positive:</strong> real distances are positive. If <span class="m">u</span> is less than <span class="m">f</span>, the formula gives a negative <span class="m">v</span>: the image is virtual and cannot be caught on a screen.</p>
+      <p class="note">This is why you first find <span class="m">f</span> roughly, so that every <span class="m">u</span> you choose is bigger than <span class="m">f</span>.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ BENCH ============ -->
+<section id="bench"><div class="wrap">
+  <span class="eyebrow">Part B · The experiment</span>
+  <h2>Do it on the bench</h2>
+  <div class="bench">
+    <div class="canvasbox"><canvas id="sim" width="640" height="400" aria-label="Side view of an optical bench with an illuminated cross-wire, a converging lens and a screen on a metre stick"></canvas></div>
+    <div class="steps">
+      <div class="stepnav" id="nav"></div>
+      <div class="steptext" id="text" aria-live="polite"></div>
+      <div class="status" id="stat"><span class="dot"></span><span></span></div>
+      <div class="slider" id="ctlU">
+        <label for="uS">Move the lens. Object distance <span class="m">u</span>: <output id="uOut">30 cm</output></label>
+        <input type="range" id="uS" min="10" max="60" step="1" value="30">
+      </div>
+      <div class="slider" id="ctlS">
+        <label for="sS">Move the screen. Screen at the <output id="sOut">80.0 cm</output> mark</label>
+        <input type="range" id="sS" min="20" max="100" step="0.5" value="80">
+      </div>
+      <div class="controls">
+        <button class="btn ghost" id="prev">Back</button>
+        <button class="btn" id="next">Next step</button>
+        <button class="btn" id="rec" hidden>Record this trial</button>
+      </div>
+    </div>
+  </div>
+
+  <h3>Results table</h3>
+  <div class="tablebox"><table>
+    <thead><tr><th>Trial</th><th><span class="m">u</span> (cm)</th><th><span class="m">v</span> (cm)</th><th>1/<span class="m">u</span> (m⁻¹)</th><th>1/<span class="m">v</span> (m⁻¹)</th><th>1/<span class="m">u</span> + 1/<span class="m">v</span> (m⁻¹)</th><th><span class="m">f</span> (cm)</th><th></th></tr></thead>
+    <tbody id="tb"></tbody><tfoot id="tf"></tfoot></table>
+    <p class="empty" id="em">No trials yet. Record at least six different values of <span class="m">u</span>, all bigger than <span class="m">f</span>.</p>
+  </div>
+</div></section>
+
+<!-- ============ GRAPH ============ -->
+<section id="graph"><div class="wrap">
+  <span class="eyebrow">Part C · The graph</span>
+  <h2>Verify the model with a straight line</h2>
+  <p class="intro">Choose a graph. Both come straight from the equation and both give <span class="m">f</span>.</p>
+  <div class="seg" role="group" aria-label="Choose graph">
+    <button id="m1" aria-pressed="true">1/v against 1/u</button>
+    <button id="m2" aria-pressed="false">uv against u + v</button>
+  </div>
+  <div class="graphgrid">
+    <div class="canvasbox"><canvas id="plot" width="640" height="440" aria-label="Graph for the lens formula"></canvas></div>
+    <div class="readout">
+      <div class="controls">
+        <button class="btn" id="gPlot">1 · Plot the points</button>
+        <button class="btn" id="gFit" disabled>2 · Line of best fit</button>
+        <button class="btn" id="gRead" disabled>3 · Find f</button>
+      </div>
+      <div class="controls">
+        <button class="btn ghost" id="gSample">Use sample data</button>
+        <button class="btn ghost" id="gMine">Use my results</button>
+      </div>
+      <p class="note" id="gSource">Data: your results table.</p>
+      <div id="gExplain" class="note"></div>
+      <div id="gResult" hidden>
+        <p class="eyebrow">Compare with a straight line</p>
+        <div class="compare" id="gCompare"></div>
+        <p id="gText"></p>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ QUESTIONS ============ -->
+<section id="questions"><div class="wrap">
+  <span class="eyebrow">Part D · Check your understanding</span>
+  <h2>Questions on this experiment</h2>
+  <div class="qgroup">
+    <h3>The usual questions</h3>
+    <details><summary><span class="n">Q1</span>How is an approximate value of the focal length found?</summary><div class="ans"><p>Focus the image of a distant object, such as a window or a tree outside, on a screen. Measure the distance from the lens to the screen. Rays from a distant object are almost parallel, so they meet at the focus.</p></div></details>
+    <details><summary><span class="n">Q2</span>Why find the approximate focal length first?</summary><div class="ans"><p>So that every object distance used is bigger than <span class="m">f</span>. If <span class="m">u</span> is less than <span class="m">f</span>, the image is virtual and cannot be formed on a screen.</p></div></details>
+    <details><summary><span class="n">Q3</span>How is the position of the image found?</summary><div class="ans"><p>Move the screen back and forth until a sharp image of the cross-wire appears. Approach the sharp position from both sides and take the middle.</p></div></details>
+    <details><summary><span class="n">Q4</span>Why are <span class="m">u</span> and <span class="m">v</span> measured to the centre of the lens?</summary><div class="ans"><p>The formula uses distances from the optical centre of the lens. Measuring to the edge of the lens or its holder adds a systematic error.</p></div></details>
+    <details><summary><span class="n">Q5</span>Describe the image formed on the screen.</summary><div class="ans"><p>Real and inverted. It is magnified when <span class="m">u</span> is between <span class="m">f</span> and 2<span class="m">f</span>, the same size at <span class="m">u</span> = 2<span class="m">f</span>, and diminished beyond 2<span class="m">f</span>.</p></div></details>
+    <details><summary><span class="n">Q6</span>Why is it hard to find the image when <span class="m">u</span> is only slightly bigger than <span class="m">f</span>?</summary><div class="ans"><p><span class="m">v</span> becomes very large, so the image is far away, large and dim. It stays roughly in focus over a long distance, so its exact position is hard to judge.</p></div></details>
+    <details><summary><span class="n">Q7</span>How does the graph of 1/<span class="m">v</span> against 1/<span class="m">u</span> verify the formula?</summary><div class="ans"><p>It is a straight line with slope −1. Rearranged, the formula is 1/<span class="m">v</span> = (−1)(1/<span class="m">u</span>) + 1/<span class="m">f</span>, which has the form <span class="m">y</span> = <span class="m">mx</span> + <span class="m">c</span> with <span class="m">m</span> = −1 and <span class="m">c</span> = 1/<span class="m">f</span>. Both intercepts equal 1/<span class="m">f</span>.</p></div></details>
+    <details><summary><span class="n">Q8</span>Why does the graph of <span class="m">uv</span> against <span class="m">u</span> + <span class="m">v</span> go through the origin?</summary><div class="ans"><p>Multiply 1/<span class="m">f</span> = 1/<span class="m">u</span> + 1/<span class="m">v</span> by <span class="m">fuv</span>: <span class="m">uv</span> = <span class="m">f</span>(<span class="m">u</span> + <span class="m">v</span>). So <span class="m">uv</span> is directly proportional to <span class="m">u</span> + <span class="m">v</span>, and the slope is <span class="m">f</span>.</p></div></details>
+    <details><summary><span class="n">Q9</span>Give two precautions.</summary><div class="ans"><p>Keep the centres of the object, lens and screen at the same height on one straight line. Work in a dimmed room so the image is clear. Read the metre stick at eye level to avoid parallax. Use a range of <span class="m">u</span> values.</p></div></details>
+    <details><summary><span class="n">Q10</span>A lens has a focal length of 20 cm. What is its power?</summary><div class="ans"><p><span class="m">P</span> = 1/<span class="m">f</span> = 1/0.20 m = <strong>5 m⁻¹</strong> (5 dioptres). <span class="m">f</span> must be in metres.</p></div></details>
+  </div>
+  <div class="qgroup">
+    <h3>Percentage error</h3>
+    <details><summary><span class="n">P1</span>The screen position can be judged to ±0.5 cm. Calculate the percentage error in <span class="m">v</span> = 20.0 cm and in <span class="m">v</span> = 60.0 cm.</summary><div class="ans"><p>(0.5/20.0) × 100 = <strong>2.5%</strong>. (0.5/60.0) × 100 = <strong>0.8%</strong>.</p><p>But in practice the sharp position is much harder to judge when <span class="m">v</span> is large, so the real uncertainty grows with <span class="m">v</span>.</p></div></details>
+    <details><summary><span class="n">P2</span>Why should you avoid values of <span class="m">u</span> very close to <span class="m">f</span>?</summary><div class="ans"><p><span class="m">v</span> becomes very large and the image is blurred over a long range of screen positions. The error in <span class="m">v</span> becomes large.</p></div></details>
+    <details><summary><span class="n">P3</span>Why is the value of <span class="m">f</span> from a graph more reliable than from one pair of readings?</summary><div class="ans"><p>The line of best fit uses all the readings, so random errors in individual readings tend to cancel. It also shows up any reading that does not fit the pattern.</p></div></details>
+  </div>
+</div></section>
+
+<!-- ============ LC ============ -->
+<section id="lc"><div class="wrap">
+  <span class="eyebrow">Part E · Leaving Certificate question</span>
+  <h2>Exam question using the same formula</h2>
+  <p class="intro">This question uses a concave mirror, but the formula, the method and the calculation are the same as for the lens.</p>
+  <div class="lc">
+    <h3>LC 2019 Higher Level · Section A, Question 2 <span class="marks">(40 marks)</span></h3>
+    <p>A student determined the focal length of a concave mirror. She first found an approximate value for its focal length. She then measured the image distance <span class="m">v</span> for different object distances <span class="m">u</span>.</p>
+    <div class="tablebox"><table><tbody>
+      <tr><th><span class="m">u</span> (cm)</th><td>20.0</td><td>30.0</td><td>40.0</td><td>50.0</td></tr>
+      <tr><th><span class="m">v</span> (cm)</th><td>61.0</td><td>29.5</td><td>24.0</td><td>20.5</td></tr>
+    </tbody></table></div>
+    <ol type="i">
+      <li>How did the student find the approximate focal length?</li>
+      <li>Why did the student find the approximate focal length at the start of the experiment?</li>
+      <li>Describe, with the aid of a labelled diagram, how the position of the image was found.</li>
+      <li>State two precautions that should be taken when measuring <span class="m">v</span>. <span class="marks">(27)</span></li>
+      <li>Use all of the data to calculate the focal length of the mirror. <span class="marks">(13)</span></li>
+    </ol>
+    <div class="controls"><button class="btn ghost" id="load2019">Plot this data on the graph</button></div>
+    <details><summary><span class="n">✓</span>Show the solution</summary><div class="ans">
+      <p>(i) Form a sharp image of a distant object on a screen and measure the distance from the mirror to the screen.</p>
+      <p>(ii) So that the object distances used are all greater than <span class="m">f</span>, giving real images that can be formed on a screen.</p>
+      <p>(iii) An illuminated cross-wire is the object. Move a screen until a sharp image of the cross-wire is formed on it.</p>
+      <p>(iv) Measure to the centre of the mirror. Make sure the image is sharp. Avoid parallax when reading the metre stick.</p>
+      <div class="tablebox"><table><tbody>
+        <tr><th><span class="m">f</span> = <span class="m">uv</span>/(<span class="m">u</span>+<span class="m">v</span>) (cm)</th><td>15.06</td><td>14.87</td><td>15.00</td><td>14.54</td></tr>
+      </tbody></table></div>
+      <p>(v) Average <span class="m">f</span> = <strong>14.9 cm</strong></p>
+    </div></details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">PBC Science · LC Physics experiment guides · Experiment 3 of 26</div></footer>
+
+<script>
+(()=>{
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function setup(id){ const cv = document.getElementById(id), W = cv.width, H = cv.height, dpr = Math.max(1, devicePixelRatio||1);
+  cv.width = W*dpr; cv.height = H*dpr; const ctx = cv.getContext('2d'); ctx.scale(dpr,dpr); return {ctx,W,H}; }
+function seg(ctx,a,b,f=1){ ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(a.x+(b.x-a.x)*f, a.y+(b.y-a.y)*f); ctx.stroke(); }
+function cross(ctx,p,s=5){ ctx.beginPath(); ctx.moveTo(p.x-s,p.y-s); ctx.lineTo(p.x+s,p.y+s); ctx.moveTo(p.x+s,p.y-s); ctx.lineTo(p.x-s,p.y+s); ctx.stroke(); }
+function label(ctx,t,x,y,font='12px "IBM Plex Mono", monospace',col='--muted',align='left'){ ctx.fillStyle = css(col); ctx.font = font; ctx.textAlign = align; ctx.fillText(t,x,y); ctx.textAlign = 'left'; }
+
+/* ================= BENCH ================= */
+const sim = setup('sim'), F = 15.0;          // focal length, cm
+const PXC = 6, X0 = 20, AX = 150, OBJ = 5;    // px per cm, x of 0 cm mark, optical axis y, object at 5 cm mark
+const X = cm => X0 + cm*PXC;
+let u = 30, S = 80, step = 0, t0 = performance.now(); const trials = [];
+const vTrue = () => u>F ? u*F/(u-F) : null;
+const vMeas = () => +(S - (OBJ+u)).toFixed(1);
+function state(){ const v = vTrue(); if(v===null) return 'none'; return Math.abs(vMeas()-v) <= 0.75 ? 'sharp' : 'blur'; }
+
+const STEPS = [
+  {t:'Find f roughly', b:'Hold the lens in front of a screen and point it at a <strong>distant</strong> object, such as a window. Move the screen until the image is sharp. The lens-to-screen distance is roughly <span class="m">f</span>.', w:'Rays from a distant object arrive almost parallel, and parallel rays meet at the focus. You need <span class="m">f</span> so that you always choose <span class="m">u</span> &gt; <span class="m">f</span>.'},
+  {t:'Set up the bench', b:'Place the illuminated cross-wire (the object), the lens and the screen along a metre stick. Their centres must be at the same height, on one straight line.', w:'The formula assumes the object and image lie on the principal axis of the lens.'},
+  {t:'Choose an object distance', b:'Move the lens so the object distance <span class="m">u</span> is bigger than <span class="m">f</span>. Try what happens when <span class="m">u</span> is less than <span class="m">f</span>.', w:'If <span class="m">u</span> &lt; <span class="m">f</span>, the rays spread out after the lens. The image is virtual and no screen position works.'},
+  {t:'Find the sharp image', b:'Move the screen back and forth until the image of the cross-wire is sharp. The screen view, top right, shows what you see. Approach from both sides.', w:'If the screen is too near or too far, the rays have not met yet, or have already crossed, and the image is blurred.'},
+  {t:'Measure u and v', b:'Measure <span class="m">u</span> from the cross-wire to the <strong>centre</strong> of the lens, and <span class="m">v</span> from the centre of the lens to the screen. Read the metre stick at eye level.', w:'The formula uses distances from the centre of the lens. Reading at eye level avoids parallax error.'},
+  {t:'Calculate, record and repeat', b:'Calculate 1/<span class="m">u</span> + 1/<span class="m">v</span> and <span class="m">f</span>. Record the trial. Repeat for at least six different values of <span class="m">u</span>.', w:'A range of readings lets you draw a graph and average out random errors.'}
+];
+
+function drawSim(now){
+  const {ctx,W,H} = sim, p = reduce ? 1 : Math.min(1,(now-t0)/700);
+  ctx.clearRect(0,0,W,H); ctx.fillStyle = css('--paper'); ctx.fillRect(0,0,W,H);
+  // metre stick
+  const MY = 320;
+  ctx.fillStyle = css('--surface'); ctx.fillRect(X(0)-6,MY,X(100)-X(0)+12,34);
+  ctx.strokeStyle = css('--line'); ctx.lineWidth = 1; ctx.strokeRect(X(0)-6,MY,X(100)-X(0)+12,34);
+  ctx.strokeStyle = css('--fg');
+  for(let c=0;c<=100;c++){ const h = c%10===0 ? 12 : c%5===0 ? 8 : 4; seg(ctx,{x:X(c),y:MY},{x:X(c),y:MY+h}); }
+  for(let c=0;c<=100;c+=10) label(ctx,String(c),X(c),MY+28,'11px "IBM Plex Mono", monospace','--fg','center');
+  // axis
+  ctx.strokeStyle = css('--grid'); ctx.setLineDash([3,4]); seg(ctx,{x:0,y:AX},{x:W,y:AX}); ctx.setLineDash([]);
+
+  if(step===0){
+    // distant window: parallel rays
+    const L = X(30), fx = X(30+F);
+    label(ctx,'from a distant window: parallel rays', 20, 40, '13px "IBM Plex Sans", sans-serif', '--fg');
+    ctx.strokeStyle = css('--beam'); ctx.lineWidth = 2;
+    [-40,-20,0,20,40].forEach(h=>{ seg(ctx,{x:20,y:AX+h},{x:L,y:AX+h}); seg(ctx,{x:L,y:AX+h},{x:fx,y:AX},p); });
+    drawLens(ctx,L); drawScreen(ctx,fx);
+    if(p===1){ ctx.strokeStyle = css('--mark'); ctx.lineWidth = 1.5; seg(ctx,{x:L,y:280},{x:fx,y:280}); seg(ctx,{x:L,y:274},{x:L,y:286}); seg(ctx,{x:fx,y:274},{x:fx,y:286});
+      label(ctx,'f ≈ 15 cm',(L+fx)/2,272,'13px "IBM Plex Mono", monospace','--mark','center'); }
+    return;
+  }
+  const xo = X(OBJ), xl = X(OBJ+u), xs = X(S);
+  // lamp box and object
+  ctx.fillStyle = css('--fg'); ctx.fillRect(xo-40,AX-45,36,90);
+  ctx.fillStyle = css('--beam'); ctx.fillRect(xo-4,AX-30,4,60);
+  ctx.strokeStyle = css('--ink'); ctx.lineWidth = 3; seg(ctx,{x:xo,y:AX},{x:xo,y:AX-30});
+  ctx.beginPath(); ctx.moveTo(xo-5,AX-24); ctx.lineTo(xo,AX-32); ctx.lineTo(xo+5,AX-24); ctx.stroke();
+  label(ctx,'cross-wire', xo-44, AX-56);
+  drawLens(ctx,xl); drawScreen(ctx,xs);
+  // stands to metre stick
+  ctx.strokeStyle = css('--muted'); ctx.lineWidth = 2; [xo,xl,xs].forEach(x=>seg(ctx,{x,y:AX+48},{x,y:MY}));
+  // rays from top of object
+  if(step>=2){
+    const top = {x:xo, y:AX-30}, v = vTrue();
+    ctx.strokeStyle = css('--beam'); ctx.lineWidth = 1.8;
+    if(v!==null){
+      const I = {x:X(OBJ+u+v), y:AX + 30*v/u};
+      const toScreen = (a)=>{ const t = (xs - a.x)/(I.x - a.x); return {x:xs, y:a.y + (I.y-a.y)*t}; };
+      const A = {x:xl, y:top.y}, Cc = {x:xl, y:AX};
+      seg(ctx,top,A); seg(ctx,A, xs>xl ? toScreen(A) : A);
+      seg(ctx,top,Cc); seg(ctx,Cc, toScreen(Cc));
+      // focus marks
+      ctx.fillStyle = css('--ink'); [xl-F*PXC, xl+F*PXC].forEach(x=>{ ctx.beginPath(); ctx.arc(x,AX,3,0,7); ctx.fill(); });
+      label(ctx,'F', xl+F*PXC-3, AX+18, 'italic 13px "STIX Two Text", serif', '--ink');
+      label(ctx,'F', xl-F*PXC-3, AX+18, 'italic 13px "STIX Two Text", serif', '--ink');
+      if(I.x < W){ ctx.strokeStyle = css('--mark'); ctx.lineWidth = 1; ctx.setLineDash([3,3]); seg(ctx,{x:I.x,y:AX},I); ctx.setLineDash([]); }
+    } else {
+      const A = {x:xl, y:top.y}, Fx = xl + F*PXC, dir = {x:Fx-xl, y:AX-top.y}, k = (xs-xl)/dir.x;
+      seg(ctx,top,A); seg(ctx,A,{x:xs, y:A.y + dir.y*k});
+      const Cc = {x:xl,y:AX}, d2 = {x:xl-top.x, y:AX-top.y}, k2 = (xs-xl)/d2.x;
+      seg(ctx,top,Cc); seg(ctx,Cc,{x:xs, y:AX + d2.y*k2});
+    }
+  }
+  // dimensions
+  if(step>=4){
+    const f = step===4 ? p : 1, y = 290;
+    ctx.strokeStyle = css('--mark'); ctx.lineWidth = 1.5;
+    seg(ctx,{x:xo,y},{x:xo+(xl-xo)*f,y}); seg(ctx,{x:xl,y},{x:xl+(xs-xl)*f,y});
+    if(f===1){ [xo,xl,xs].forEach(x=>seg(ctx,{x,y:y-6},{x,y:y+6}));
+      label(ctx,`u = ${u.toFixed(1)} cm`,(xo+xl)/2,y-8,'13px "IBM Plex Mono", monospace','--mark','center');
+      label(ctx,`v = ${vMeas().toFixed(1)} cm`,(xl+xs)/2,y-8,'13px "IBM Plex Mono", monospace','--mark','center'); }
+  }
+  // screen view inset
+  if(step>=2) drawInset(ctx,W);
+  label(ctx,'1/f = 1/u + 1/v', W-14, H-12, 'italic 14px "STIX Two Text", serif', '--muted', 'right');
+}
+function drawLens(ctx,x){
+  ctx.fillStyle = css('--glass'); ctx.strokeStyle = css('--glass-edge'); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(x,AX,9,48,0,0,7); ctx.fill(); ctx.stroke();
+  label(ctx,'lens', x, AX-58, '12px "IBM Plex Mono", monospace', '--muted', 'center');
+}
+function drawScreen(ctx,x){
+  ctx.fillStyle = css('--surface'); ctx.strokeStyle = css('--fg'); ctx.lineWidth = 1.5;
+  ctx.fillRect(x-3,AX-70,6,140); ctx.strokeRect(x-3,AX-70,6,140);
+  label(ctx,'screen', x, AX-78, '12px "IBM Plex Mono", monospace', '--muted', 'center');
+}
+function drawInset(ctx,W){
+  const s = 120, x0 = W-s-14, y0 = 14, cx = x0+s/2, cy = y0+s/2;
+  ctx.fillStyle = css('--surface'); ctx.strokeStyle = css('--line'); ctx.lineWidth = 1; ctx.fillRect(x0,y0,s,s); ctx.strokeRect(x0,y0,s,s);
+  label(ctx,'screen view', x0, y0+s+14);
+  const v = vTrue();
+  if(v===null){ ctx.fillStyle = css('--beam'); ctx.globalAlpha = .25; ctx.fillRect(x0+4,y0+4,s-8,s-8); ctx.globalAlpha = 1;
+    label(ctx,'no image', cx, cy+4, '12px "IBM Plex Sans", sans-serif', '--fg', 'center'); return; }
+  const vs = vMeas(), m = Math.min(2.2, v/u), blur = Math.min(26, Math.abs(vs - v)*4*12/v);
+  ctx.save(); ctx.beginPath(); ctx.rect(x0+1,y0+1,s-2,s-2); ctx.clip();
+  ctx.fillStyle = css('--beam'); ctx.globalAlpha = .12; ctx.fillRect(x0,y0,s,s);
+  const arm = 24*m, N = blur<0.5 ? 1 : 14;
+  ctx.strokeStyle = css('--fg'); ctx.lineWidth = 2;
+  for(let k=0;k<N;k++){ const a = k/N*Math.PI*2, ox = N===1 ? 0 : Math.cos(a)*blur, oy = N===1 ? 0 : Math.sin(a)*blur;
+    ctx.globalAlpha = N===1 ? 1 : 0.14;
+    ctx.beginPath(); ctx.moveTo(cx-arm+ox,cy+oy); ctx.lineTo(cx+arm+ox,cy+oy); ctx.moveTo(cx+ox,cy-arm+oy); ctx.lineTo(cx+ox,cy+arm+oy); ctx.stroke();
+    // inverted marker: object's marker is top-right, so the image's is bottom-left
+    ctx.beginPath(); ctx.arc(cx-arm*.5+ox, cy+arm*.5+oy, 3*m, 0, 7); ctx.fillStyle = css('--fg'); ctx.fill(); }
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+function go(k){
+  step = k; t0 = performance.now(); const s = STEPS[k], st = state();
+  let extra = '';
+  if(k===2 && u<=F) extra = `<p class="link"><span class="m">u</span> = ${u} cm is less than <span class="m">f</span>. No real image can form. Move the lens further from the object.</p>`;
+  if(k===3 && st!=='sharp') extra = `<p class="link">${st==='none' ? 'No image: <span class="m">u</span> is less than <span class="m">f</span>.' : 'Still blurred. Keep moving the screen.'}</p>`;
+  if(k>=4 && u>F){ const v = vMeas(), inv = 100/u + 100/v;
+    extra = `<p class="link"><span class="m">u</span> = ${u.toFixed(1)} cm, <span class="m">v</span> = ${v.toFixed(1)} cm${k===5 ? `<br>1/<span class="m">u</span> + 1/<span class="m">v</span> = 1/${(u/100).toFixed(3)} + 1/${(v/100).toFixed(3)} = ${inv.toFixed(2)} m⁻¹<br><span class="m">f</span> = 1/${inv.toFixed(2)} m = <strong>${(100/inv).toFixed(1)} cm</strong>` : ''}${st!=='sharp' ? '<br><strong>Check:</strong> the image was not sharp, so this <span class="m">v</span> is not the image distance.' : ''}</p>`; }
+  document.getElementById('text').innerHTML = `<span class="eyebrow">Step ${k+1} of ${STEPS.length}</span><h3>${s.t}</h3><p>${s.b}</p><p class="why"><strong>Why:</strong> ${s.w}</p>${extra}`;
+  [...nav.children].forEach((b,j)=>b.className = j===k ? 'on' : (j<k ? 'done' : ''));
+  document.getElementById('prev').disabled = k===0;
+  document.getElementById('next').textContent = k===STEPS.length-1 ? 'Choose another u' : 'Next step';
+  document.getElementById('rec').hidden = k!==5;
+  document.getElementById('ctlU').hidden = k<2;
+  document.getElementById('ctlS').hidden = k<3;
+  document.getElementById('stat').hidden = k<3 || k>4;
+  updStat();
+}
+function updStat(){ const st = state(), el = document.getElementById('stat');
+  el.className = 'status '+st; el.lastElementChild.textContent = st==='none' ? 'No real image: u is less than f' : st==='sharp' ? 'Sharp image on the screen' : 'Image blurred'; }
+const nav = document.getElementById('nav');
+STEPS.forEach((s,k)=>{ const b = document.createElement('button'); b.textContent = k+1; b.title = s.t; b.addEventListener('click',()=>go(k)); nav.appendChild(b); });
+const uS = document.getElementById('uS'), sS = document.getElementById('sS');
+function clampScreen(){ const min = OBJ+u+3; if(S < min){ S = min; sS.value = S; } document.getElementById('sOut').textContent = S.toFixed(1)+' cm'; }
+uS.addEventListener('input',()=>{ u = +uS.value; document.getElementById('uOut').textContent = u+' cm'; clampScreen(); if(step>3) go(3); else go(step); });
+sS.addEventListener('input',()=>{ S = +sS.value; clampScreen(); if(step>4) go(4); else go(step); });
+document.getElementById('prev').addEventListener('click',()=>go(Math.max(0,step-1)));
+document.getElementById('next').addEventListener('click',()=>go(step===STEPS.length-1 ? 2 : step+1));
+document.getElementById('rec').addEventListener('click',()=>{
+  if(u<=F) return;
+  const idx = trials.findIndex(t=>t.u===u), row = {u, v:vMeas()};
+  if(idx>=0) trials[idx] = row; else trials.push(row); trials.sort((a,b)=>a.u-b.u); render();
+  if(gSource==='mine') resetGraph();
+  const next = [20,25,35,40,50,60,30,45,55].find(a=>!trials.some(t=>t.u===a));
+  if(next){ u = next; uS.value = next; document.getElementById('uOut').textContent = next+' cm'; clampScreen(); }
+  go(2);
+});
+function render(){
+  document.getElementById('em').hidden = trials.length>0;
+  const tb = document.getElementById('tb');
+  tb.innerHTML = trials.map((t,k)=>{ const iu = 100/t.u, iv = 100/t.v;
+    return `<tr><td>${k+1}</td><td>${t.u.toFixed(1)}</td><td>${t.v.toFixed(1)}</td><td>${iu.toFixed(2)}</td><td>${iv.toFixed(2)}</td><td>${(iu+iv).toFixed(2)}</td><td>${(100/(iu+iv)).toFixed(1)}</td><td><button data-k="${k}" aria-label="Remove trial ${k+1}">Remove</button></td></tr>`; }).join('');
+  tb.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ trials.splice(+b.dataset.k,1); render(); if(gSource==='mine') resetGraph(); }));
+  const tf = document.getElementById('tf');
+  if(trials.length){ const avg = trials.reduce((s,t)=>s + t.u*t.v/(t.u+t.v),0)/trials.length;
+    tf.innerHTML = `<tr><td colspan="6">Average <span class="m">f</span></td><td>${avg.toFixed(1)}</td><td></td></tr>`; } else tf.innerHTML = '';
+}
+
+/* ================= GRAPH ================= */
+const pl = setup('plot');
+const SAMPLE = [{u:20,v:60.5},{u:25,v:37.0},{u:30,v:30.5},{u:40,v:24.0},{u:50,v:21.5},{u:60,v:20.0}];
+const LC2019 = [{u:20,v:61.0},{u:30,v:29.5},{u:40,v:24.0},{u:50,v:20.5}];
+let gSource = 'mine', gStage = 0, gT0 = 0, mode = 1;
+const G = {l:70, r:612, t:24, b:384};
+function axes(){ return mode===1 ? {xmax:7, ymax:7, xs:1, ys:1, xl:'1/u  (m⁻¹)', yl:'1/v  (m⁻¹)', xd:0, yd:0}
+                                 : {xmax:1.0, ymax:0.16, xs:0.1, ys:0.02, xl:'u + v  (m)', yl:'uv  (m²)', xd:1, yd:2}; }
+function data(){ const src = gSource==='sample' ? SAMPLE : gSource==='lc' ? LC2019 : trials;
+  return src.map(t=>{ const u = t.u/100, v = t.v/100; return mode===1 ? {x:1/u, y:1/v} : {x:u+v, y:u*v}; }); }
+function fit(d){ const n = d.length, sx = d.reduce((s,p)=>s+p.x,0), sy = d.reduce((s,p)=>s+p.y,0);
+  if(mode===2){ const m = d.reduce((s,p)=>s+p.x*p.y,0)/d.reduce((s,p)=>s+p.x*p.x,0); return {m, c:0}; }
+  const sxy = d.reduce((s,p)=>s+p.x*p.y,0), sxx = d.reduce((s,p)=>s+p.x*p.x,0);
+  const m = (n*sxy - sx*sy)/(n*sxx - sx*sx); return {m, c:(sy - m*sx)/n}; }
+function drawPlot(now){
+  const {ctx,W,H} = pl, a = axes(), d = data();
+  const px = x => G.l + x/a.xmax*(G.r-G.l), py = y => G.b - y/a.ymax*(G.b-G.t);
+  ctx.clearRect(0,0,W,H); ctx.fillStyle = css('--paper'); ctx.fillRect(0,0,W,H);
+  ctx.lineWidth = 1;
+  for(let x=0;x<=a.xmax+1e-9;x+=a.xs/2){ ctx.strokeStyle = Math.abs(x/a.xs - Math.round(x/a.xs))<1e-6 ? css('--line') : css('--grid'); seg(ctx,{x:px(x),y:G.t},{x:px(x),y:G.b}); }
+  for(let y=0;y<=a.ymax+1e-9;y+=a.ys/2){ ctx.strokeStyle = Math.abs(y/a.ys - Math.round(y/a.ys))<1e-6 ? css('--line') : css('--grid'); seg(ctx,{x:G.l,y:py(y)},{x:G.r,y:py(y)}); }
+  ctx.strokeStyle = css('--fg'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(G.l,G.t); ctx.lineTo(G.l,G.b); ctx.lineTo(G.r,G.b); ctx.stroke();
+  for(let x=0;x<=a.xmax+1e-9;x+=a.xs) label(ctx,x.toFixed(a.xd),px(x),G.b+18,'12px "IBM Plex Mono", monospace','--muted','center');
+  for(let y=0;y<=a.ymax+1e-9;y+=a.ys) label(ctx,y.toFixed(a.yd),G.l-8,py(y)+4,'12px "IBM Plex Mono", monospace','--muted','right');
+  label(ctx,a.xl,(G.l+G.r)/2,H-14,'italic 15px "STIX Two Text", serif','--fg','center');
+  ctx.save(); ctx.translate(16,(G.t+G.b)/2); ctx.rotate(-Math.PI/2); label(ctx,a.yl,0,0,'italic 15px "STIX Two Text", serif','--fg','center'); ctx.restore();
+  if(gStage===0){ label(ctx, d.length<3 ? 'Record at least three trials, or use the sample data.' : `${d.length} points ready. Press "Plot the points".`, G.l+20, G.t+30, '14px "IBM Plex Sans", sans-serif'); return; }
+  const el = reduce ? 1e9 : now - gT0, shown = gStage===1 ? Math.min(d.length, Math.floor(el/250)+1) : d.length;
+  ctx.strokeStyle = css('--ink'); ctx.lineWidth = 2; d.slice(0,shown).forEach(p=>cross(ctx,{x:px(p.x),y:py(p.y)}));
+  if(gStage>=2){
+    const {m,c} = fit(d), f = gStage===2 ? Math.min(1, el/600) : 1;
+    let A, B;
+    if(mode===1){ const xi = -c/m; A = {x:px(0),y:py(c)}; B = {x:px(xi),y:py(0)}; }
+    else { const xe = Math.min(a.xmax, a.ymax/m); A = {x:px(0),y:py(0)}; B = {x:px(xe),y:py(m*xe)}; }
+    ctx.strokeStyle = css('--mark'); ctx.lineWidth = 2; seg(ctx,A,B,f);
+    if(gStage>=3){
+      ctx.fillStyle = css('--mark');
+      if(mode===1){ const xi = -c/m;
+        [[0,c],[xi,0]].forEach(([x,y])=>{ ctx.beginPath(); ctx.arc(px(x),py(y),5,0,7); ctx.fill(); });
+        label(ctx,`1/f = ${c.toFixed(2)}`, px(0)+10, py(c)-8, '13px "IBM Plex Mono", monospace', '--mark');
+        label(ctx,`1/f = ${xi.toFixed(2)}`, px(xi)-6, py(0)-12, '13px "IBM Plex Mono", monospace', '--mark', 'right');
+      } else {
+        const x1 = 0.2, x2 = Math.min(0.9, a.ymax/m*0.95);
+        ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
+        ctx.beginPath(); ctx.moveTo(px(x1),py(m*x1)); ctx.lineTo(px(x2),py(m*x1)); ctx.lineTo(px(x2),py(m*x2)); ctx.stroke(); ctx.setLineDash([]);
+        label(ctx,`Δx = ${(x2-x1).toFixed(2)}`, (px(x1)+px(x2))/2, py(m*x1)+18, '13px "IBM Plex Mono", monospace', '--ink', 'center');
+        label(ctx,`Δy = ${(m*(x2-x1)).toFixed(4)}`, px(x2)-8, (py(m*x1)+py(m*x2))/2, '13px "IBM Plex Mono", monospace', '--ink', 'right');
+      }
+    }
+  }
+}
+const $ = id => document.getElementById(id);
+function resetGraph(){
+  gStage = 0; $('gFit').disabled = true; $('gRead').disabled = true; $('gResult').hidden = true;
+  $('gSource').textContent = 'Data: ' + ({mine:'your results table.', sample:'sample class results.', lc:'LC 2019 Higher Level, Q2 (concave mirror).'})[gSource];
+  $('gExplain').innerHTML = mode===1
+    ? 'Rearrange the formula: 1/<span class="m">v</span> = −1/<span class="m">u</span> + 1/<span class="m">f</span>. Plot 1/<span class="m">v</span> on the y-axis against 1/<span class="m">u</span> on the x-axis.'
+    : 'Rearrange the formula: <span class="m">uv</span> = <span class="m">f</span>(<span class="m">u</span> + <span class="m">v</span>). Plot <span class="m">uv</span> on the y-axis against <span class="m">u</span> + <span class="m">v</span> on the x-axis.';
+}
+function setMode(k){ mode = k; $('m1').setAttribute('aria-pressed', k===1); $('m2').setAttribute('aria-pressed', k===2); resetGraph(); }
+$('m1').addEventListener('click',()=>setMode(1)); $('m2').addEventListener('click',()=>setMode(2));
+$('gPlot').addEventListener('click',()=>{
+  if(data().length<3){ $('gExplain').innerHTML = 'Not enough data. Record at least three trials, or press <strong>Use sample data</strong>.'; return; }
+  gStage = 1; gT0 = performance.now(); $('gFit').disabled = false;
+  $('gExplain').innerHTML = 'Look at the pattern first. Do the points lie close to a straight line?' + (mode===2 ? ' Does that line look as if it passes through the origin?' : ' Which way does it slope?');
+});
+$('gFit').addEventListener('click',()=>{
+  gStage = 2; gT0 = performance.now(); $('gRead').disabled = false; const {m,c} = fit(data());
+  $('gResult').hidden = false;
+  if(mode===1){
+    $('gExplain').innerHTML = `The points lie on a straight line with slope ${m.toFixed(2)}, close to −1. The model is verified.`;
+    $('gCompare').innerHTML = '<span><i>y</i></span><span>=</span><span><i>m</i></span><span><i>x</i></span><span>+</span><span><i>c</i></span><span></span><span>1/<i>v</i></span><span>=</span><span>(−1)</span><span>1/<i>u</i></span><span>+</span><span>1/<i>f</i></span><span></span>';
+    $('gText').innerHTML = `Slope <span class="m">m</span> = −1 and intercept <span class="m">c</span> = 1/<span class="m">f</span>. The line cuts the y-axis where 1/<span class="m">u</span> = 0, so 1/<span class="m">v</span> = 1/<span class="m">f</span>, and the x-axis where 1/<span class="m">v</span> = 0, so 1/<span class="m">u</span> = 1/<span class="m">f</span>. Press <strong>Find f</strong>.`;
+  } else {
+    $('gExplain').innerHTML = 'The points lie on a straight line through the origin. So <span class="m">uv</span> is directly proportional to <span class="m">u</span> + <span class="m">v</span>. The model is verified.';
+    $('gCompare').innerHTML = '<span><i>y</i></span><span>=</span><span><i>m</i></span><span><i>x</i></span><span></span><span></span><span></span><span><i>uv</i></span><span>=</span><span><i>f</i></span><span>(<i>u</i> + <i>v</i>)</span><span></span><span></span><span></span>';
+    $('gText').innerHTML = 'The slope <span class="m">m</span> is the focal length <span class="m">f</span>. Press <strong>Find f</strong>.';
+  }
+});
+$('gRead').addEventListener('click',()=>{
+  gStage = 3; const {m,c} = fit(data());
+  if(mode===1){ const xi = -c/m, fy = 1/c, fx = 1/xi, fa = (fy+fx)/2;
+    $('gText').innerHTML = `y-intercept: 1/<span class="m">f</span> = ${c.toFixed(2)} m⁻¹, so <span class="m">f</span> = ${(fy*100).toFixed(1)} cm.<br>x-intercept: 1/<span class="m">f</span> = ${xi.toFixed(2)} m⁻¹, so <span class="m">f</span> = ${(fx*100).toFixed(1)} cm.<br>Average: <strong><span class="m">f</span> = ${(fa*100).toFixed(1)} cm</strong>. Units of 1/<span class="m">f</span> are m⁻¹, so <span class="m">f</span> comes out in metres.`;
+  } else { const x1 = 0.2, x2 = Math.min(0.9, 0.16/m*0.95);
+    $('gText').innerHTML = `Slope = Δy / Δx = ${(m*(x2-x1)).toFixed(4)} / ${(x2-x1).toFixed(2)} = <strong>${m.toFixed(3)} m</strong>, so <strong><span class="m">f</span> = ${(m*100).toFixed(1)} cm</strong>.<br>Units: m² / m = m, a length, as a focal length should be.`; }
+});
+$('gSample').addEventListener('click',()=>{ gSource='sample'; resetGraph(); });
+$('gMine').addEventListener('click',()=>{ gSource='mine'; resetGraph(); });
+$('load2019').addEventListener('click',()=>{ gSource='lc'; resetGraph(); $('graph').scrollIntoView({behavior: reduce?'auto':'smooth'}); });
+
+/* ---------- loop ---------- */
+go(0); render(); resetGraph();
+function frame(now){ drawSim(now); drawPlot(now); }
+if(reduce){ const redraw = ()=>frame(performance.now()); document.addEventListener('input',redraw); document.addEventListener('click',()=>setTimeout(redraw,0)); redraw(); }
+else { const loop = now=>{ frame(now); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+})();
+</script>
+
+</body></html>

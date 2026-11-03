@@ -1,0 +1,390 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Point Effect</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* Layout: same lab bench as Animations 1–3 — tabbed scenes, wide stage, controls, steps that track the playhead, key + charge-density card. */
+:root{
+  --bg:#e9eef1; --surface:#fbfcfd; --fg:#15212a; --muted:#566773; --line:#c8d2d9;
+  --pos:#c4362b; --pos-soft:rgba(196,54,43,.25); --neg:#2160c4; --neg-soft:rgba(33,96,196,.25);
+  --accent:#0e7466; --accent-ink:#ffffff; --on-color:#ffffff;
+  --metal:#a9b4bc; --molecule:#c9d1d6; --molecule-edge:#8e9ba4; --stand:#7c6a58;
+  --flame:#f29a1f; --flame-core:#ffe08a; --wax:#ece4d2; --cloud:#9aa6ae; --cloud-hi:#b8c2c8;
+  --ground:#b9a98c; --building:#d5cdc0; --window:#8fb0c4; --bolt:#f3d34a; --flash:#fff6c8;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f161b; --surface:#172129; --fg:#e4ebef; --muted:#93a5b1; --line:#2c3a44;
+  --pos:#f0695d; --pos-soft:rgba(240,105,93,.28); --neg:#6fa3ff; --neg-soft:rgba(111,163,255,.28);
+  --accent:#37bfa9; --accent-ink:#06201b; --on-color:#0f161b;
+  --metal:#5d6b75; --molecule:#3c4952; --molecule-edge:#6f808b; --stand:#8a7560;
+  --flame:#f5a537; --flame-core:#ffe9a8; --wax:#cfc6b2; --cloud:#4b5862; --cloud-hi:#5b6973;
+  --ground:#5c5241; --building:#3d3a35; --window:#3f6378; --bolt:#ffe066; --flash:#fff3b0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161b; --surface:#172129; --fg:#e4ebef; --muted:#93a5b1; --line:#2c3a44;
+  --pos:#f0695d; --pos-soft:rgba(240,105,93,.28); --neg:#6fa3ff; --neg-soft:rgba(111,163,255,.28);
+  --accent:#37bfa9; --accent-ink:#06201b; --on-color:#0f161b;
+  --metal:#5d6b75; --molecule:#3c4952; --molecule-edge:#6f808b; --stand:#8a7560;
+  --flame:#f5a537; --flame-core:#ffe9a8; --wax:#cfc6b2; --cloud:#4b5862; --cloud-hi:#5b6973;
+  --ground:#5c5241; --building:#3d3a35; --window:#3f6378; --bolt:#ffe066; --flash:#fff3b0; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding-block:28px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,5vw,42px);line-height:1.05;margin:4px 0 0;text-wrap:balance}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--fg);
+  padding:8px 14px;border-radius:999px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tab span{color:var(--muted);font-variant-numeric:tabular-nums}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tab[aria-selected="true"] span{color:inherit;opacity:.75}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:0}
+canvas{display:block;width:100%;height:auto;aspect-ratio:900/500;max-width:100%}
+.bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.btn{font:inherit;font-weight:700;font-size:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);
+  border-radius:8px;padding:6px 12px;cursor:pointer;min-width:78px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+input[type=range]{flex:1;min-width:160px;accent-color:var(--accent)}
+.group{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-weight:700;font-size:16px;width:40px;padding:4px 0;border:0;background:var(--bg);color:var(--fg);cursor:pointer}
+.seg button[aria-pressed="true"].p{background:var(--pos);color:var(--on-color)}
+.seg button[aria-pressed="true"].n{background:var(--neg);color:var(--on-color)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.below{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:18px;align-items:start}
+@media (max-width:760px){.below{grid-template-columns:1fr}}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:10px 12px;
+  border-radius:10px;cursor:pointer;color:var(--muted);border:1px solid transparent}
+ol.steps li::before{content:counter(s);font-family:var(--f-display);font-weight:800;font-size:18px;line-height:1.3}
+ol.steps li.on{background:var(--surface);border-color:var(--line);color:var(--fg)}
+ol.steps li.on::before{color:var(--accent)}
+.side{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:9px;font-size:14px}
+.card h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.card p{margin:0}
+.eq{font-family:var(--f-display);font-size:22px;font-weight:600}
+.key{display:flex;align-items:center;gap:10px}
+.dot{width:14px;height:14px;border-radius:50%;flex:none;display:grid;place-items:center;color:var(--on-color);font-weight:700;font-size:11px;line-height:1;margin:0 3px}
+.dot.big{width:20px;height:20px;font-size:14px;margin:0}
+.dot.p{background:var(--pos)} .dot.n{background:var(--neg)}
+.dot.m{background:var(--molecule);box-shadow:inset 0 0 0 1.5px var(--molecule-edge);width:18px;height:18px;margin:0 1px}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Static electricity · Animation 4</p>
+    <h1>Point Effect</h1>
+  </header>
+
+  <div class="tabs" role="tablist" id="tabs"></div>
+
+  <figure class="stage">
+    <canvas id="cv" aria-label="Point effect animation"></canvas>
+    <div class="bar">
+      <button class="btn primary" id="play">Pause</button>
+      <button class="btn" id="restart">Restart</button>
+      <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Animation position">
+      <div class="group" id="signCtl">Conductor charge
+        <div class="seg"><button class="p" id="sp" aria-pressed="true" aria-label="Positive">+</button><button class="n" id="sn" aria-pressed="false" aria-label="Negative">−</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <div class="below">
+    <ol class="steps" id="steps"></ol>
+    <aside class="side">
+      <section class="card">
+        <h2>Key</h2>
+        <div class="key"><span class="dot p">+</span>Positive charge on the conductor</div>
+        <div class="key"><span class="dot n">−</span>Electron</div>
+        <div class="key"><span class="dot big p">+</span>Positive ion</div>
+        <div class="key"><span class="dot big n">−</span>Negative ion</div>
+        <div class="key"><span class="dot m"></span>Neutral air molecule</div>
+      </section>
+      <section class="card">
+        <h2>Charge density</h2>
+        <p class="eq">σ = Q / A</p>
+        <p>Charge density is the charge per unit area. Units: C / m², or C m⁻².</p>
+        <p>Just outside a conductor, E = σ / ε. σ is above the line: as σ gets bigger, E gets bigger. So the field is strongest at the point, where the charge is most crowded.</p>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+(()=>{
+const W=900,H=500;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let C={};
+const TOK=['surface','fg','muted','line','pos','pos-soft','neg','neg-soft','accent','on-color','metal','molecule','molecule-edge','stand',
+  'flame','flame-core','wax','cloud','cloud-hi','ground','building','window','bolt','flash'];
+function readColors(){const s=getComputedStyle(document.documentElement);TOK.forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
+
+// ---------- helpers ----------
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>{x=clamp(x);return x*x*(3-2*x)};
+const easeIn=x=>{x=clamp(x);return x*x};
+const seg=(t,a,b)=>ease((t-a)/(b-a));
+const lerp=(a,b,s)=>a+(b-a)*s;
+const norm=(x,y)=>{const m=Math.hypot(x,y)||1;return{x:x/m,y:y/m}};
+function rng(seed){return()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+let clock=0,sign=1;
+const jig=(i,a=1.5)=>[Math.sin(clock*7+i*1.7)*a,Math.cos(clock*6.3+i*2.3)*a];
+function disc(x,y,r,col){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();}
+function mark(x,y,r,plus){ctx.strokeStyle=C['on-color'];ctx.lineWidth=Math.max(1.6,r*0.32);ctx.beginPath();
+  const k=r*0.55;ctx.moveTo(x-k,y);ctx.lineTo(x+k,y);if(plus){ctx.moveTo(x,y-k);ctx.lineTo(x,y+k);}ctx.stroke();}
+function charge(x,y,s,r=5.5){disc(x,y,r,s>0?C.pos:C.neg);mark(x,y,r,s>0);}
+function ion(x,y,s,a=1){ctx.save();ctx.globalAlpha=a;disc(x,y,9.5,s>0?C.pos:C.neg);mark(x,y,9.5,s>0);ctx.restore();}
+function electron(x,y,a=1){ctx.save();ctx.globalAlpha=a;disc(x,y,5,C.neg);mark(x,y,5,false);ctx.restore();}
+function molecule(x,y,a=1){ctx.save();ctx.globalAlpha=a;disc(x,y,8.5,C.molecule);ctx.strokeStyle=C['molecule-edge'];ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(x,y,8.5,0,Math.PI*2);ctx.stroke();ctx.restore();}
+function flash(x,y,p){if(p<=0||p>=1)return;ctx.save();ctx.globalAlpha=1-p;ctx.strokeStyle=C.accent;ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(x,y,6+18*p,0,Math.PI*2);ctx.stroke();ctx.restore();}
+function glow(x,y,r,col,a){if(a<=0)return;ctx.save();ctx.globalAlpha=a;const g=ctx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,2*r,2*r);ctx.restore();}
+function text(s,x,y,{align='left',col=C.fg,size=15,weight=700,alpha=1}={}){
+  ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle=col;ctx.font=`${weight} ${size}px "Atkinson Hyperlegible", sans-serif`;
+  ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(s,x,y);ctx.restore();}
+function arrowLine(x0,y0,x1,y1,col,alpha,w=1.6,head=0.5){ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=w;
+  ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();
+  const mx=lerp(x0,x1,head),my=lerp(y0,y1,head),d=norm(x1-x0,y1-y0);
+  ctx.beginPath();ctx.moveTo(mx+d.x*6,my+d.y*6);ctx.lineTo(mx-d.x*5-d.y*5,my-d.y*5+d.x*5);ctx.lineTo(mx-d.x*5+d.y*5,my-d.y*5-d.x*5);ctx.closePath();ctx.fill();ctx.restore();}
+const fmt=q=>q===0?'0':(q>0?'+'+q:'−'+(-q));
+// walk along a polyline: u in 0..1
+function walker(P){const L=[0];for(let i=1;i<P.length;i++)L.push(L[i-1]+Math.hypot(P[i].x-P[i-1].x,P[i].y-P[i-1].y));
+  return u=>{const s=clamp(u)*L[L.length-1];let i=1;while(i<P.length-1&&L[i]<s)i++;
+    const f=(s-L[i-1])/((L[i]-L[i-1])||1);return{x:lerp(P[i-1].x,P[i].x,f),y:lerp(P[i-1].y,P[i].y,f)};};}
+
+// ---------- pear-shaped conductor: round end + sharp point ----------
+function teardrop(cx,cy,R,tx,dists,arcN){
+  const d=tx-cx,a=Math.acos(R/d),L=Math.sqrt(d*d-R*R);
+  const U={x:cx+R*Math.cos(a),y:cy-R*Math.sin(a)};
+  const path=new Path2D();path.moveTo(tx,cy);path.lineTo(U.x,U.y);path.arc(cx,cy,R,-a,a,true);path.closePath();
+  const uu={x:(tx-U.x)/L,y:(cy-U.y)/L},nU={x:uu.y,y:-uu.x};
+  const pts=[{x:tx,y:cy,nx:1,ny:0,s:0}];
+  for(const s of dists){pts.push({x:tx-uu.x*s,y:cy-uu.y*s,nx:nU.x,ny:nU.y,s});pts.push({x:tx-uu.x*s,y:cy+uu.y*s,nx:nU.x,ny:-nU.y,s});}
+  for(let k=1;k<=arcN;k++){const th=a+(Math.PI-a)*k/(arcN+1),s=L+R*(th-a);
+    pts.push({x:cx+R*Math.cos(th),y:cy-R*Math.sin(th),nx:Math.cos(th),ny:-Math.sin(th),s});
+    pts.push({x:cx+R*Math.cos(th),y:cy+R*Math.sin(th),nx:Math.cos(th),ny:Math.sin(th),s});}
+  pts.push({x:cx-R,y:cy,nx:-1,ny:0,s:L+R*(Math.PI-a)});
+  // field-line direction: surface normal, fanned out radially near the tip
+  const P0={x:tx-45,y:cy};
+  pts.forEach(p=>{const f=Math.exp(-p.s/70),r=norm(p.x-P0.x,p.y-P0.y);const dd=norm(p.nx*(1-f)+r.x*f,p.ny*(1-f)+r.y*f);p.dx=dd.x;p.dy=dd.y;});
+  return{path,pts,cx,cy,R,tx};
+}
+function drawConductor(td){ctx.fillStyle=C.metal;ctx.fill(td.path);ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.stroke(td.path);}
+
+// ================= Scene 1: charge collects at the point =================
+const TD1=teardrop(250,250,120,630,[20,36,56,82,116,160,215,280,345],2);
+const start1=(()=>{const r=rng(11);return TD1.pts.map(()=>{const a=r()*Math.PI*2,d=Math.sqrt(r())*75;return{x:230+Math.cos(a)*d,y:250+Math.sin(a)*d};});})();
+const S1={name:'Charge collects at the point',dur:16,signed:true,steps:[
+ {at:0,text:'A metal conductor with a rounded end and a sharp point. Charge has just been put on it.'},
+ {at:0.13,text:'Like charges repel. In a conductor the charges are free to move, so they push each other as far apart as possible. All the charge ends up on the outside surface.'},
+ {at:0.43,text:'The charge does not spread out evenly. It crowds together where the surface curves most sharply. The charge density (charge per unit area) is greatest at the point.'},
+ {at:0.62,text:'Field lines start and end on charges, so they are crowded together at the point. Closely spaced field lines mean a strong electric field: the field is strongest at the point.'}],
+ draw(t){
+  glow(TD1.tx,TD1.cy,80,sign>0?C['pos-soft']:C['neg-soft'],seg(t,0.43,0.52)*2);
+  drawConductor(TD1);
+  const fl=seg(t,0.6,0.7);
+  if(fl>0)TD1.pts.forEach(p=>{const x0=p.x+p.dx*8,y0=p.y+p.dy*8,x1=p.x+p.dx*88,y1=p.y+p.dy*88;
+    sign>0?arrowLine(x0,y0,x1,y1,C.fg,fl*0.8):arrowLine(x1,y1,x0,y0,C.fg,fl*0.8);});
+  TD1.pts.forEach((p,i)=>{const s=seg(t,0.14+0.005*i,0.38+0.005*i),[jx,jy]=jig(i,2*(1-s));
+    charge(lerp(start1[i].x,p.x,s)+jx,lerp(start1[i].y,p.y,s)+jy,sign);});
+  const lb=seg(t,0.45,0.52);
+  if(lb>0){text('Low charge density',250,250,{align:'center',col:C.fg,alpha:lb});
+    text('High charge density',TD1.tx,345,{align:'center',col:sign>0?C.pos:C.neg,alpha:lb});}
+  text(`Charge on conductor: ${fmt(sign*TD1.pts.length)}`,40,40);
+ }};
+
+// ================= Scene 2: the strong field ionises the air =================
+const T2={x:300,y:250},eU=norm(-320,-85),eL={x:eU.x,y:-eU.y};
+const ch2=[{x:T2.x,y:T2.y,s:0}];[22,40,62,92,132,186,255].forEach(s=>{ch2.push({x:T2.x+eU.x*s,y:T2.y+eU.y*s,s});ch2.push({x:T2.x+eL.x*s,y:T2.y+eL.y*s,s});});
+const order2=ch2.map((c,i)=>i).sort((a,b)=>ch2[b].s-ch2[a].s); // farthest first: remaining charge stays crowded at the tip
+const EV2=(()=>{const r=rng(7);return[...Array(10)].map((_,k)=>{const f=(r()-0.5)*1.0,d=58+r()*55;
+  return{x:T2.x+Math.cos(f)*d,y:T2.y+Math.sin(f)*d,u:{x:Math.cos(f),y:Math.sin(f)},te:0.14+0.052*k};});})();
+const BG2=(()=>{const r=rng(3),out=[];let tries=0;
+  while(out.length<46&&tries++<4000){const x=340+r()*540,y=25+r()*450;
+    if(Math.hypot(x-T2.x,y-T2.y)<80)continue;if(EV2.some(e=>Math.hypot(x-e.x,y-e.y)<26))continue;if(out.some(o=>Math.hypot(x-o.x,y-o.y)<32))continue;out.push({x,y});}
+  return out;})();
+const IN=0.035,OUT=0.26;
+function windPos(m,t){if(t<0.5)return{x:m.x,y:m.y,a:1};
+  const c=clamp(1-Math.abs(m.y-T2.y)/(60+0.5*(m.x-T2.x)));const x=340+(((m.x-340+800*(t-0.5)*c)%550)+550)%550;
+  return{x,y:m.y,a:clamp(Math.min((x-340)/30,(890-x)/30))};}
+const S2={name:'The air is ionised',dur:24,signed:true,steps:[
+ {at:0,text:'Zoom in on the tip. Charge is crowded at the point, so the electric field there is very strong. The air around the point is made of neutral molecules.'},
+ {at:0.13,text:'The strong field ionises the air molecules nearest the point: each one is pulled apart into a positive ion and an electron.'},
+ {at:0.19,text:s=>s>0?'The electron is attracted to the positive point. It joins the conductor and neutralises one of its positive charges.'
+   :'The positive ion is attracted to the negative point. It takes an electron from the conductor, neutralising one of its negative charges.'},
+ {at:0.26,text:s=>s>0?'The positive ion is repelled away from the point, because like charges repel.'
+   :'The electron is repelled away from the point. It quickly attaches to an air molecule, forming a negative ion.'},
+ {at:0.5,text:'The stream of repelled ions drags neutral air molecules along with it. An electric wind blows away from the point.'},
+ {at:0.72,text:'Every ionisation removes some of the charge, so charge leaks away from the conductor through its point. This is the point effect, also called point discharge.'}],
+ draw(t){
+  const done=EV2.filter(e=>t>=e.te+IN).length;
+  glow(T2.x,T2.y,110,sign>0?C['pos-soft']:C['neg-soft'],1.6*(1-done/16));
+  ctx.beginPath();ctx.moveTo(T2.x,T2.y);ctx.lineTo(T2.x+eU.x*420,T2.y+eU.y*420);ctx.lineTo(T2.x+eL.x*420,T2.y+eL.y*420);ctx.closePath();
+  ctx.fillStyle=C.metal;ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.stroke();
+  BG2.forEach((m,i)=>{const p=windPos(m,t),[jx,jy]=jig(i+40,1.4);molecule(p.x+jx,p.y+jy,p.a);});
+  // conductor charges (farthest disappear first)
+  ch2.forEach((c,i)=>{const k=order2.indexOf(i);let a=1;if(k<EV2.length){const e=EV2[k];a=1-seg(t,e.te+IN,e.te+IN+0.02);}
+    if(a>0){ctx.save();ctx.globalAlpha=a;charge(c.x,c.y,sign,6);ctx.restore();}});
+  EV2.forEach((e,k)=>{
+    const [jx,jy]=jig(k,1.4);
+    if(t<e.te){molecule(e.x+jx,e.y+jy);return;}
+    flash(e.x,e.y,(t-e.te)/0.03);
+    // particle attracted to the point
+    const pi=easeIn((t-e.te)/IN);
+    if(pi<1){const x=lerp(e.x,T2.x+6,pi),y=lerp(e.y,T2.y,pi);sign>0?electron(x,y):ion(x,y,1);}
+    else flash(T2.x,T2.y,(t-e.te-IN)/0.03);
+    // particle repelled from the point
+    const po=easeIn((t-e.te)/OUT)*700;
+    if(po<700)ion(e.x+e.u.x*po,e.y+e.u.y*po,sign);
+  });
+  const wa=seg(t,0.52,0.58);
+  if(wa>0){arrowLine(560,90,790,90,C.accent,wa,4,0.97);text('Electric wind',675,66,{align:'center',col:C.accent,alpha:wa});}
+  text(`Charge on conductor: ${fmt(sign*(ch2.length-done))}`,40,40);
+ }};
+
+// ================= Scene 3: electric wind and a candle flame =================
+const TD3=teardrop(170,250,70,420,[16,30,48,72,104,150,205],2);
+const ION3=(()=>{const r=rng(5);return[...Array(72)].map((_,i)=>({ti:0.16+i*0.0108,f:(r()-0.5)*0.75}));})();
+const S3={name:'Electric wind',dur:18,signed:true,steps:[
+ {at:0,text:'A candle is placed near the point of a charged conductor. A Van de Graaff generator keeps the conductor charged.'},
+ {at:0.16,text:'The point effect ionises the air at the point. Ions with the same sign as the point are repelled and stream away from it.'},
+ {at:0.33,text:'The moving ions drag the air with them. This electric wind blows the flame away from the point, and can even blow it out.'},
+ {at:0.68,text:'Switch the charge on the conductor with the + / − buttons. The flame is still blown away from the point: the repelled ions always have the same sign as the point, so they always move away from it.'}],
+ draw(t){
+  // stand
+  ctx.fillStyle=C.stand;ctx.fillRect(163,310,14,112);ctx.fillRect(120,420,100,12);
+  text('Insulating stand',230,400,{col:C.muted,weight:400,size:13});
+  glow(TD3.tx,TD3.cy,60,sign>0?C['pos-soft']:C['neg-soft'],1.6);
+  drawConductor(TD3);
+  TD3.pts.forEach(p=>charge(p.x,p.y,sign,4.5));
+  // candle
+  const bx=625,by=290;
+  ctx.fillStyle=C.wax;ctx.fillRect(608,by,34,140);ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.strokeRect(608,by,34,140);
+  ctx.strokeStyle=C.fg;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx,by-7);ctx.stroke();
+  const lean=0.95*seg(t,0.3,0.5)+(reduce?0:0.06*Math.sin(clock*9));
+  ctx.save();ctx.translate(bx,by-5);ctx.rotate(lean);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(-16,-8,-12,-40,0,-64);ctx.bezierCurveTo(12,-40,16,-8,0,0);ctx.fillStyle=C.flame;ctx.fill();
+  ctx.beginPath();ctx.moveTo(0,-2);ctx.bezierCurveTo(-7,-8,-5,-26,0,-38);ctx.bezierCurveTo(5,-26,7,-8,0,-2);ctx.fillStyle=C['flame-core'];ctx.fill();
+  ctx.restore();
+  // ions streaming from the point
+  ION3.forEach(p=>{if(t<p.ti)return;const d=easeIn((t-p.ti)/0.32)*620;if(d>=620)return;
+    ion(TD3.tx+8+Math.cos(p.f)*d,TD3.cy+Math.sin(p.f)*d,sign,0.9);});
+  const wa=seg(t,0.33,0.4);
+  if(wa>0){arrowLine(470,120,720,120,C.accent,wa,4,0.97);text('Electric wind',595,96,{align:'center',col:C.accent,alpha:wa});}
+  text(sign>0?'Positively charged point':'Negatively charged point',40,40);
+ }};
+
+// ================= Scene 4: lightning conductor =================
+const GROUND=440,TIPS=[{x:448,y:214},{x:470,y:198},{x:492,y:214}];
+const CL=[...Array(13)].map((_,k)=>({x:200+50*k,y:100}));
+const TARGETS=CL.map((c,i)=>i).sort((a,b)=>Math.abs(CL[a].x-470)-Math.abs(CL[b].x-470)).slice(0,8);
+const earthPath=(tip,i)=>[{x:tip.x,y:234},{x:470,y:234},{x:470,y:300},{x:562,y:300},{x:562,y:474},{x:572+(i%4)*9,y:478}];
+const IND=[];TIPS.forEach((tp,j)=>[6,18].forEach((dy,k)=>IND.push({x:tp.x+8,y:tp.y+dy,tip:tp,st:0.12+0.022*(j*2+k)})));
+IND.forEach((e,i)=>e.w=walker([{x:e.x,y:e.y},...earthPath(e.tip,i)]));
+const EV4=(()=>{const r=rng(9);return[...Array(8)].map((_,k)=>{const tp=TIPS[k%3];
+  const spot={x:tp.x+(r()-0.5)*14,y:tp.y-26-r()*10};
+  return{tp,spot,te:0.38+0.03*k,target:CL[TARGETS[k]],w:walker([{x:tp.x,y:tp.y},...earthPath(tp,k+2)])};});})();
+const BOLT=(()=>{const r=rng(21),pts=[{x:470,y:112}];for(let k=1;k<8;k++)pts.push({x:470+(r()-0.5)*40,y:112+k*11});pts.push({x:470,y:198});return pts;})();
+const STRIKE=[...Array(12)].map((_,i)=>({st:0.805+0.006*i,w:walker([{x:470,y:200},...earthPath(TIPS[1],i)])}));
+const S4={name:'Lightning conductor',dur:24,signed:false,steps:[
+ {at:0,text:'A thundercloud with a large negative charge on its base drifts over a building. A lightning conductor runs from pointed spikes on the roof, down a thick copper strip, to a metal plate buried in the earth.'},
+ {at:0.11,text:'The negative cloud repels electrons in the conductor. They flow down the copper strip into the earth, leaving the spikes positively charged. This is charging by induction.'},
+ {at:0.3,text:'The positive charge crowds at the sharp points, so the electric field there is very strong.'},
+ {at:0.37,text:'Point effect: the strong field ionises the air at the points. Positive ions are repelled up to the cloud and neutralise some of its negative charge. The electrons released are drawn into the points and flow to earth.'},
+ {at:0.66,text:'Discharging the cloud gradually like this makes a lightning strike less likely.'},
+ {at:0.79,text:'If lightning does strike, it hits the conductor. The thick copper strip carries the charge safely to earth instead of through the building.'}],
+ draw(t){
+  // ground + building
+  ctx.fillStyle=C.ground;ctx.fillRect(0,GROUND,W,H-GROUND);
+  ctx.fillStyle=C.building;ctx.fillRect(380,300,176,GROUND-300);ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.strokeRect(380,300,176,GROUND-300);
+  ctx.fillStyle=C.window;for(let r=0;r<2;r++)for(let c=0;c<3;c++)ctx.fillRect(398+c*52,322+r*56,34,34);
+  // conductor
+  ctx.strokeStyle=C.metal;ctx.lineWidth=6;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
+  TIPS.forEach(tp=>{ctx.moveTo(tp.x,tp.y);ctx.lineTo(tp.x,234);});ctx.moveTo(448,234);ctx.lineTo(492,234);
+  ctx.moveTo(470,234);ctx.lineTo(470,300);ctx.lineTo(562,300);ctx.lineTo(562,474);ctx.stroke();
+  ctx.fillStyle=C.metal;ctx.fillRect(546,472,58,8);
+  text('Copper strip',575,380,{col:C.muted,weight:400,size:13});text('Earth plate',612,477,{col:C.muted,weight:400,size:13});
+  // cloud
+  const off=lerp(-340,0,seg(t,0,0.1)),strike=t>=0.8;
+  ctx.save();ctx.translate(off,0);
+  [[230,60,48],[310,44,58],[400,52,62],[490,40,66],[580,52,60],[670,46,56],[750,62,46]].forEach(([x,y,r],i)=>disc(x,y,r,i%2?C['cloud-hi']:C.cloud));
+  ctx.fillStyle=C.cloud;ctx.fillRect(190,60,600,52);
+  CL.forEach((c,i)=>{const k=TARGETS.indexOf(i);let a=1;
+    if(k>=0){const e=EV4[k];a=1-seg(t,e.te+0.09,e.te+0.11);}
+    a=Math.min(a,1-seg(t,0.8,0.83));if(a>0){ctx.save();ctx.globalAlpha=a;charge(c.x,c.y,-1,6.5);ctx.restore();}});
+  ctx.restore();
+  // charges on the spikes
+  const plusA=seg(t,0.12,0.26);
+  glow(470,206,60,C['pos-soft'],seg(t,0.28,0.36)*1.8*(1-seg(t,0.8,0.82)));
+  TIPS.forEach(tp=>[4,16].forEach(dy=>charge(tp.x,tp.y+dy,1,5)));
+  IND.forEach(e=>{const u=(t-e.st)/0.13;if(u>=1.15)return;const p=u<=0?{x:e.x,y:e.y}:e.w(u);electron(p.x,p.y,1-clamp((u-1)/0.15));});
+  // point discharge
+  EV4.forEach(e=>{if(t<e.te)return;flash(e.spot.x,e.spot.y,(t-e.te)/0.03);
+    const ui=easeIn((t-e.te)/0.09);if(ui<1)ion(lerp(e.spot.x,e.target.x,ui),lerp(e.spot.y,e.target.y+12,ui),1);
+    const v=(t-e.te)/0.02;
+    if(v<1)electron(lerp(e.spot.x,e.tp.x,easeIn(v)),lerp(e.spot.y,e.tp.y,easeIn(v)));
+    else{const u=(t-e.te-0.02)/0.1;if(u<1.15){const p=e.w(u);electron(p.x,p.y,1-clamp((u-1)/0.15));}}});
+  // strike
+  if(strike&&t<0.86&&(reduce||Math.sin(clock*60)>-0.3)){
+    ctx.save();ctx.strokeStyle=C.bolt;ctx.lineWidth=5;ctx.shadowColor=C.bolt;ctx.shadowBlur=18;ctx.beginPath();
+    BOLT.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();ctx.restore();}
+  if(strike){ctx.save();ctx.globalAlpha=0.35*(1-seg(t,0.8,0.84));ctx.fillStyle=C.flash;ctx.fillRect(0,0,W,H);ctx.restore();
+    STRIKE.forEach(e=>{const u=(t-e.st)/0.05;if(u<0||u>=1.15)return;const p=e.w(u);electron(p.x,p.y,1-clamp((u-1)/0.15));});}
+  const left=strike?0:CL.length-EV4.filter(e=>t>=e.te+0.1).length;
+  text(`Cloud charge: ${fmt(-left)}`,40,H-28,{col:C.fg});
+  if(plusA>0.5&&t<0.8)text('Spikes: positive',505,190,{col:C.pos,size:14,alpha:seg(t,0.24,0.3)});
+ }};
+
+const SC=[S1,S2,S3,S4];
+
+// ---------- UI ----------
+const tabsEl=document.getElementById('tabs'),stepsEl=document.getElementById('steps');
+const playBtn=document.getElementById('play'),scrub=document.getElementById('scrub');
+const signCtl=document.getElementById('signCtl'),sp=document.getElementById('sp'),sn=document.getElementById('sn');
+let scene=0,t=0,playing=!reduce,last=performance.now(),activeStep=-1;
+SC.forEach((s,i)=>{const b=document.createElement('button');b.className='tab';b.setAttribute('role','tab');
+  b.innerHTML=`<span>${i+1}</span>${s.name}`;b.onclick=()=>select(i);tabsEl.appendChild(b);});
+function renderSteps(){stepsEl.innerHTML='';SC[scene].steps.forEach(st=>{const li=document.createElement('li');
+  li.textContent=typeof st.text==='function'?st.text(sign):st.text;li.onclick=()=>{t=st.at+0.001;};stepsEl.appendChild(li);});activeStep=-1;}
+function select(i){scene=i;t=reduce?1:0;playing=!reduce;
+  [...tabsEl.children].forEach((b,j)=>b.setAttribute('aria-selected',j===i));
+  signCtl.hidden=!SC[i].signed;renderSteps();updateBtn();}
+function setSign(s){sign=s;sp.setAttribute('aria-pressed',s>0);sn.setAttribute('aria-pressed',s<0);renderSteps();}
+sp.onclick=()=>setSign(1);sn.onclick=()=>setSign(-1);
+function updateBtn(){playBtn.textContent=playing?'Pause':(t>=1?'Replay':'Play');}
+playBtn.onclick=()=>{if(t>=1)t=0;playing=!playing;updateBtn();};
+document.getElementById('restart').onclick=()=>{t=0;playing=true;updateBtn();};
+scrub.oninput=()=>{t=scrub.value/1000;if(playing){playing=false;updateBtn();}};
+
+function resize(){const w=cv.getBoundingClientRect().width,d=devicePixelRatio||1;cv.width=Math.round(w*d);cv.height=Math.round(w*H/W*d);}
+new ResizeObserver(resize).observe(cv);
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readColors);
+new MutationObserver(readColors).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+function frame(now){
+  const dt=Math.min(0.1,(now-last)/1000);last=now;
+  if(playing){t+=dt/SC[scene].dur;if(t>=1){t=1;playing=false;updateBtn();}}
+  if(!reduce)clock=now/1000;
+  const k=cv.width/W;ctx.setTransform(k,0,0,k,0,0);
+  ctx.fillStyle=C.surface;ctx.fillRect(0,0,W,H);
+  SC[scene].draw(t);
+  if(document.activeElement!==scrub)scrub.value=Math.round(t*1000);
+  const st=SC[scene].steps;let a=0;st.forEach((s,i)=>{if(t>=s.at)a=i;});
+  if(a!==activeStep){activeStep=a;[...stepsEl.children].forEach((li,i)=>li.classList.toggle('on',i===a));}
+  requestAnimationFrame(frame);
+}
+select(0);
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>

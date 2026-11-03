@@ -1,0 +1,308 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Thumb and Forefinger Refraction</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one teaching canvas, controls and live equation beneath; built to project in a classroom */
+:root{
+  --bg:#f5f7f8; --panel:#ffffff; --fg:#17242b; --muted:#5b6b73; --line:#d5dde1;
+  --m2:#dcecef; --m2-edge:#7fa9b3;
+  --finger:#d4561c; --thumb:#5b4bc4; --accent:#1f7a8c;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10181c; --panel:#162228; --fg:#e6eef1; --muted:#9aabb3; --line:#2a3a42;
+  --m2:#173540; --m2-edge:#4f8d9b; --finger:#f08a4b; --thumb:#a597ff; --accent:#5cc3d6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10181c; --panel:#162228; --fg:#e6eef1; --muted:#9aabb3; --line:#2a3a42;
+  --m2:#173540; --m2-edge:#4f8d9b; --finger:#f08a4b; --thumb:#a597ff; --accent:#5cc3d6; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-block:24px 40px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  display:grid;gap:18px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(1.6rem,4vw,2.3rem);line-height:1.1;margin:0;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:65ch}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+canvas{display:block;width:100%}
+.status{margin:0;padding:12px 16px;border-top:1px solid var(--line);min-height:3.2em;font-size:1.02rem}
+.status b{font-weight:700}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;font-weight:700;font-size:.95rem;padding:8px 14px;border-radius:8px;border:1px solid var(--line);
+  background:var(--panel);color:var(--fg);cursor:pointer}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.scrub{flex:1 1 200px;min-width:0;accent-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.ctl{display:grid;gap:14px}
+label{display:grid;gap:4px;font-weight:700;font-size:.95rem}
+label span.v{font-family:var(--mono);font-weight:500;color:var(--accent)}
+label .row{display:flex;justify-content:space-between;gap:8px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.hint{font-weight:400;color:var(--muted);font-size:.85rem;display:flex;justify-content:space-between}
+.eq{display:grid;gap:6px;align-content:start}
+.eq h2{font-family:var(--display);font-size:1.05rem;margin:0 0 4px;letter-spacing:.02em}
+.eq dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 16px}
+.eq dt{color:var(--muted)}
+.eq dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.chip{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:700;font-size:.9rem;border:1.5px solid currentColor;color:var(--accent);justify-self:start;margin-top:6px}
+.note{color:var(--muted);font-size:.9rem;margin:6px 0 0;max-width:60ch}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Thumb and Forefinger Refraction</h1>
+    <p class="lede">Finger and thumb sit at either end of a wavefront. Whichever reaches the boundary first changes speed first, so one gets ahead of the other and the wave turns.</p>
+  </header>
+
+  <div class="stage">
+    <canvas id="cv" aria-label="Animation of a wavefront crossing a boundary between two media"></canvas>
+    <p class="status" id="status" aria-live="polite"></p>
+  </div>
+
+  <div class="bar">
+    <button id="play" type="button">Pause</button>
+    <button id="restart" type="button">Restart</button>
+    <button id="slow" type="button" aria-pressed="false">Slow motion</button>
+    <button id="train" type="button" aria-pressed="false">Wave train</button>
+    <input class="scrub" id="scrub" type="range" min="0" max="1000" value="0" aria-label="Scrub through the animation">
+  </div>
+
+  <div class="grid">
+    <div class="ctl">
+      <label for="ang"><span class="row">Angle of incidence, i <span class="v" id="angv"></span></span>
+        <input id="ang" type="range" min="0" max="70" step="0.1" value="40"></label>
+      <label for="rat"><span class="row">Speed in medium 2 ÷ speed in medium 1 <span class="v" id="ratv"></span></span>
+        <input id="rat" type="range" min="0.4" max="1.6" step="0.05" value="0.65">
+        <span class="hint"><span>slower</span><span>same</span><span>faster</span></span></label>
+      <div class="bar"><button id="crit" type="button">Go to critical angle</button>
+        <span class="hint" id="crith"></span></div>
+    </div>
+    <div class="eq">
+      <h2>Snell's law, live</h2>
+      <dl>
+        <dt>i</dt><dd id="oi"></dd>
+        <dt>r</dt><dd id="or"></dd>
+        <dt>sin i ÷ sin r</dt><dd id="osr"></dd>
+        <dt>v₁ ÷ v₂ = n</dt><dd id="on"></dd>
+        <dt>critical angle, c</dt><dd id="oc"></dd>
+      </dl>
+      <span class="chip" id="chip"></span>
+      <p class="note">As v₂ gets smaller, n gets bigger, because v₂ is below the line. A bigger n means the finger lags further and the wave bends more.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const st={angle:40,ratio:0.65,playing:!reduce,slow:false,train:false,t:0};
+let W=0,H=0,G=null,last=null,hold=0;
+
+function resize(){
+  const w=cv.parentElement.clientWidth; W=w;
+  H=Math.round(w<560? w*1.05 : Math.min(Math.max(w*0.6,340),560));
+  const dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  build(false);
+}
+
+function build(reset=true){
+  const i=st.angle*Math.PI/180, r=st.ratio, Y0=H*0.5, v1=H*0.16;
+  const s=Math.sin(i)*r, tir=s>1+1e-9, crit=Math.abs(s-1)<5e-4;
+  const cAng=r>1?Math.asin(1/r):null;
+  const d1={x:Math.sin(i),y:Math.cos(i)};
+  let d2,va,rAng=null;
+  if(tir){d2={x:d1.x,y:-d1.y};va=v1}
+  else{rAng=Math.asin(Math.min(s,1));d2={x:Math.sin(rAng),y:Math.cos(rAng)};va=v1*r}
+  const L=Math.min(W*0.3,200);
+  const f={x:Math.cos(i),y:-Math.sin(i)};
+  const lead=Math.max(Math.sin(i)*L/2+22,Y0*0.55)/d1.y;
+  const C={x:W*(0.5+0.12*Math.sin(i)),y:Y0};
+  const M={x:C.x-d1.x*lead,y:C.y-d1.y*lead};
+  const F0={x:M.x-f.x*L/2,y:M.y-f.y*L/2}, T0={x:M.x+f.x*L/2,y:M.y+f.y*L/2};
+  const D=p=>(Y0-p.y)/d1.y;
+  const post=(tir?Y0*0.9:(H-Y0)*0.9)/Math.max(Math.abs(d2.y),0.3);
+  const tF=D(F0)/v1, tT=D(T0)/v1;
+  const T=(H*0.085)/v1;
+  const tMain=Math.max(tF,tT)+post/va;
+  G={i,r,Y0,v1,va,d1,d2,tir,crit,cAng,rAng,L,f,F0,T0,tF,tT,T,tMain,
+     tEnd:tMain+(st.train?6*T:0)};
+  if(reset){st.t=reduce&&!st.playing?(tF+tT)/2:0;hold=0}
+  readouts();
+}
+
+function pos(p,t){
+  const D=(G.Y0-p.y)/G.d1.y;
+  if(t*G.v1<=D) return {x:p.x+G.d1.x*G.v1*t,y:p.y+G.d1.y*G.v1*t};
+  const c={x:p.x+G.d1.x*D,y:G.Y0}, tr=t-D/G.v1;
+  return {x:c.x+G.d2.x*G.va*tr,y:c.y+G.d2.y*G.va*tr};
+}
+function cross(p){const D=(G.Y0-p.y)/G.d1.y;return {x:p.x+G.d1.x*D,y:G.Y0}}
+
+function frontPts(t){
+  // exact wavefront: straight pieces either side of the boundary, kinked where it meets the boundary
+  const ss=[0,1];
+  const DF=(G.Y0-G.F0.y)/G.d1.y, DT=(G.Y0-G.T0.y)/G.d1.y, dist=t*G.v1;
+  if(DF!==DT){const k=(dist-DF)/(DT-DF); if(k>0&&k<1) ss.push(k)}
+  ss.sort((a,b)=>a-b);
+  return ss.map(s=>pos({x:G.F0.x+(G.T0.x-G.F0.x)*s,y:G.F0.y+(G.T0.y-G.F0.y)*s},t));
+}
+
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+
+function draw(){
+  const c={bg:css('--panel'),fg:css('--fg'),muted:css('--muted'),m2:css('--m2'),edge:css('--m2-edge'),
+           fi:css('--finger'),th:css('--thumb'),ac:css('--accent')};
+  const {Y0}=G, t=st.t;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=c.bg; ctx.fillRect(0,0,W,Y0);
+  ctx.fillStyle=c.m2; ctx.fillRect(0,Y0,W,H-Y0);
+  ctx.strokeStyle=c.edge; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,Y0); ctx.lineTo(W,Y0); ctx.stroke();
+
+  ctx.font='600 13px '+css('--body'); ctx.fillStyle=c.muted; ctx.textBaseline='top';
+  ctx.fillText('Medium 1 · speed v₁',12,10);
+  const lbl=G.r<0.999?'slower':G.r>1.001?'faster':'same speed';
+  ctx.textBaseline='bottom'; ctx.fillText('Medium 2 · speed v₂ ('+lbl+')',12,H-10);
+  ctx.textAlign='right'; ctx.fillText('boundary',W-12,Y0-6); ctx.textAlign='left';
+
+  // normals and angle arcs at the finger's crossing point
+  const nl=Math.min(Y0,H-Y0)*0.42;
+  ctx.setLineDash([5,5]); ctx.strokeStyle=c.muted; ctx.lineWidth=1;
+  [G.F0,G.T0].forEach(p=>{const q=cross(p);ctx.beginPath();ctx.moveTo(q.x,Y0-nl);ctx.lineTo(q.x,Y0+nl);ctx.stroke()});
+  ctx.setLineDash([]);
+  const Fc=cross(G.F0);
+  if(G.i>0.01){
+    ctx.strokeStyle=c.ac; ctx.fillStyle=c.ac; ctx.lineWidth=1.5; ctx.font='700 14px '+css('--body');
+    const a1=Math.atan2(-G.d1.y,-G.d1.x);
+    ctx.beginPath(); ctx.arc(Fc.x,Y0,30,a1,-Math.PI/2); ctx.stroke();
+    const mi=(a1-Math.PI/2)/2; ctx.textBaseline='middle'; ctx.textAlign='center';
+    ctx.fillText('i',Fc.x+44*Math.cos(mi),Y0+44*Math.sin(mi));
+    if(!G.tir&&G.rAng>0.005){
+      const a2=Math.atan2(G.d2.y,G.d2.x);
+      ctx.beginPath(); ctx.arc(Fc.x,Y0,30,a2,Math.PI/2); ctx.stroke();
+      const mr=(a2+Math.PI/2)/2; ctx.fillText('r',Fc.x+44*Math.cos(mr),Y0+44*Math.sin(mr));
+    }
+    ctx.textAlign='left';
+  }
+
+  // critical angle marker in medium 1 (only when medium 2 is faster)
+  if(G.cAng!=null){
+    const len=Math.min(Y0,H-Y0)*0.8, a=-Math.PI/2-G.cAng;
+    ctx.strokeStyle=c.ac; ctx.globalAlpha=0.6; ctx.lineWidth=1.5; ctx.setLineDash([2,4]);
+    ctx.beginPath(); ctx.moveTo(Fc.x,Y0); ctx.lineTo(Fc.x+len*Math.cos(a),Y0+len*Math.sin(a)); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha=1; ctx.fillStyle=c.ac; ctx.font='700 13px '+css('--body');
+    ctx.textAlign='right'; ctx.textBaseline='bottom';
+    ctx.fillText('critical angle '+(G.cAng*180/Math.PI).toFixed(1)+'°',Fc.x+len*Math.cos(a)-4,Y0+len*Math.sin(a)-2);
+    ctx.textAlign='left';
+  }
+
+  // full paths faint, travelled part solid
+  [[G.F0,c.fi],[G.T0,c.th]].forEach(([p,col])=>{
+    const q=cross(p), e=pos(p,G.tMain);
+    ctx.strokeStyle=col; ctx.globalAlpha=0.25; ctx.lineWidth=1.5; ctx.setLineDash([3,5]);
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.lineTo(e.x,e.y); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha=0.9; ctx.lineWidth=2.5;
+    const now=pos(p,Math.min(t,G.tMain)), D=(Y0-p.y)/G.d1.y;
+    ctx.beginPath(); ctx.moveTo(p.x,p.y);
+    if(Math.min(t,G.tMain)*G.v1>D) ctx.lineTo(q.x,q.y);
+    ctx.lineTo(now.x,now.y); ctx.stroke(); ctx.globalAlpha=1;
+  });
+
+  // wave train (earlier fronts behind the main one)
+  if(st.train){
+    for(let k=1;k<=6;k++){
+      const tk=t-k*G.T, pts=frontPts(tk);
+      ctx.strokeStyle=c.fg; ctx.globalAlpha=0.35; ctx.lineWidth=2;
+      ctx.beginPath(); pts.forEach((p,j)=>j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }
+
+  // main front
+  const tm=Math.min(t,G.tMain), pts=frontPts(tm);
+  ctx.strokeStyle=c.fg; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); pts.forEach((p,j)=>j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+
+  // digits
+  const dig=(p,col,ch,name,side)=>{
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(p.x,p.y,12,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=c.bg; ctx.font='700 13px '+css('--body'); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(ch,p.x,p.y+0.5);
+    ctx.fillStyle=col; ctx.font='700 14px '+css('--body');
+    const ox=side*(-G.f.x)*24, oy=side*(-G.f.y)*24;
+    ctx.fillText(name,p.x+ox*1.6,p.y+oy*1.6); ctx.textAlign='left';
+  };
+  dig(pts[0],c.fi,'F','finger',1);
+  dig(pts[pts.length-1],c.th,'T','thumb',-1);
+
+  status(tm);
+}
+
+let lastMsg='';
+function status(t){
+  let m;
+  if(t<G.tF-1e-6) m='<b>Both in medium 1.</b> Finger and thumb move at the same speed, so the front travels straight.';
+  else if(t<G.tT-1e-6){
+    if(G.crit) m='<b>At the critical angle.</b> The finger speeds up in medium 2 so much that the refracted wave runs along the boundary: r = 90°.';
+    else if(G.tir) m='<b>Finger reaches the boundary</b>, but at this angle it cannot go into the faster medium. The wave is totally internally reflected.';
+    else if(G.r<0.999) m='<b>Finger is in medium 2 and slows down.</b> The thumb keeps its speed and gets ahead, so the front swings <b>towards the normal</b>.';
+    else if(G.r>1.001) m='<b>Finger is in medium 2 and speeds up.</b> It gets ahead of the thumb, so the front swings <b>away from the normal</b>.';
+    else m='<b>Finger crosses, but its speed does not change.</b> Neither digit gets ahead, so there is no bending.';
+  }
+  else if(G.tF===G.tT&&t<G.tF+0.4) m='<b>Head-on:</b> finger and thumb reach the boundary together. The speed changes but neither gets ahead, so the direction does not change.';
+  else m=G.tir?'<b>Both reflected.</b> The wave travels back into medium 1 at the same angle.'
+       :'<b>Both are across</b> and moving at the same speed again. The front travels straight in its new direction.';
+  if(m!==lastMsg){$('status').innerHTML=m;lastMsg=m}
+}
+
+function readouts(){
+  const deg=x=>(x*180/Math.PI).toFixed(1)+'°';
+  $('angv').textContent=st.angle.toFixed(1)+'°';
+  $('ratv').textContent=st.ratio.toFixed(2);
+  $('oi').textContent=deg(G.i);
+  $('or').textContent=G.tir?'none (reflected)':deg(G.rAng);
+  $('osr').textContent=(G.i<0.001||G.tir)?'—':(Math.sin(G.i)/Math.sin(G.rAng)).toFixed(2);
+  $('on').textContent=(1/G.r).toFixed(2);
+  const cd=G.cAng!=null?G.cAng*180/Math.PI:null;
+  $('oc').textContent=cd==null?'none (medium 2 is not faster)':'sin⁻¹(v₁ ÷ v₂) = '+cd.toFixed(1)+'°';
+  $('crit').disabled=cd==null||cd>70;
+  $('crith').textContent=cd==null?'Make medium 2 faster to get a critical angle.':cd>70?'Critical angle is beyond 70°: increase v₂.':'';
+  $('chip').textContent=G.crit?'At the critical angle: r = 90°':G.tir?'Total internal reflection':G.i<0.001?'Along the normal: no bending'
+    :G.r<0.999?'Bends towards the normal':G.r>1.001?'Bends away from the normal':'No bending';
+}
+
+function tick(now){
+  const dt=last==null?0:Math.min((now-last)/1000,0.05); last=now;
+  if(st.playing){
+    if(st.t>=G.tEnd){hold+=dt; if(hold>1.4){st.t=0;hold=0}}
+    else st.t=Math.min(G.tEnd,st.t+dt*(st.slow?0.35:1));
+    $('scrub').value=Math.round(st.t/G.tEnd*1000);
+  }
+  draw(); requestAnimationFrame(tick);
+}
+
+const setPlay=p=>{st.playing=p;$('play').textContent=p?'Pause':'Play'};
+$('play').onclick=()=>{if(!st.playing&&st.t>=G.tEnd)st.t=0;setPlay(!st.playing)};
+$('restart').onclick=()=>{st.t=0;hold=0;$('scrub').value=0};
+$('slow').onclick=e=>{st.slow=!st.slow;e.currentTarget.setAttribute('aria-pressed',st.slow)};
+$('train').onclick=e=>{st.train=!st.train;e.currentTarget.setAttribute('aria-pressed',st.train);build()};
+$('scrub').oninput=e=>{setPlay(false);st.t=e.target.value/1000*G.tEnd;hold=0};
+$('ang').oninput=e=>{st.angle=+e.target.value;build()};
+$('crit').onclick=()=>{if(G.cAng==null)return;st.angle=G.cAng*180/Math.PI;$('ang').value=st.angle;build()};
+$('rat').oninput=e=>{st.ratio=+e.target.value;build()};
+
+setPlay(st.playing);
+new ResizeObserver(resize).observe(cv.parentElement);
+resize(); build(true);
+requestAnimationFrame(tick);
+})();
+</script>
+
+</body></html>

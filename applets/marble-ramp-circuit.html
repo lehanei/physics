@@ -1,0 +1,610 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Marble Ramp Circuit v2</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: 3D stage, then graph + table beneath it; instrument panel on the right; stacks on phones */
+:root{
+  --bg:#e9edf1; --panel:#f8fafb; --stage:#dfe5eb; --fg:#1b2530; --muted:#5b6876; --line:#cdd5dd; --accent:#c26a32; --warn:#b4471f;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --grid:#e3e8ed;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141a21; --panel:#1c242d; --stage:#10151b; --fg:#e7edf3; --muted:#93a1b0; --line:#2f3a46; --accent:#d9814a; --warn:#f08a5d;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --grid:#26303a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a21; --panel:#1c242d; --stage:#10151b; --fg:#e7edf3; --muted:#93a1b0; --line:#2f3a46; --accent:#d9814a; --warn:#f08a5d;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --grid:#26303a; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+.wrap{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,3.5vw,2.3rem);margin:0;text-wrap:balance;grid-column:1/-1}
+h1 span{color:var(--muted);font-weight:600}
+h2{font-family:var(--display);font-size:18px;margin:0}
+.sub{grid-column:1/-1;margin:-12px 0 0;color:var(--muted);max-width:72ch}
+.left{display:grid;gap:14px;min-width:0}
+.stage{position:relative;aspect-ratio:4/3;max-width:100%;border-radius:10px;overflow:hidden;background:var(--stage);border:1px solid var(--line);touch-action:none}
+@media (max-width:500px){.stage{aspect-ratio:1/1}}
+.stage canvas{display:block;width:100%;height:100%}
+.tag{position:absolute;transform:translate(-50%,-100%);font-size:12px;font-weight:600;padding:2px 7px;border-radius:4px;
+  background:var(--panel);color:var(--fg);border:1px solid var(--line);white-space:nowrap;pointer-events:none}
+.hintbar{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);pointer-events:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.cardhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:14px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:600 13px var(--body);padding:8px 6px;border:0;background:transparent;color:var(--fg);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.ramp{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:10px}
+.ramp header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ramp header strong{font-family:var(--display);font-size:17px;display:flex;align-items:center;gap:8px}
+.swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+.btn{font:500 13px var(--body);padding:6px 12px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+label{display:grid;gap:2px;font-weight:500;font-size:14px}
+label .top{display:flex;justify-content:space-between;gap:8px}
+label .top b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
+label.check{display:flex;align-items:center;gap:8px}
+select{font:500 14px var(--body);padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-weight:400;color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500;text-align:right;padding:4px 8px;white-space:nowrap}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+td{font-family:var(--mono);text-align:right;padding:5px 8px;border-top:1px solid var(--line);white-space:nowrap}
+td:nth-child(2){font-family:var(--body)}
+tr.total td{font-weight:600;border-top:2px solid var(--line)}
+.warn{color:var(--warn);font-size:13px;margin:8px 0 0}
+.note{color:var(--muted);font-size:13px;margin:8px 0 0}
+.graphwrap{overflow-x:auto}
+#graph{width:100%;min-width:420px;height:auto;display:block}
+#graph text{font-family:var(--body);font-size:12px;fill:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;margin-top:6px}
+.legend span{display:flex;align-items:center;gap:6px}
+/* presenter mode */
+.pbar{position:absolute;top:10px;right:10px;display:none;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-width:calc(100% - 20px)}
+.pbar label{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.pbar input[type=range]{width:160px}
+body.present{padding-block:8px}
+body.present h1, body.present .sub, body.present .panel, body.present .below{display:none}
+body.present .wrap{grid-template-columns:minmax(0,1fr);max-width:none}
+body.present .stage{aspect-ratio:auto;height:calc(100vh - 16px)}
+body.present .pbar{display:flex}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <h1>Marble Ramp Circuit <span>v2</span></h1>
+  <p class="sub">Each ramp is a piece of wire. Marbles are free electrons and the fixed balls are atoms. The potential difference across a ramp is the difference in height between its two ends. Dashed level lines run from each end to a ruler marked in volts, and the voltmeter is connected across both ends. Ammeters count electrons.</p>
+
+  <div class="left">
+    <div class="stage" id="stage">
+      <div class="hintbar">Drag to rotate · scroll or pinch to zoom</div>
+      <div class="pbar" id="pbar"></div>
+    </div>
+
+    <div class="card below">
+      <div class="cardhead">
+        <h2>Current against potential difference</h2>
+        <div class="actions"><button class="btn primary" id="rec">Record readings</button><button class="btn" id="clr">Clear graph</button></div>
+      </div>
+      <div class="graphwrap"><svg id="graph" viewBox="0 0 600 330" role="img" aria-label="Graph of current I against potential difference V for each ramp"></svg></div>
+      <div class="legend" id="legend"></div>
+      <p class="note" id="gnote">Set a PD, let the ammeters settle, then press Record readings. Repeat at different PDs.</p>
+    </div>
+
+    <div class="card below tablewrap">
+      <table>
+        <thead><tr><th>Ramp</th><th>Material</th><th>V</th><th>Temp</th><th>R</th><th>I = V/R</th><th>e⁻ per s</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <p class="warn" id="warn" hidden></p>
+      <p class="note" id="note"></p>
+    </div>
+  </div>
+
+  <div class="panel" id="panel"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(()=>{
+const stage=document.getElementById('stage'), panel=document.getElementById('panel');
+const $=id=>document.getElementById(id);
+
+// ---------- state ----------
+const VH=0.35, MAXR=4;
+// relative resistivities are real ratios to copper; temperature coefficients α per °C
+const MATS={
+  copper:   {name:'Copper',   rho:1.0, a:0.0039, col:0xc8743c},
+  aluminium:{name:'Aluminium',rho:1.6, a:0.0040, col:0xc4cad1},
+  tungsten: {name:'Tungsten', rho:3.3, a:0.0045, col:0x707880},
+  iron:     {name:'Iron',     rho:5.8, a:0.0050, col:0x9a6a52}
+};
+const S={mode:'series', auto:true, Troom:20, heat:false, Vbat:6,
+  ramps:[{L:8,W:3,V:3,mat:'copper'},{L:8,W:2,V:3,mat:'tungsten'}], points:[]};
+const resistAt=(c,T)=>MATS[c.mat].rho*c.L/c.W*(1+MATS[c.mat].a*(T-20));
+const sColor=i=>getComputedStyle(document.documentElement).getPropertyValue('--s'+(i+1)).trim();
+
+// ---------- three.js ----------
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.outputEncoding=THREE.sRGBEncoding;
+stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(40,4/3,0.1,300);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.maxPolarAngle=Math.PI*0.49; controls.minDistance=4; controls.maxDistance=90;
+function themeBg(){scene.background=new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--stage').trim()||'#dfe5eb');}
+themeBg(); try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',themeBg);}catch(e){}
+new MutationObserver(themeBg).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+scene.add(new THREE.HemisphereLight(0xdfe9ff,0x30281f,0.75));
+const sun=new THREE.DirectionalLight(0xffffff,0.95); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048); sun.shadow.bias=-0.0005;
+scene.add(sun,sun.target);
+const FLOOR=-0.6;
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(300,300),new THREE.ShadowMaterial({opacity:0.22}));
+floor.rotation.x=-Math.PI/2; floor.position.y=FLOOR; floor.receiveShadow=true; scene.add(floor);
+
+const M={
+  rail:new THREE.MeshStandardMaterial({color:0xcfd6de,roughness:0.18,metalness:0.85}),
+  post:new THREE.MeshStandardMaterial({color:0x8d98a4,roughness:0.3,metalness:0.8}),
+  marble:new THREE.MeshStandardMaterial({color:0x3f7fe0,roughness:0.08,metalness:0.2}),
+  tube:new THREE.MeshStandardMaterial({color:0xbfe0ff,roughness:0.05,transparent:true,opacity:0.22,depthWrite:false}),
+  battery:new THREE.MeshStandardMaterial({color:0x2a2d33,roughness:0.5}),
+  cap:new THREE.MeshStandardMaterial({color:0xd8a531,roughness:0.35,metalness:0.5})
+};
+const fieldTex=(()=>{const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');
+  g.fillStyle='#1d2f5c';g.fillRect(0,0,256,256);g.strokeStyle='rgba(255,255,255,0.07)';g.lineWidth=2;
+  for(let i=0;i<=256;i+=32){g.beginPath();g.moveTo(i,0);g.lineTo(i,256);g.stroke();g.beginPath();g.moveTo(0,i);g.lineTo(256,i);g.stroke();}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;return t;})();
+
+const RM=0.15, RA=0.2, SPACING=1.0, THICK=0.12, RAIL_H=0.35;
+const gMarble=new THREE.SphereGeometry(RM,20,14), gAtom=new THREE.SphereGeometry(RA,20,14), gPost=new THREE.CylinderGeometry(0.12,0.16,1,16);
+
+let R=[], marbles=[], paths=[], pathLen=[], pathMeshes=[], tags=[], t=0;
+const gSpan=new THREE.CylinderGeometry(0.06,0.06,1,12), gTerm=new THREE.SphereGeometry(0.09,14,10);
+const GM={
+  level:new THREE.LineDashedMaterial({color:0x8a96a3,dashSize:0.18,gapSize:0.12}),
+  tick:new THREE.LineBasicMaterial({color:0x8a96a3}),
+  leadNeg:new THREE.LineBasicMaterial({color:0x22262b}), leadPos:new THREE.LineBasicMaterial({color:0xd23a2a}),
+  termNeg:new THREE.MeshStandardMaterial({color:0x22262b,roughness:0.4}), termPos:new THREE.MeshStandardMaterial({color:0xd23a2a,roughness:0.4})
+};
+function setLine(l,a){const geo=l.geometry, at=geo.getAttribute('position');
+  if(!at||at.array.length!==a.length) geo.setAttribute('position',new THREE.Float32BufferAttribute(a,3)); else{at.array.set(a);at.needsUpdate=true;}
+  geo.computeBoundingSphere(); if(l.material.isLineDashedMaterial) l.computeLineDistances();}
+function makeGauge(i){
+  const g={span:new THREE.Mesh(gSpan,new THREE.MeshBasicMaterial({color:new THREE.Color(sColor(i)||'#2a78d6')})),
+    ticks:new THREE.LineSegments(new THREE.BufferGeometry(),GM.tick),
+    lvlTop:new THREE.Line(new THREE.BufferGeometry(),GM.level), lvlBot:new THREE.Line(new THREE.BufferGeometry(),GM.level),
+    leadNeg:new THREE.Line(new THREE.BufferGeometry(),GM.leadNeg), leadPos:new THREE.Line(new THREE.BufferGeometry(),GM.leadPos),
+    tTop:new THREE.Mesh(gTerm,GM.termNeg), tBot:new THREE.Mesh(gTerm,GM.termPos)};
+  Object.values(g).forEach(o=>scene.add(o)); return g;
+}
+function dropGauge(g){Object.values(g).forEach(o=>{scene.remove(o); if(o.geometry!==gSpan&&o.geometry!==gTerm) o.geometry.dispose();}); g.span.material.dispose();}
+// height gauge: level lines from both ends of the ramp to a ruler marked every 1 V; voltmeter leads to both ends
+function updGauge(r){
+  const g=r.gauge, ser=S.mode==='series', edge=r.cfg.W/2+0.12;
+  const rx=r.bot.x+r.cfg.W/2+(ser?0.6:0.3), rz=r.top.z, yb=r.bot.y, yt=r.top.y, H=Math.max(0.001,yt-yb), V=r.h/VH;
+  setLine(g.lvlTop,[r.top.x+edge,yt,r.top.z, rx,yt,rz]);
+  setLine(g.lvlBot,[r.bot.x+edge,yb,r.bot.z, rx,yb,r.bot.z, rx,yb,rz]);
+  g.span.scale.y=H; g.span.position.set(rx,yb+H/2,rz);
+  const tk=[]; for(let v=0;v<=V+1e-6;v++){const y=yb+v*VH, w=v%5===0?0.2:0.12; tk.push(rx-w,y,rz, rx+w,y,rz);}
+  if(tk.length) setLine(g.ticks,tk);
+  g.tTop.position.set(rx,yt,rz); g.tBot.position.set(rx,yb,rz);
+  const vm=r.vmeter.sp.position;
+  if(ser) vm.set(rx+1.05,yb+H/2,rz); else vm.set(rx,yt+1.0,rz);
+  const hy=0.47*r.vmeter.sp.scale.y;
+  if(ser){setLine(g.leadNeg,[rx,yt,rz, vm.x-0.3,vm.y+hy,vm.z]); setLine(g.leadPos,[rx,yb,rz, vm.x-0.3,vm.y-hy,vm.z]);}
+  else{setLine(g.leadNeg,[rx,yt,rz, vm.x-0.25,vm.y-hy,vm.z]); setLine(g.leadPos,[rx,yb,rz, vm.x+0.25,vm.y-hy,vm.z]);}
+}
+let meters=[], totalMeter=null, totalExits=[], t0Total=0, wires=[], present=false;
+
+// ---------- meters (canvas textures on sprites that always face the camera) ----------
+function makeMeter(title,kind){
+  const c=document.createElement('canvas'); c.width=320; c.height=200;
+  const tex=new THREE.CanvasTexture(c); tex.encoding=THREE.sRGBEncoding;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex})); scene.add(sp);
+  const m={c,ctx:c.getContext('2d'),tex,sp,title,kind,shown:0,value:0,lastText:''}; meters.push(m); return m;
+}
+function drawMeter(m){
+  const big=m.kind==='A'?m.shown.toFixed(1):m.shown.toFixed(2);
+  const key=big+(m.kind==='A'?(m.shown/EPA).toFixed(2):''); if(key===m.lastText) return; m.lastText=key;
+  const g=m.ctx, W=320, H=200;
+  g.clearRect(0,0,W,H);
+  g.fillStyle=m.kind==='A'?'#24292f':'#3a2a22'; roundRect(g,4,4,W-8,H-8,20); g.fill();
+  g.fillStyle='#e8eef0'; g.font='600 20px "IBM Plex Sans",sans-serif'; g.textAlign='left'; g.fillText(m.title,22,38);
+  g.fillStyle='#a3adb6'; g.font='600 16px "IBM Plex Sans",sans-serif'; g.textAlign='right'; g.fillText(m.kind==='A'?'AMMETER':'VOLTMETER',W-22,38);
+  g.fillStyle='#b9c8a8'; roundRect(g,20,52,W-40,96,8); g.fill();
+  g.font='600 64px "IBM Plex Mono",monospace';
+  g.fillStyle='rgba(30,40,25,0.10)'; g.fillText(m.kind==='A'?'88.8':'8.88',W-98,124);
+  g.fillStyle='#1d2a17'; g.fillText(big,W-98,124);
+  g.font='600 20px "IBM Plex Sans",sans-serif'; g.textAlign='left'; g.fillText(m.kind==='A'?'e⁻/s':'V',W-90,124);
+  g.fillStyle='#c9d2d8'; g.font='500 19px "IBM Plex Mono",monospace'; g.textAlign='center';
+  g.fillText(m.kind==='A'?'= '+(m.shown/EPA).toFixed(2)+' A':'= height drop of ramp',W/2,180);
+  m.tex.needsUpdate=true;
+}
+function roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+const rateOf=(list,t0)=>{while(list.length&&t-list[0]>5) list.shift(); return list.length/Math.min(5,Math.max(0.5,t-t0));};
+const v3=new THREE.Vector3();
+function tag(text){const d=document.createElement('div');d.className='tag';d.textContent=text;stage.appendChild(d);return d;}
+
+// ---------- build ----------
+function rebuild(){
+  R.forEach(r=>{scene.remove(r.group);scene.remove(r.post); r.atomMat.dispose(); dropGauge(r.gauge);
+    r.group.traverse(o=>{if(o.geometry&&o.geometry!==gAtom)o.geometry.dispose(); if(o.material&&o.material.map){o.material.map.dispose();o.material.dispose();}});});
+  marbles.forEach(m=>scene.remove(m.mesh));
+  tags.forEach(x=>x.el.remove()); tags=[];
+  meters.forEach(m=>{scene.remove(m.sp); m.tex.dispose(); m.sp.material.dispose();}); meters=[];
+  R=[]; marbles=[]; totalExits=[]; t0Total=t; S.points=[];
+  const n=S.ramps.length;
+  S.ramps.forEach((cfg,i)=>{
+    const g=new THREE.Group(); scene.add(g);
+    const mat=new THREE.MeshStandardMaterial({roughness:0.25,metalness:0.1,map:fieldTex.clone()});
+    mat.map.needsUpdate=true; mat.map.repeat.set(cfg.W/2,cfg.L/2);
+    const atomMat=new THREE.MeshStandardMaterial({color:MATS[cfg.mat].col,roughness:0.35,metalness:0.5});
+    const add=(geo,m,x,y,z)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g.add(o);return o;};
+    add(new THREE.BoxGeometry(cfg.W,THICK,cfg.L),mat,0,-THICK/2,-cfg.L/2);
+    for(const s of[-1,1]) add(new THREE.BoxGeometry(0.12,RAIL_H,cfg.L),M.rail,s*(cfg.W/2+0.06),RAIL_H/2-THICK,-cfg.L/2);
+    if(S.mode==='parallel'||i===0) add(new THREE.BoxGeometry(cfg.W+0.24,RAIL_H,0.12),M.rail,0,RAIL_H/2-THICK,-cfg.L-0.06);
+    const atoms=[]; let row=0;
+    for(let v=0.9; v<=cfg.L-0.9; v+=SPACING*0.866,row++){
+      const off=(row%2)*SPACING/2;
+      for(let u=-cfg.W/2+0.6+off; u<=cfg.W/2-0.6+1e-6; u+=SPACING){
+        const m=add(gAtom,atomMat,u,RM,-v); atoms.push({u,v,mesh:m,ph:Math.random()*6.28});
+      }
+    }
+    const post=new THREE.Mesh(gPost,M.post); post.castShadow=true; scene.add(post);
+    const arch=new THREE.Mesh(new THREE.TorusGeometry(cfg.W/2+0.06,0.035,8,40,Math.PI),M.rail);
+    arch.scale.y=0.55/(cfg.W/2+0.06); arch.position.set(0,0,-cfg.L/2); arch.castShadow=true; g.add(arch);
+    const V0=S.mode==='parallel'?S.Vbat:(S.auto?S.Vbat/n:cfg.V);   // auto series starts from an equal split, then settles
+    const r={cfg,group:g,atoms,atomMat,post,V:V0,h:V0*VH,T:S.Troom,exits:[],t0:t,
+      meter:makeMeter('Ramp '+(i+1),'A'),vmeter:makeMeter('Ramp '+(i+1),'V'),gauge:makeGauge(i),ap:[],top:new THREE.Vector3(),bot:new THREE.Vector3()};
+    R.push(r);
+    const N=Math.round(cfg.L*cfg.W); r.N=N; const cols=Math.max(1,Math.round(Math.sqrt(N*cfg.W/cfg.L))), rows=Math.ceil(N/cols);
+    for(let k=0;k<N;k++){
+      const cu=(k%cols+0.5)/cols, cv=(Math.floor(k/cols)+0.5)/rows;
+      let u,v,ok=false,tries=0;
+      while(!ok&&tries++<60){
+        u=(cu-0.5+(Math.random()-0.5)*0.8/cols)*(cfg.W-0.4);
+        v=0.3+(cv+(Math.random()-0.5)*0.8/rows)*(cfg.L-0.6);
+        ok=atoms.every(a=>Math.hypot(a.u-u,a.v-v)>RA+RM+0.04);}
+      const mesh=new THREE.Mesh(gMarble,M.marble); mesh.castShadow=true; scene.add(mesh);
+      marbles.push({r:i,u,v,vu:0,jv:0,q:false,mesh});
+    }
+  });
+  tags.push({el:tag('− terminal'),pos:()=>neg});
+  tags.push({el:tag('+ terminal'),pos:()=>pos});
+  tags.push({el:tag('battery (part of the circuit)'),pos:()=>batPos});
+  totalMeter=makeMeter('Total','A');
+  layout(); buildPaths(); fitCamera();
+  // connecting wire and battery are full of electrons too, moving with the rest of the circuit
+  wires=paths.map((p,b)=>{const cap=Math.max(4,Math.floor(pathLen[b]/0.45)), list=[];
+    for(let k=0;k<cap;k++){const mesh=new THREE.Mesh(gMarble,M.marble); mesh.castShadow=true; scene.add(mesh);
+      const m={r:0,u:0,v:0,vu:0,jv:0,q:true,s:(k+0.5)/cap*pathLen[b],mesh}; marbles.push(m); list.push(m);}
+    return {list,cap};});
+  renderLegend();
+}
+
+let neg=new THREE.Vector3(), pos=new THREE.Vector3(), batPos=new THREE.Vector3(), lastHs='';
+function layout(){
+  if(S.mode==='series'){
+    let p=new THREE.Vector3(0,0,0);
+    for(let i=R.length-1;i>=0;i--){
+      const r=R[i], th=Math.asin(Math.min(0.95,r.h/r.cfg.L));
+      r.group.position.copy(p); r.group.rotation.x=th;
+      r.bot.copy(p); r.top.set(0,p.y+r.cfg.L*Math.sin(th),p.z-r.cfg.L*Math.cos(th));
+      p=r.top.clone();
+    }
+  } else {
+    const gap=0.9, total=R.reduce((s,r)=>s+r.cfg.W,0)+gap*(R.length-1);
+    let x=-total/2;
+    R.forEach(r=>{
+      const th=Math.asin(Math.min(0.95,r.h/r.cfg.L)); x+=r.cfg.W/2;
+      r.group.position.set(x,0,0); r.group.rotation.x=th;
+      r.bot.set(x,0,0); r.top.set(x,r.cfg.L*Math.sin(th),-r.cfg.L*Math.cos(th));
+      x+=r.cfg.W/2+gap;
+    });
+  }
+  R.forEach(r=>{r.group.updateMatrixWorld();
+    const hgt=Math.max(0.01,r.top.y-THICK-FLOOR); r.post.scale.y=hgt; r.post.position.set(r.top.x,FLOOR+hgt/2,r.top.z+0.35);});
+}
+
+function buildPaths(){
+  const oldLen=pathLen.slice();
+  pathMeshes.forEach(m=>{scene.remove(m); m.traverse(o=>{if(o.geometry)o.geometry.dispose();});}); pathMeshes=[]; paths=[]; pathLen=[];
+  const xR=Math.max(...R.map(r=>r.bot.x+r.cfg.W/2))+(S.mode==='series'?3.0:0.8);
+  const topY=Math.max(...R.map(r=>r.top.y)), zBack=Math.min(...R.map(r=>r.top.z))-0.7;
+  const branches=S.mode==='series'?[[R[R.length-1],R[0]]]:R.map(r=>[r,r]);
+  const yLow=FLOOR+0.35, zFront=0.7;
+  branches.forEach(([out,inn])=>{
+    const pts=[
+      new THREE.Vector3(out.bot.x,RM,0.3), new THREE.Vector3(out.bot.x,0.1,zFront), new THREE.Vector3(xR,0.1,zFront),
+      new THREE.Vector3(xR,yLow,zFront), new THREE.Vector3(xR,yLow,zBack), new THREE.Vector3(xR,topY+0.4,zBack),
+      new THREE.Vector3(inn.top.x,topY+0.4,zBack), new THREE.Vector3(inn.top.x,inn.top.y+0.4,inn.top.z-0.2)
+    ];
+    const cp=new THREE.CurvePath(); for(let i=0;i<pts.length-1;i++) if(pts[i].distanceTo(pts[i+1])>1e-3) cp.add(new THREE.LineCurve3(pts[i],pts[i+1]));
+    paths.push(cp); pathLen.push(cp.getLength());
+    for(const c of cp.curves){const m=new THREE.Mesh(new THREE.TubeGeometry(c,2,0.22,12,false),M.tube); scene.add(m); pathMeshes.push(m);}
+  });
+  const bat=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,1.6,28),M.battery);
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.35,28),M.cap); cap.position.y=0.97;
+  body.castShadow=cap.castShadow=true; bat.add(body,cap); bat.rotation.x=-Math.PI/2;
+  batPos.set(xR,yLow+0.07,(zFront+zBack)/2); bat.position.copy(batPos); scene.add(bat); pathMeshes.push(bat);
+  batPos=batPos.clone().add(new THREE.Vector3(0,0.6,0));
+  const first=S.mode==='series'?R[0]:null;
+  neg=first?first.top.clone().add(new THREE.Vector3(0,0.9,-0.3)):new THREE.Vector3(0,topY+1.1,zBack);
+  pos=S.mode==='series'?R[R.length-1].bot.clone().add(new THREE.Vector3(0,0.6,0.8)):new THREE.Vector3(0,0.7,zFront+0.3);
+  wires.forEach((w,b)=>{if(oldLen[b]) w.list.forEach(m=>m.s*=pathLen[b]/oldLen[b]);});
+  lastHs=R.map(r=>r.h.toFixed(2)).join();
+}
+
+function fitCamera(){
+  const box=new THREE.Box3(); R.forEach(r=>{box.expandByPoint(r.top);box.expandByPoint(r.bot);
+    box.expandByPoint(v3.copy(r.bot).add(new THREE.Vector3(r.cfg.W/2+3,0,1)));box.expandByPoint(v3.copy(r.bot).add(new THREE.Vector3(-r.cfg.W/2-1.5,0,0)));});
+  const c=box.getCenter(new THREE.Vector3()), size=box.getSize(new THREE.Vector3()), d=Math.max(size.x,size.z,size.y*2)*1.05+4;
+  controls.target.copy(c); camera.position.set(c.x+d*0.8,c.y+d*0.6,c.z+d*0.5);
+  const e=Math.max(size.x,size.z)/2+4;
+  Object.assign(sun.shadow.camera,{left:-e,right:e,top:e,bottom:-e,near:1,far:e*4}); sun.shadow.camera.updateProjectionMatrix();
+  sun.position.set(c.x+e*0.6,e*1.6,c.z+e*0.7); sun.target.position.copy(c);
+}
+
+// ---------- circuit: PDs, resistance, heating ----------
+const HEAT=30, TAU=3, TMAX=1500;      // °C per watt at steady state, time constant (s), cap
+function circuit(dt){
+  const series=S.mode==='series', n=R.length;
+  R.forEach(r=>r.R=resistAt(r.cfg,r.T));
+  if(series&&S.auto){
+    // charge builds up wherever a ramp carries less current than its neighbours; that changes the PDs
+    // until every ramp carries the same current. Modelled as a relaxation that keeps ΣV = battery PD.
+    const Is=R.map(r=>r.V/r.R), Ib=Is.reduce((a,b)=>a+b,0)/n;
+    R.forEach((r,i)=>r.V=Math.max(0,r.V+0.6*(Ib-Is[i])*r.R*dt));
+    const sum=R.reduce((s,r)=>s+r.V,0);
+    R.forEach(r=>r.V=sum>1e-6?r.V*S.Vbat/sum:S.Vbat/n);
+  } else R.forEach((r,i)=>r.V=series?S.ramps[i].V:S.Vbat);
+  R.forEach(r=>{
+    const Tgoal=S.heat?Math.min(TMAX,S.Troom+HEAT*(r.h/VH)**2/r.R):S.Troom;
+    r.T+=(Tgoal-r.T)*Math.min(1,dt/(S.heat?TAU:0.4));
+    r.h+=(r.V*VH-r.h)*Math.min(1,dt*3);
+  });
+}
+
+// ---------- electron motion (u across a ramp, v up its slope) ----------
+// Drift model: electrons on a ramp drift downhill at a speed ∝ V/(L·ρ(T)), scaled for the electron count,
+// so electrons per second through each ammeter = EPA × (V/R). Atoms push electrons sideways only.
+const K=3, EPA=K, NOISE=1.6, DRAG=3;
+const ampT=T=>0.015+0.13*Math.min(1.4,Math.max(0,T)/400);
+const randn=()=>(Math.random()+Math.random()+Math.random()-1.5)*1.4;
+function atomPos(a,A){return [a.u+A*Math.sin(t*23+a.ph), a.v+A*Math.cos(t*19+a.ph*1.3)];}
+function enterTop(m,i,carry){const c=R[i].cfg; m.q=false; m.r=i; m.v=Math.max(0,c.L-RM+carry); m.u=(Math.random()-0.5)*(c.W-0.6); m.vu=0;}
+
+function physics(dt){
+  const series=S.mode==='series';
+  R.forEach(r=>{const A=ampT(r.T); r.rc=RA+RM+A*0.6; r.ap=r.atoms.map(a=>atomPos(a,A));
+    const mt=MATS[r.cfg.mat], f=1+mt.a*(r.T-20);
+    r.vd=r.h<0.02?0:K*(r.h/VH)/(r.cfg.L*mt.rho*f)*(r.cfg.L*r.cfg.W/r.N);});
+  for(const m of marbles){
+    m.jv+=(-m.jv*8+randn()*0.3)*dt;
+    if(m.q) continue;
+    const r=R[m.r], c=r.cfg, rc=r.rc;
+    m.vu+=randn()*NOISE*Math.sqrt(dt); m.vu*=1-Math.min(1,DRAG*dt);
+    const vOld=m.v;
+    m.u+=m.vu*dt; m.v-=r.vd*dt;
+    if(vOld>=c.L/2&&m.v<c.L/2) r.exits.push(t);
+    const lim=c.W/2-RM;
+    if(m.u>lim){m.u=lim;m.vu=-Math.abs(m.vu);} if(m.u<-lim){m.u=-lim;m.vu=Math.abs(m.vu);}
+    if(m.v>c.L-RM) m.v=c.L-RM;
+    if(m.v<RM-0.15){
+      const carry=m.v-(RM-0.15);
+      if(series&&m.r<R.length-1){const nx=R[m.r+1].cfg; m.r++; m.v=nx.L-RM+carry; m.u=Math.max(-(nx.W/2-RM),Math.min(nx.W/2-RM,m.u));}
+      else{ const b=series?0:m.r; m.q=true; m.s=-carry; wires[b].list.push(m); }
+      continue;
+    }
+    if(r.vd===0&&m.v<RM) m.v=RM;
+    for(const [au,av] of r.ap){
+      const dv=m.v-av; if(dv>=rc||dv<=-rc) continue;
+      const du=m.u-au, req=Math.sqrt(rc*rc-dv*dv);
+      if(Math.abs(du)<req){const s=du>0?1:du<0?-1:(Math.random()<.5?1:-1); m.u=au+s*req; m.vu=s*Math.abs(m.vu);}
+    }
+  }
+  wires.forEach((w,b)=>{
+    const out=series?R[R.length-1]:R[b], flux=out.vd*(out.N/out.cfg.L);
+    const vt=flux*pathLen[b]/w.cap, half=pathLen[b]/2;
+    for(let i=w.list.length-1;i>=0;i--){const m=w.list[i], s0=m.s; m.s+=vt*dt;
+      if(s0<half&&m.s>=half) totalExits.push(t);
+      if(m.s>=pathLen[b]){w.list.splice(i,1); enterTop(m,series?0:b,-(m.s-pathLen[b]));}}
+  });
+  const on=marbles.filter(m=>!m.q), d0=2*RM;
+  for(let i=0;i<on.length;i++){const a=on[i];
+    for(let j=i+1;j<on.length;j++){const b=on[j]; if(a.r!==b.r) continue;
+      const du=b.u-a.u, dv=b.v-a.v; if(Math.abs(du)>d0||Math.abs(dv)>d0) continue;
+      const d=Math.hypot(du,dv); if(d<d0&&d>1e-6){const k=(d0-d)/2/d; a.u-=du*k;b.u+=du*k; a.v-=dv*k*0.3;b.v+=dv*k*0.3;}
+    }}
+  on.forEach(m=>{const L=R[m.r].cfg.L; if(m.v>L-RM) m.v=L-RM;});
+}
+
+// ---------- panel ----------
+function slider(id,label,min,max,step,val,fmt){
+  return `<label for="${id}"><span class="top">${label} <b id="${id}o">${fmt(val)}</b></span><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${val}"></label>`;
+}
+const fV=v=>(+v).toFixed(1)+' V';
+function renderPanel(){
+  const ser=S.mode==='series', batt=!ser||S.auto;
+  let h=`<div class="seg" role="group" aria-label="Connection">
+    <button id="mSeries" aria-pressed="${ser}">Series</button><button id="mPar" aria-pressed="${!ser}">Parallel</button></div>`;
+  if(ser) h+=`<div class="seg" role="group" aria-label="How the PDs are set">
+    <button id="mAuto" aria-pressed="${S.auto}">PDs share out</button><button id="mMan" aria-pressed="${!S.auto}">Set each PD</button></div>`;
+  if(batt) h+=slider('vbat',ser?'Battery PD (shared by the ramps)':'Battery PD (across every ramp)',0,10,0.5,S.Vbat,fV);
+  S.ramps.forEach((r,i)=>{
+    h+=`<div class="ramp"><header><strong><i class="swatch" style="background:var(--s${i+1})"></i>Ramp ${i+1}</strong><button class="btn" data-rm="${i}" ${S.ramps.length<2?'disabled':''}>Remove</button></header>
+      <label for="m${i}">Material<select id="m${i}">${Object.entries(MATS).map(([k,m])=>`<option value="${k}" ${k===r.mat?'selected':''}>${m.name} (ρ ×${m.rho})</option>`).join('')}</select></label>`;
+    if(ser&&!S.auto) h+=slider('v'+i,'PD across ramp',0,10,0.1,r.V,fV);
+    h+=slider('l'+i,'Length',4,10,1,r.L,v=>v)+slider('w'+i,'Width',1.5,5,0.5,r.W,v=>(+v).toFixed(1))+`</div>`;
+  });
+  h+=`<div class="actions"><button class="btn primary" id="addR" ${S.ramps.length>=MAXR?'disabled':''}>Add ramp</button>`;
+  if(ser&&!S.auto) h+=`<button class="btn" id="share">Share V by resistance</button>`;
+  h+=`<button class="btn" id="reset">Reset to 0 V</button></div>`;
+  h+=slider('temp','Room temperature',0,400,10,S.Troom,v=>v+' °C');
+  h+=`<label class="check" for="heat"><input type="checkbox" id="heat" ${S.heat?'checked':''}> Current heats the wire</label>
+      <span class="hint">Electrons hand energy to the atoms they hit. With heating on, P = I²R warms each ramp, its atoms shake and glow, and its resistance rises.</span>
+      <button class="btn" id="pres">Presenter mode</button>`;
+  panel.innerHTML=h;
+
+  const re=()=>{renderPanel();rebuild();};
+  $('mSeries').onclick=()=>{if(S.mode!=='series'){S.mode='series';re();}};
+  $('mPar').onclick=()=>{if(S.mode!=='parallel'){S.mode='parallel';re();}};
+  if(ser){$('mAuto').onclick=()=>{if(!S.auto){S.auto=true;re();}}; $('mMan').onclick=()=>{if(S.auto){S.auto=false;S.ramps.forEach((c,i)=>c.V=Math.round((R[i]?R[i].V:c.V)*10)/10);re();}};}
+  panel.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{S.ramps.splice(+b.dataset.rm,1);re();});
+  $('addR').onclick=()=>{S.ramps.push({L:8,W:3,V:3,mat:'copper'});re();};
+  $('reset').onclick=()=>{S.ramps.forEach(r=>r.V=0); S.Vbat=0; re();};
+  if($('share')) $('share').onclick=()=>{
+    const Vt=S.ramps.reduce((s,r)=>s+r.V,0), Rs=R.map(r=>r.R), Rt=Rs.reduce((a,b)=>a+b,0);
+    S.ramps.forEach((r,i)=>{r.V=Math.min(10,Math.round(Vt*Rs[i]/Rt*10)/10); $('v'+i).value=r.V; $('v'+i+'o').textContent=fV(r.V);});
+  };
+  const bind=(id,fn,fmt)=>{const el=$(id); if(!el) return; el.oninput=()=>{fn(+el.value); $(id+'o').textContent=fmt(el.value); syncPbar();};};
+  bind('vbat',v=>S.Vbat=v,fV);
+  bind('temp',v=>S.Troom=v,v=>v+' °C');
+  $('heat').onchange=e=>{S.heat=e.target.checked;};
+  $('pres').onclick=()=>setPresent(true);
+  S.ramps.forEach((r,i)=>{
+    bind('v'+i,v=>r.V=v,fV);
+    bind('l'+i,v=>{r.L=v;rebuild();},v=>v);
+    bind('w'+i,v=>{r.W=v;rebuild();},v=>(+v).toFixed(1));
+    $('m'+i).onchange=e=>{r.mat=e.target.value;rebuild();};
+  });
+  renderPbar();
+}
+
+// presenter mode: big stage with a compact floating control bar
+function renderPbar(){
+  const ser=S.mode==='series', batt=!ser||S.auto;
+  $('pbar').innerHTML=(batt?`<label for="pv">Battery PD <input id="pv" type="range" min="0" max="10" step="0.5" value="${S.Vbat}"><b id="pvo" style="font-family:var(--mono)">${fV(S.Vbat)}</b></label>`:'')+
+    `<label class="check" for="ph"><input type="checkbox" id="ph" ${S.heat?'checked':''}> Heating</label>
+     <button class="btn" id="preset">Reset to 0 V</button><button class="btn primary" id="pexit">Exit presenter mode</button>`;
+  if($('pv')) $('pv').oninput=e=>{S.Vbat=+e.target.value; $('pvo').textContent=fV(S.Vbat); if($('vbat')){$('vbat').value=S.Vbat;$('vbato').textContent=fV(S.Vbat);}};
+  $('ph').onchange=e=>{S.heat=e.target.checked; if($('heat')) $('heat').checked=S.heat;};
+  $('preset').onclick=()=>{S.ramps.forEach(r=>r.V=0); S.Vbat=0; renderPanel(); rebuild();};
+  $('pexit').onclick=()=>setPresent(false);
+}
+function syncPbar(){if($('pv')){$('pv').value=S.Vbat;$('pvo').textContent=fV(S.Vbat);} if($('ph')) $('ph').checked=S.heat;}
+function setPresent(on){
+  present=on; document.body.classList.toggle('present',on); syncPbar();
+  try{ if(on&&document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+       if(!on&&document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }catch(e){}
+  setTimeout(()=>{resize();fitCamera();},60);
+}
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&present) setPresent(false);});
+
+// ---------- readouts: one set of readings feeds the meters, the table and the graph ----------
+// An ammeter reads the steady flow rate of electrons past it. For a ramp that is exactly EPA × V/R,
+// because the drift speed is set from V and R (see the electron-motion section).
+function readings(){
+  R.forEach(r=>{r.dV=r.h/VH; r.dI=r.dV/r.R; r.meter.shown=EPA*r.dI; r.vmeter.shown=r.dV;});
+  S.totV=S.mode==='series'?R.reduce((a,r)=>a+r.dV,0):R[0].dV;
+  S.totR=S.mode==='series'?R.reduce((a,r)=>a+r.R,0):1/R.reduce((a,r)=>a+1/r.R,0);
+  S.totI=S.mode==='series'?S.totV/S.totR:R.reduce((a,r)=>a+r.dI,0);
+  totalMeter.shown=EPA*S.totI;
+}
+function table(){
+  const ser=S.mode==='series', f=(x,d=2)=>x.toFixed(d);
+  let rows='';
+  R.forEach((r,i)=>{
+    rows+=`<tr><td>Ramp ${i+1}</td><td>${MATS[r.cfg.mat].name}</td><td>${f(r.dV)} V</td><td>${Math.round(r.T)} °C</td><td>${f(r.R)} Ω</td><td>${f(r.dI)} A</td><td>${f(EPA*r.dI,1)}</td></tr>`;});
+  rows+=`<tr class="total"><td>Total</td><td></td><td>${f(S.totV)} V</td><td></td><td>${f(S.totR)} Ω</td><td>${f(S.totI)} A</td><td>${f(EPA*S.totI,1)}</td></tr>`;
+  const law=' Ammeters read '+EPA+' electrons per second = 1 A. The meters in the 3D view show the same values as this table.';
+  if(ser){
+    const Is=R.map(r=>r.dI), unequal=!S.auto&&R.length>1&&(Math.max(...Is)-Math.min(...Is))>0.05*Math.max(...Is,1e-9);
+    $('warn').hidden=!unequal;
+    $('warn').textContent='The currents are not equal, so electrons pile up where a ramp carries less current. In a real circuit that pile-up changes the PDs until every ramp carries the same current. Choose "PDs share out" to watch that happen.';
+    $('note').textContent='Series: same current through every ramp, V = V₁ + V₂ + …, R = R₁ + R₂ + ….'+law;
+  } else {
+    $('warn').hidden=true;
+    $('note').textContent='Parallel: same V across every ramp, I = I₁ + I₂ + …, 1/R = 1/R₁ + 1/R₂ + ….'+law;
+  }
+  $('tbody').innerHTML=rows;
+}
+
+// ---------- I–V graph ----------
+const GX0=56, GX1=584, GY0=290, GY1=16, VMAX=10;
+const niceMax=v=>{const c=[0.5,1,2,3,4,5,6,8,10,15,20,30,40,50]; return c.find(x=>x>=v)||Math.ceil(v/10)*10;};
+function renderLegend(){
+  $('legend').innerHTML=R.map((r,i)=>`<span><i class="swatch" style="background:var(--s${i+1})"></i>Ramp ${i+1} (${MATS[r.cfg.mat].name})<b id="fit${i}" style="font-family:var(--mono);font-weight:500;color:var(--muted)"></b></span>`).join('');
+}
+function graph(){
+  const live=R.map((r,i)=>({i,V:r.dV,I:r.dI}));
+  const Imax=niceMax(Math.max(0.5,...S.points.map(p=>p.I),...live.map(p=>p.I))*1.1);
+  const X=v=>GX0+(GX1-GX0)*v/VMAX, Y=i=>GY0-(GY0-GY1)*i/Imax;
+  let s='';
+  for(let v=0;v<=VMAX;v+=2){s+=`<line x1="${X(v)}" x2="${X(v)}" y1="${GY1}" y2="${GY0}" stroke="var(--grid)"/><text x="${X(v)}" y="${GY0+18}" text-anchor="middle">${v}</text>`;}
+  const step=Imax/5;
+  for(let k=0;k<=5;k++){const i=k*step; s+=`<line x1="${GX0}" x2="${GX1}" y1="${Y(i)}" y2="${Y(i)}" stroke="var(--grid)"/><text x="${GX0-8}" y="${Y(i)+4}" text-anchor="end">${+i.toFixed(2)}</text>`;}
+  s+=`<line x1="${GX0}" x2="${GX1}" y1="${GY0}" y2="${GY0}" stroke="var(--muted)"/><line x1="${GX0}" x2="${GX0}" y1="${GY1}" y2="${GY0}" stroke="var(--muted)"/>`;
+  s+=`<text x="${(GX0+GX1)/2}" y="${GY0+36}" text-anchor="middle">Potential difference V (volts)</text>`;
+  s+=`<text transform="translate(16 ${(GY0+GY1)/2}) rotate(-90)" text-anchor="middle">Current I (amps)</text>`;
+  R.forEach((r,i)=>{
+    const pts=S.points.filter(p=>p.ramp===i).sort((a,b)=>a.V-b.V), col=`var(--s${i+1})`, fitEl=$('fit'+i);
+    if(pts.length>=2){
+      const sVI=pts.reduce((a,p)=>a+p.V*p.I,0), sVV=pts.reduce((a,p)=>a+p.V*p.V,0), straight=pts.every(p=>!p.heat);
+      if(straight&&sVV>0){const k=sVI/sVV; s+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(VMAX)}" y2="${Y(k*VMAX)}" stroke="${col}" stroke-width="2" clip-path="url(#clip)"/>`;
+        if(fitEl) fitEl.textContent=k>0?`  slope ${k.toFixed(3)} A/V → R = 1/slope = ${(1/k).toFixed(2)} Ω`:'';}
+      else{ s+=`<polyline fill="none" stroke="${col}" stroke-width="2" points="${[{V:0,I:0},...pts].map(p=>X(p.V)+','+Y(p.I)).join(' ')}"/>`;
+        if(fitEl) fitEl.textContent='  curve: R changes as the wire heats'; }
+    } else if(fitEl) fitEl.textContent='';
+    pts.forEach(p=>{s+=`<circle cx="${X(p.V)}" cy="${Y(p.I)}" r="5" fill="${col}" stroke="var(--panel)" stroke-width="2"><title>Ramp ${i+1}: V = ${p.V.toFixed(2)} V, I = ${p.I.toFixed(2)} A${p.heat?' (heating on)':''}</title></circle>`;});
+    const L=live[i]; s+=`<circle cx="${X(L.V)}" cy="${Y(L.I)}" r="6" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="3 2"><title>Ramp ${i+1} now: ${L.V.toFixed(2)} V, ${L.I.toFixed(2)} A</title></circle>`;
+  });
+  $('graph').innerHTML=`<defs><clipPath id="clip"><rect x="${GX0}" y="${GY1}" width="${GX1-GX0}" height="${GY0-GY1}"/></clipPath></defs>`+s;
+}
+$('rec').onclick=()=>{R.forEach((r,i)=>S.points.push({ramp:i,V:r.dV,I:r.dI,heat:S.heat})); graph();};
+$('clr').onclick=()=>{S.points=[]; graph();};
+
+// ---------- loop ----------
+function resize(){const w=stage.clientWidth,hh=stage.clientHeight; renderer.setSize(w,hh,false); camera.aspect=w/hh; camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(stage);
+const tmp=new THREE.Vector3();
+function place(el,p){tmp.copy(p).project(camera); const r=stage.getBoundingClientRect();
+  el.hidden=tmp.z>1; el.style.left=((tmp.x+1)/2*r.width)+'px'; el.style.top=((1-tmp.y)/2*r.height)+'px';}
+
+renderPanel(); rebuild(); resize();
+let last=performance.now(), lastTable=0;
+function loop(now){
+  const dt=Math.min(0.033,(now-last)/1000); last=now; t+=dt;
+  circuit(dt);
+  layout();
+  const hs=R.map(r=>r.h.toFixed(2)).join(); if(hs!==lastHs) buildPaths();
+  for(let s=0;s<3;s++) physics(dt/3);
+  R.forEach(r=>{
+    const A=ampT(r.T); r.atoms.forEach(a=>{const [pu,pv]=atomPos(a,A); a.mesh.position.set(pu,RM,-pv);});
+    const k=Math.max(0,Math.min(1,(r.T-250)/900)), k0=Math.max(0,Math.min(1,r.T/400))*0.25;
+    r.atomMat.emissive.setRGB(Math.min(1,k0+k*1.1),0.06*k0+0.55*k*k,0.25*k*k*k);
+  });
+  wires.forEach((w,b)=>w.list.forEach(m=>m.mesh.position.copy(paths[b].getPointAt(Math.min(1,Math.max(0,m.s/pathLen[b]))))));
+  for(const m of marbles) if(!m.q) m.mesh.position.copy(R[m.r].group.localToWorld(v3.set(m.u,RM,-(m.v+m.jv))));
+  const sc=present?1.35:1, ser=S.mode==='series';
+  R.forEach(r=>{
+    r.meter.sp.position.copy(r.group.localToWorld(ser?v3.set(-r.cfg.W/2-1.0,0.6,-r.cfg.L/2):v3.set(0,1.35,-r.cfg.L/2)));
+  });
+  totalMeter.sp.position.copy(batPos).add(new THREE.Vector3(1.4,0.6,0));
+  meters.forEach(m=>m.sp.scale.set(1.5*sc,0.94*sc,1));
+  R.forEach(updGauge);
+  if(now-lastTable>250||!R[0].dV&&R[0].dV!==0){readings(); table(); graph(); lastTable=now;}
+  meters.forEach(drawMeter);
+  controls.update(); renderer.render(scene,camera);
+  tags.forEach(x=>place(x.el,x.pos()));
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
+
+</body></html>
