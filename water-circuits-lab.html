@@ -81,6 +81,13 @@ summary{cursor:pointer;font-size:13px;color:var(--accent);font-weight:700}
 details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14px}
 .note{font-size:13px;color:var(--muted)}
 [hidden]{display:none!important}
+.sel{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.sel select{font-family:var(--f-body);font-size:13.5px;padding:5px 8px;border-radius:6px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink)}
+.tablewrap{max-height:230px;overflow:auto;border-top:1px solid var(--line)}
+.rtab{width:100%;border-collapse:collapse;font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.rtab th{position:sticky;top:0;background:var(--panel);text-align:right;font-weight:500;color:var(--muted);padding:5px 10px;border-bottom:1.5px solid var(--ink);white-space:nowrap}
+.rtab td{text-align:right;padding:4px 10px;border-bottom:1px solid var(--line)}
+.rtab th:first-child,.rtab td:first-child{text-align:left}
 @media (max-width:520px){.tabs button{font-size:13px;padding:7px 10px}}
 </style>
 
@@ -103,6 +110,10 @@ details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14
     <div class="stage"><canvas id="g1" style="aspect-ratio:820/170"></canvas></div>
     <div class="readouts" id="ro1"></div>
     <div class="controls" id="k1"><h4>Beakers</h4></div>
+    <div class="controls" id="k1e"><h4>Experiment</h4></div>
+    <div class="stage"><canvas id="e1" style="aspect-ratio:820/320"></canvas>
+      <div class="cap"><span id="e1note"></span><span id="e1fit"></span></div>
+      <div class="tablewrap" id="e1tab"></div></div>
   </div>
   <aside class="guide">
     <h2>Student guide</h2>
@@ -136,6 +147,15 @@ details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14
     <span class="eq">C = volume stored / rise in surface height</span>
     <p>Read as a definition: <b>capacitance is the volume stored per unit rise in head</b>. Compare C = Q/V: charge stored per unit potential.</p>
     <p>Units: mL ÷ cm = cm³ ÷ cm = <b>cm²</b>. The capacitance of a beaker is its cross-sectional area. A wider beaker has a bigger C, so more water has to move to change its level by 1 cm.</p>
+    <h3>Experiments: steady flow</h3>
+    <p>Turn the <b>pump</b> on. It returns water from B to A as fast as it arrives, so both levels stay put and the flow stays steady, like a cell holding a p.d. constant. Change <b>one</b> thing at a time and record a reading each time; keep everything else fixed.</p>
+    <span class="eq">Q = Δh × nA / L &nbsp;&nbsp; with &nbsp; A = πd²/4</span>
+    <ul>
+      <li><b>Q against Δh</b>: Δh is above the line, so Q ∝ Δh. Straight line through the origin; slope = 1/R.</li>
+      <li><b>Q against L</b>: L is below the line, so as L gets bigger Q gets smaller: Q ∝ 1/L. Plotted against L it is a curve; plotted against <b>1/L</b> it is a straight line through the origin.</li>
+      <li><b>Q against d</b>: d² is above the line, so Q ∝ d². Plotted against d it curves upward; plotted against <b>d²</b> it is a straight line through the origin.</li>
+    </ul>
+    <p>A straight line through the origin is the sign of direct proportion, so choose the axes that give one.</p>
     <h3>Try this</h3>
     <ol>
       <li>Drag the beakers until the water surfaces are level. Read the flowmeters.</li>
@@ -159,6 +179,12 @@ details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14
         <details><summary>Show answer</summary><p>It takes longer. A wider beaker has a bigger capacitance (more mL per cm), so more water has to move through the same pipe to change Δh. The time depends on R × C, like the time constant RC of a capacitor circuit.</p></details></li>
       <li>Close the tap. What is the electrical equivalent, and what happens to Δh?
         <details><summary>Show answer</summary><p>An open switch. The flow stops at once but Δh stays the same: there can be a potential difference across an open switch with no current through it.</p></details></li>
+      <li>With the pump on, record Q for five different values of Δh. Plot Q against Δh. Describe the graph and use its slope to find R.
+        <details><summary>Show answer</summary><p>A straight line through the origin, so Q ∝ Δh. The slope is Q/Δh = 1/R, so R = 1/slope (cm s mL⁻¹). This is the water version of verifying Ohm's law.</p></details></li>
+      <li>Record Q for five lengths, keeping Δh, d and n fixed. Plot Q against L, then Q against 1/L. Which gives a straight line, and what does that tell you?
+        <details><summary>Show answer</summary><p>Q against 1/L is a straight line through the origin, so Q ∝ 1/L: doubling the length halves the flow. That is because R ∝ L.</p></details></li>
+      <li>Record Q for five diameters. Plot Q against d, then against d². Explain the result using the equation.
+        <details><summary>Show answer</summary><p>Q against d² is a straight line through the origin. Q depends on the cross-sectional area A = πd²/4, so Q ∝ d²: doubling the diameter gives four times the flow. That is because R ∝ 1/A.</p></details></li>
     </ol>
   </aside>
 </div>
@@ -400,10 +426,10 @@ function graph(c,o){ // o:{x0,x1,y0,y1,xs,ys,xl,yl}
 }
 
 /* =============== TAB 1: head and flow =============== */
-const S1={baseA:22,baseB:4,area:20,L:50,d:6,n:1,open:true,VA:0,VB:0,speed:1,t:0,hist:[],acc:0,Q:0,phS:0,phB:0,drag:null};
+const S1={baseA:22,baseB:4,area:20,L:50,d:6,n:1,open:true,VA:0,VB:0,speed:1,t:0,hist:[],acc:0,Q:0,phS:0,phB:0,drag:null,pump:false,dA:16,dB:3,exp:[],xv:'dh',fit:true,phR:0};
 const C1=makeCanvas($('#c1'),820,460),G1=makeCanvas($('#g1'),820,170),y1=h=>420-h*6.5;
 const BH=25; // beaker height cm
-function reset1(){S1.VA=16*S1.area;S1.VB=3*S1.area;S1.t=0;S1.hist=[];S1.acc=0;}
+function reset1(){S1.VA=16*S1.area;S1.VB=3*S1.area;S1.dA=16;S1.dB=3;S1.t=0;S1.hist=[];S1.acc=0;}
 const k1=$('#k1');const sl1={};
 sl1.baseA=addSlider(k1,{id:'s1a',label:'Beaker A base height',min:0,max:35,step:.5,value:S1.baseA,unit:'cm'},v=>S1.baseA=v);
 sl1.baseB=addSlider(k1,{id:'s1b',label:'Beaker B base height',min:0,max:35,step:.5,value:S1.baseB,unit:'cm'},v=>S1.baseB=v);
@@ -412,8 +438,29 @@ addHead(k1,'Pipe');
 addSlider(k1,{id:'s1L',label:'Length L',min:10,max:100,step:5,value:S1.L,unit:'cm'},v=>S1.L=v);
 addSlider(k1,{id:'s1d',label:'Diameter d',min:2,max:10,step:1,value:S1.d,unit:'mm'},v=>S1.d=v);
 addSlider(k1,{id:'s1n',label:'Number of pipes n',min:1,max:4,step:1,value:S1.n},v=>S1.n=v);
-addBtns(k1,[{id:'b1tap',text:'Close tap',primary:true,on:e=>{S1.open=!S1.open;tapLbl();}},{id:'b1r',text:'Refill and restart',on:()=>reset1()},{id:'b1s',text:'Speed ×1',on:e=>{S1.speed=S1.speed===1?5:1;e.textContent='Speed ×'+S1.speed;}}]);
+addBtns(k1,[{id:'b1tap',text:'Close tap',primary:true,on:e=>{S1.open=!S1.open;tapLbl();}},{id:'b1p',text:'Pump on',on:()=>{S1.pump=!S1.pump;if(S1.pump){S1.dA=S1.VA/S1.area;S1.dB=S1.VB/S1.area;}$('#b1p').textContent=S1.pump?'Pump off':'Pump on';}},{id:'b1r',text:'Refill and restart',on:()=>reset1()},{id:'b1s',text:'Speed ×1',on:e=>{S1.speed=S1.speed===1?5:1;e.textContent='Speed ×'+S1.speed;}}]);
 function tapLbl(){$('#b1tap').textContent=S1.open?'Close tap':'Open tap';}
+const k1e=$('#k1e');
+const XV={dh:{t:'Q against Δh',lab:'head difference Δh / cm',f:r=>r.dh,lin:1,su:'mL s⁻¹ cm⁻¹'},L:{t:'Q against L',lab:'length L / cm',f:r=>r.L,hint:'Curved: try Q against 1/L.'},invL:{t:'Q against 1/L',lab:'1/L / cm⁻¹',f:r=>1/r.L,lin:1,su:'mL s⁻¹ cm'},d:{t:'Q against d',lab:'diameter d / mm',f:r=>r.d,hint:'Curved: try Q against d².'},d2:{t:'Q against d²',lab:'d² / mm²',f:r=>r.d*r.d,lin:1,su:'mL s⁻¹ mm⁻²'}};
+{const w=document.createElement('label');w.className='sel';w.innerHTML='Plot <select id="s1x">'+Object.entries(XV).map(([k,v])=>`<option value="${k}">${v.t}</option>`).join('')+'</select>';k1e.appendChild(w);w.querySelector('select').addEventListener('change',e=>S1.xv=e.target.value);}
+const bwe=addBtns(k1e,[{id:'b1rec',text:'Record reading',primary:true,on:()=>{const hA=S1.baseA+S1.VA/S1.area,hB=S1.baseB+S1.VB/S1.area;S1.exp.push({dh:Math.abs(hA-hB),L:S1.L,d:S1.d,n:S1.n,Q:Math.abs(S1.Q)});tab1();}},{id:'b1clr',text:'Clear readings',on:()=>{S1.exp=[];tab1();}}]);
+addCheck(bwe,'s1fit','Best-fit line through origin',S1.fit,v=>S1.fit=v);
+function tab1(){$('#e1tab').innerHTML=S1.exp.length?`<table class="rtab"><thead><tr><th>#</th><th>Δh / cm</th><th>L / cm</th><th>d / mm</th><th>n</th><th>Q / mL s⁻¹</th></tr></thead><tbody>${S1.exp.map((r,i)=>`<tr><td>${i+1}</td><td>${r.dh.toFixed(1)}</td><td>${r.L}</td><td>${r.d}</td><td>${r.n}</td><td>${r.Q.toFixed(1)}</td></tr>`).join('')}</tbody></table>`:'';}
+const E1=makeCanvas($('#e1'),820,320);
+function drawE1(){
+  if(!E1.begin())return;const ctx=E1.ctx,v=XV[S1.xv],pts=S1.exp.map(r=>[v.f(r),r.Q]);
+  const xm=niceCeil((pts.length?Math.max(...pts.map(p=>p[0])):({dh:20,L:100,invL:.1,d:10,d2:100})[S1.xv])*1.05);
+  const ym=niceCeil(Math.max(5,...pts.map(p=>p[1]))*1.1);
+  const gr=graph(E1,{x0:0,x1:xm,y0:0,y1:ym,xs:xm/5,ys:ym/5,xl:v.lab,yl:'flow Q / mL s⁻¹'});
+  let fit='',note=S1.pump?'':'Turn the pump on for steady readings. ';
+  if(!pts.length)note+='No readings yet: set up, then press Record reading.';
+  else if(v.hint)note+=v.hint;
+  if(v.lin&&S1.fit&&pts.length>1){const sxx=pts.reduce((a,p)=>a+p[0]*p[0],0),k=pts.reduce((a,p)=>a+p[0]*p[1],0)/sxx;
+    ctx.strokeStyle=T.accent;ctx.lineWidth=1.8;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(gr.X(0),gr.Y(0));const xe=Math.min(xm,ym/k);ctx.lineTo(gr.X(xe),gr.Y(k*xe));ctx.stroke();ctx.setLineDash([]);
+    fit='slope = '+(k<0.1?k.toPrecision(3):k.toFixed(2))+' '+v.su+(S1.xv==='dh'?' → R = 1/slope = '+(1/k).toFixed(2)+' cm s mL⁻¹':'');}
+  ctx.fillStyle=T.water;pts.forEach(p=>{ctx.beginPath();ctx.arc(gr.X(p[0]),gr.Y(p[1]),4.5,0,7);ctx.fill();});
+  setT('e1note',note);setT('e1fit',fit);
+}
 reset1();
 readouts($('#ro1'),[['r1a','Surface A','cm'],['r1b','Surface B','cm'],['r1dh','Head diff Δh','cm'],['r1R','Resistance R','cm s mL⁻¹'],['r1Q','Flow Q','mL s⁻¹'],['r1C','Capacitance C','mL cm⁻¹']]);
 
@@ -425,9 +472,10 @@ function step1(dt){
     S1.VA-=Q*h;S1.VB+=Q*h;
     if(S1.VA>cap||S1.VB>cap)over=true;
     S1.VA=clamp(S1.VA,0,cap);S1.VB=clamp(S1.VB,0,cap);S1.Q=Q;
+    if(S1.pump){S1.VA=S1.dA*S1.area;S1.VB=S1.dB*S1.area;over=false;}
   }
   setT('t1warn',over?'A beaker is overflowing':'');
-  const v=clamp(S1.Q/(S1.n*areaOf(S1.d))*260,-420,420);S1.phB+=v*dt;S1.phS+=clamp(S1.Q*6,-420,420)*dt;
+  const v=clamp(S1.Q/(S1.n*areaOf(S1.d))*260,-420,420);S1.phB+=v*dt;S1.phS+=clamp(S1.Q*6,-420,420)*dt;S1.phR+=clamp(S1.Q*5,-420,420)*dt;
   S1.t+=dt;S1.acc+=dt;if(S1.acc>=0.1){S1.acc=0;S1.hist.push([S1.t,S1.Q]);while(S1.hist.length&&S1.hist[0][0]<S1.t-60)S1.hist.shift();}
 }
 function geo1(){const w=30+S1.area*2.4,xa=190,xb=640;return{w,xa,xb,aR:xa+w/2,bL:xb-w/2,yA:y1(S1.baseA+0.9),yB:y1(S1.baseB+0.9)};}
@@ -437,6 +485,11 @@ function draw1(){
   const hA=S1.baseA+S1.VA/S1.area,hB=S1.baseB+S1.VB/S1.area;
   levelLine(ctx,48,810,y1(hA));levelLine(ctx,48,810,y1(hB));
   const th=S1.d*1.6,man=Math.min(th+3,22),m1=[300,g.yA],m2=[530,g.yB];
+  if(S1.pump){const tA=y1(S1.baseA+BH);pipe(ctx,[[g.xb,y1(S1.baseB)],[g.xb,448],[812,448],[812,16],[g.xa,16],[g.xa,tA+6]],8,S1.Q,S1.phR);
+    if(S1.Q>0.05){ctx.strokeStyle=T.water;ctx.lineWidth=clamp(S1.Q/6,1.5,5);ctx.beginPath();ctx.moveTo(g.xa,tA+6);ctx.lineTo(g.xa,Math.min(y1(S1.baseA+S1.VA/S1.area),tA+40));ctx.stroke();}
+    ctx.fillStyle=T.panel;ctx.strokeStyle=T.ink;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(760,448,11,0,7);ctx.fill();ctx.stroke();
+    ctx.save();ctx.translate(760,448);ctx.rotate(-S1.phR/30);ctx.strokeStyle=T.accent;ctx.lineWidth=2.5;for(let i=0;i<3;i++){ctx.rotate(2.094);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-8);ctx.stroke();}ctx.restore();
+    ctx.fillStyle=T.ink;ctx.font=`700 11px ${MONO}`;ctx.textAlign='right';ctx.fillText('PUMP',744,452);}
   bundle(m1,m2,S1.n,th,S1.L).forEach(p=>pipe(ctx,p,th,S1.Q,S1.phB));
   pipe(ctx,[[g.aR,g.yA],m1],man,S1.Q,S1.phS);pipe(ctx,[m2,[g.bL,g.yB]],man,S1.Q,S1.phS);
   beaker(ctx,g.xa,g.w,y1(S1.baseA),y1(S1.baseA+BH),y1(hA),'Beaker A');
@@ -687,7 +740,7 @@ $('#segD').addEventListener('click',()=>setSub('diode'));$('#segT').addEventList
 
 let last=performance.now(),lastRO=0;
 function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;readTok();
-  if(active==='head-and-flow'){step1(dt*S1.speed);draw1();draw1g();}
+  if(active==='head-and-flow'){step1(dt*S1.speed);draw1();draw1g();drawE1();}
   else if(active==='water-circuit'){step2(dt*S2.speed);draw2();}
   else if(sub==='diode'){step3(dt);draw3();draw3g();}
   else{step4(dt);draw4();draw4g();}
