@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Water Circuits Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: lab bench (simulation + controls) beside a student guide column; stacks on narrow screens. */
+:root{
+  --bg:#e9efee; --panel:#f8fbfa; --ink:#13232a; --muted:#56686d; --line:#c4d0cf; --grid:#d8e2e1;
+  --water:#1f6fb8; --water-2:#a9cdee; --pipe:#6f7d82; --brass:#b06f12; --accent:#0d6b77;
+  --meter-bg:#0f1d22; --meter-fg:#7fe3c4; --warn:#b4410c; --good:#17803d; --chip:#dfe8e7;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1417; --panel:#121e22; --ink:#e2ebeb; --muted:#93a5a9; --line:#26363b; --grid:#18262b;
+  --water:#4fa3ef; --water-2:#1b4466; --pipe:#86959a; --brass:#e3a446; --accent:#4cb8c6;
+  --meter-bg:#04090b; --meter-fg:#7fe3c4; --warn:#f0844c; --good:#4ccf7a; --chip:#1b2a2f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1417; --panel:#121e22; --ink:#e2ebeb; --muted:#93a5a9; --line:#26363b; --grid:#18262b;
+  --water:#4fa3ef; --water-2:#1b4466; --pipe:#86959a; --brass:#e3a446; --accent:#4cb8c6;
+  --meter-bg:#04090b; --meter-fg:#7fe3c4; --warn:#f0844c; --good:#4ccf7a; --chip:#1b2a2f; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.app{max-width:1440px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 32px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-stretch:78%;font-weight:800;font-size:clamp(28px,4vw,44px);line-height:1;margin:4px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.tabs{display:flex;flex-wrap:wrap;gap:4px}
+.tabs button,.seg button{font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:15px;letter-spacing:.02em;border:1.5px solid var(--line);background:var(--panel);color:var(--muted);padding:8px 14px;border-radius:6px;cursor:pointer}
+.tabs button span{font-family:var(--f-mono);font-size:11px;margin-right:6px;color:var(--accent)}
+.tabs button[aria-selected="true"],.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tabs button[aria-selected="true"] span{color:var(--meter-fg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.layout{display:grid;grid-template-columns:1fr;gap:20px;margin-top:18px}
+@media (min-width:1120px){.layout{grid-template-columns:minmax(0,1fr) 380px}.guide{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}}
+.bench{min-width:0;display:flex;flex-direction:column;gap:12px}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+canvas{display:block;width:100%;height:auto;touch-action:none}
+.stage .cap{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:6px 12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.controls{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 22px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.controls h4{grid-column:1/-1;margin:6px 0 0;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.ctl{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:0 10px}
+.ctl label{font-size:13.5px}
+.ctl output{font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink);text-align:right;min-width:70px}
+.ctl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:2px 0 4px}
+.ctl.off{opacity:.4}
+.btns{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding-top:4px}
+.btn{font-family:var(--f-body);font-weight:700;font-size:13.5px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.check{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}
+.check input{accent-color:var(--accent);width:16px;height:16px}
+.readouts{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.ro{background:var(--meter-bg);color:var(--meter-fg);border-radius:6px;padding:7px 10px;min-width:0}
+.ro b{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;opacity:.75;color:var(--meter-fg)}
+.ro span{font-family:var(--f-mono);font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ro small{font-size:11px;opacity:.75;font-family:var(--f-mono)}
+.seg{display:flex;gap:4px}
+.guide{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 18px 18px;min-width:0}
+.guide h2{font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:24px;margin:14px 0 4px;text-wrap:balance}
+.guide h3{font-family:var(--f-display);font-stretch:88%;font-weight:700;font-size:17px;margin:18px 0 4px;color:var(--accent)}
+.guide p,.guide li{max-width:65ch}
+.guide p{margin:6px 0}
+.guide ol,.guide ul{padding-left:20px;margin:6px 0}
+.guide li{margin:3px 0}
+.eq{font-family:var(--f-mono);font-size:14px;background:var(--chip);padding:6px 10px;border-radius:5px;display:inline-block;margin:4px 0}
+.map{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0}
+.map th{text-align:left;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:4px 6px}
+.map td{border-bottom:1px solid var(--line);padding:5px 6px;vertical-align:top}
+.qs{counter-reset:q;list-style:none;padding:0}
+.qs li{counter-increment:q;position:relative;padding-left:30px;margin:12px 0}
+.qs li::before{content:counter(q);position:absolute;left:0;top:1px;font-family:var(--f-mono);font-size:12px;font-weight:700;width:21px;height:21px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center}
+details{margin-top:4px}
+summary{cursor:pointer;font-size:13px;color:var(--accent);font-weight:700}
+details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14px}
+.note{font-size:13px;color:var(--muted)}
+[hidden]{display:none!important}
+@media (max-width:520px){.tabs button{font-size:13px;padding:7px 10px}}
+</style>
+
+<div class="app">
+<header class="top">
+  <div><div class="eyebrow">LC Physics · electricity by analogy</div><h1>Water Circuits Lab</h1></div>
+  <nav class="tabs" role="tablist" aria-label="Lab sections">
+    <button role="tab" data-tab="head-and-flow" aria-selected="true"><span>1</span>Head &amp; flow</button>
+    <button role="tab" data-tab="water-circuit" aria-selected="false"><span>2</span>Water circuit</button>
+    <button role="tab" data-tab="diode-transistor" aria-selected="false"><span>3</span>Diode &amp; transistor</button>
+  </nav>
+</header>
+
+<!-- ================= TAB 1 ================= -->
+<section id="head-and-flow" class="tab">
+<div class="layout">
+  <div class="bench">
+    <div class="stage"><canvas id="c1" style="aspect-ratio:820/460"></canvas>
+      <div class="cap"><span>Drag a beaker up or down. Click the brass tap to open or close it.</span><span id="t1warn"></span></div></div>
+    <div class="stage"><canvas id="g1" style="aspect-ratio:820/170"></canvas></div>
+    <div class="readouts" id="ro1"></div>
+    <div class="controls" id="k1"><h4>Beakers</h4></div>
+  </div>
+  <aside class="guide">
+    <h2>Student guide</h2>
+    <h3>What you are looking at</h3>
+    <p>Two beakers joined by a pipe. Water stands in for charge. A flowmeter measures how many mL of water pass each second, the way an ammeter measures how many coulombs of charge pass each second.</p>
+    <table class="map"><thead><tr><th>Water</th><th>Electricity</th></tr></thead><tbody>
+      <tr><td>Water</td><td>Charge</td></tr>
+      <tr><td>Flow rate <i>Q</i> (mL s⁻¹)</td><td>Current <i>I</i> (C s⁻¹ = A)</td></tr>
+      <tr><td>Height of the water surface <i>h</i> (cm)</td><td>Potential <i>V</i> (V)</td></tr>
+      <tr><td>Difference in surface heights Δ<i>h</i></td><td>Potential difference</td></tr>
+      <tr><td>Pipe</td><td>Resistor</td></tr>
+      <tr><td>Tap</td><td>Switch</td></tr>
+      <tr><td>Beaker cross-section</td><td>Capacitance</td></tr>
+    </tbody></table>
+    <h3>The big idea</h3>
+    <p>Water flows only when the two water surfaces are at different heights. Level surfaces give zero flow, even with the tap wide open. In the same way, current flows only when there is a potential difference.</p>
+    <p>It is the height of the <b>surface</b> that counts, not where the beaker sits. A beaker raised up but holding little water can be at a lower potential than a low beaker that is nearly full.</p>
+    <h3>Resistance, read from the equation</h3>
+    <span class="eq">Q = Δh / R &nbsp;→&nbsp; R = Δh / Q</span>
+    <p>Read as a definition: <b>resistance is the head difference per unit flow</b>. Compare R = V/I: resistance is the voltage per unit current.</p>
+    <p>Units: units of Δh ÷ units of Q = cm ÷ mL s⁻¹ = <b>cm s mL⁻¹</b>. Compare V ÷ A = Ω.</p>
+    <span class="eq">R = L / (n A) &nbsp;&nbsp; compare &nbsp; R = ρL / A</span>
+    <ul>
+      <li>As <i>L</i> gets bigger, <i>R</i> gets bigger (<i>L</i> is above the line): <i>R</i> ∝ <i>L</i>.</li>
+      <li>As <i>A</i> gets bigger, <i>R</i> gets smaller (<i>A</i> is below the line): <i>R</i> ∝ 1/<i>A</i>. Since <i>A</i> = πd²/4, doubling the diameter makes <i>A</i> four times bigger and <i>R</i> a quarter.</li>
+      <li>As the number of pipes <i>n</i> gets bigger, <i>R</i> gets smaller (<i>n</i> is below the line). Identical pipes side by side share the flow, like resistors in parallel.</li>
+    </ul>
+    <p class="note">In real narrow pipes, resistance falls even faster with diameter. This lab uses R ∝ L/A so that the pipes behave exactly like wires.</p>
+    <h3>Capacitance</h3>
+    <p>As water moves, A's surface falls and B's rises. Δh shrinks, so the flow slows down and the levels creep together.</p>
+    <span class="eq">C = volume stored / rise in surface height</span>
+    <p>Read as a definition: <b>capacitance is the volume stored per unit rise in head</b>. Compare C = Q/V: charge stored per unit potential.</p>
+    <p>Units: mL ÷ cm = cm³ ÷ cm = <b>cm²</b>. The capacitance of a beaker is its cross-sectional area. A wider beaker has a bigger C, so more water has to move to change its level by 1 cm.</p>
+    <h3>Try this</h3>
+    <ol>
+      <li>Drag the beakers until the water surfaces are level. Read the flowmeters.</li>
+      <li>Raise A. Watch the flow and the graph as the levels even out.</li>
+      <li>Double the length, then double the diameter. Compare the flow each time.</li>
+      <li>Close the tap. Then open it again.</li>
+    </ol>
+    <h2>Questions</h2>
+    <ol class="qs">
+      <li>Set both water surfaces to the same height, but with beaker A's base higher than B's. Does water flow? Explain.
+        <details><summary>Show answer</summary><p>No. Flow depends on the difference in surface heights, not on where the beakers sit. Equal surfaces give Δh = 0, so Q = 0. Two points at the same potential have no current between them.</p></details></li>
+      <li>Compare flowmeter A with flowmeter B. What does this tell you about current in a single loop?
+        <details><summary>Show answer</summary><p>They always read the same. Water is not made or lost in the pipe, so the flow rate is the same all along it. Current is the same at every point in a series path because charge is conserved.</p></details></li>
+      <li>With Δh = 20 cm the flow is 10 mL s⁻¹. Calculate the resistance of the pipe and work out its unit.
+        <details><summary>Show answer</summary><p>R = Δh / Q = 20 / 10 = 2 cm s mL⁻¹. Unit: cm ÷ mL s⁻¹ = cm s mL⁻¹, the head difference per unit flow.</p></details></li>
+      <li>Predict, then test: what happens to the flow if you (a) double the length, (b) double the diameter, (c) use two pipes instead of one?
+        <details><summary>Show answer</summary><p>(a) R doubles, so the flow halves. (b) A becomes four times bigger, R becomes a quarter, so the flow is four times bigger. (c) R halves, so the flow doubles.</p></details></li>
+      <li>Why does the flow fall as time goes on, even though you change nothing? Describe the shape of the graph.
+        <details><summary>Show answer</summary><p>A's surface falls and B's rises, so Δh gets smaller and so does Q. The flow drops quickly at first, then more and more slowly. This is the same shape as the current when a capacitor discharges through a resistor.</p></details></li>
+      <li>Make the beakers wider. How does that change the time the levels take to even out? Use the idea of capacitance.
+        <details><summary>Show answer</summary><p>It takes longer. A wider beaker has a bigger capacitance (more mL per cm), so more water has to move through the same pipe to change Δh. The time depends on R × C, like the time constant RC of a capacitor circuit.</p></details></li>
+      <li>Close the tap. What is the electrical equivalent, and what happens to Δh?
+        <details><summary>Show answer</summary><p>An open switch. The flow stops at once but Δh stays the same: there can be a potential difference across an open switch with no current through it.</p></details></li>
+    </ol>
+  </aside>
+</div>
+</section>
+
+<!-- ================= TAB 2 ================= -->
+<section id="water-circuit" class="tab" hidden>
+<div class="layout">
+  <div class="bench">
+    <div class="stage"><canvas id="c2" style="aspect-ratio:840/520"></canvas>
+      <div class="cap"><span>Click a <b>+</b> marker to place or remove a flow probe. Drag the middle beaker up or down.</span><span id="t2warn"></span></div></div>
+    <div class="readouts" id="ro2"></div>
+    <div class="controls" id="k2"><h4>Pump and reservoirs</h4></div>
+  </div>
+  <aside class="guide">
+    <h2>Student guide</h2>
+    <h3>What you are looking at</h3>
+    <p>A complete water circuit. The pump lifts water from the bottom reservoir back to the top one, so both levels stay fixed. Water runs down through the pipes and round again.</p>
+    <table class="map"><thead><tr><th>Water</th><th>Electricity</th></tr></thead><tbody>
+      <tr><td>Pump</td><td>Cell or battery</td></tr>
+      <tr><td>Top reservoir</td><td>Positive terminal</td></tr>
+      <tr><td>Bottom reservoir</td><td>Negative terminal (0 V reference)</td></tr>
+      <tr><td>Pipe section</td><td>Resistor</td></tr>
+      <tr><td>Middle beaker</td><td>The junction between two resistors</td></tr>
+      <tr><td>Flow probe (in the pipe)</td><td>Ammeter (in series)</td></tr>
+      <tr><td>Surface height reading</td><td>Voltmeter reading from 0 V</td></tr>
+    </tbody></table>
+    <h3>Plugging into potentials</h3>
+    <p>The pump fixes the potentials at the top and bottom. The pipe sections spread the drop between them. The middle beaker sits at whatever potential that split gives it.</p>
+    <h3>The potential divider</h3>
+    <p>Once the middle beaker settles, the same flow passes through both sections:</p>
+    <span class="eq">Q = Δh₁ / R₁ = Δh₂ / R₂ &nbsp;→&nbsp; Δh₁ / Δh₂ = R₁ / R₂</span>
+    <ul>
+      <li>As R₁ gets bigger compared with R₂, Δh₁ gets bigger: the section with more resistance takes the bigger share of the drop.</li>
+      <li>The drops add up to the total: Δh₁ + Δh₂ = h<sub>top</sub> − h<sub>bottom</sub>.</li>
+    </ul>
+    <span class="eq">h<sub>mid</sub> = h<sub>bottom</sub> + (h<sub>top</sub> − h<sub>bottom</sub>) × R₂ / (R₁ + R₂)</span>
+    <h3>Why the middle beaker settles</h3>
+    <p>If it is too low, more water flows in than out, so it rises. If it is too high, more flows out than in, so it falls. It stops where flow in equals flow out. While it is filling, the beaker is storing water, like a capacitor charging.</p>
+    <h3>Where the energy comes from</h3>
+    <p>The pump does work lifting water. Each kilogram lifted through Δh gains gΔh joules: <b>energy per unit mass</b>. Compare emf, the <b>work done per unit charge</b>. The water gives that energy up as it flows down through the pipes, as charge does in a resistor.</p>
+    <h3>Try this</h3>
+    <ol>
+      <li>With no middle beaker, read the flow. Check that R = Δh / Q matches R = L / (nA).</li>
+      <li>Add the middle beaker. Make both sections identical and watch where it settles.</li>
+      <li>Change one section and predict the new middle height before it settles.</li>
+      <li>Put probes before and after the middle beaker, and on a single pipe in a bundle.</li>
+    </ol>
+    <h2>Questions</h2>
+    <ol class="qs">
+      <li>No middle beaker. Top at 40 cm, bottom at 5 cm, L = 50 cm, d = 6 mm, one pipe. Calculate the resistance and predict the flow. Check with a probe.
+        <details><summary>Show answer</summary><p>A = π × 6² / 4 = 28.3 mm². R = 50 / 28.3 = 1.77 cm s mL⁻¹. Δh = 35 cm, so Q = 35 / 1.77 ≈ 19.8 mL s⁻¹.</p></details></li>
+      <li>Add the middle beaker with both sections identical. Where does its level settle, and why there?
+        <details><summary>Show answer</summary><p>Halfway, at 22.5 cm. Equal resistances carrying the same flow have equal drops, so each section takes half of the 35 cm.</p></details></li>
+      <li>Make section 1 twice as long as section 2. Predict the new middle height before it settles.
+        <details><summary>Show answer</summary><p>R₁ = 2R₂, so section 1 takes two-thirds of the drop: 2/3 × 35 = 23.3 cm. h<sub>mid</sub> = 40 − 23.3 = 16.7 cm.</p></details></li>
+      <li>Put probes on the pipe into and out of the middle beaker. Compare the readings (a) while it is still filling, (b) once it has settled.
+        <details><summary>Show answer</summary><p>(a) Flow in is bigger than flow out: the beaker is storing water, like a capacitor charging. (b) They are equal. At a junction in a steady circuit, what flows in flows out.</p></details></li>
+      <li>Give section 2 three pipes. Probe "all pipes" and "one pipe" in that section. How do they compare?
+        <details><summary>Show answer</summary><p>One pipe carries a third of the total. Parallel paths share the flow, and the flows add up to the total.</p></details></li>
+      <li>Raise the pump lift. What happens to the flows and to the middle beaker?
+        <details><summary>Show answer</summary><p>All the flows increase in proportion to the total drop. The middle level rises too, but it stays the same fraction of the way down, because that fraction depends only on R₁ and R₂.</p></details></li>
+      <li>In energy terms, what does the pump do? Link your answer to emf.
+        <details><summary>Show answer</summary><p>It does work lifting water, giving each kilogram gΔh joules. A cell does work on each coulomb of charge: emf is work done per unit charge.</p></details></li>
+    </ol>
+  </aside>
+</div>
+</section>
+
+<!-- ================= TAB 3 ================= -->
+<section id="diode-transistor" class="tab" hidden>
+<div class="layout">
+  <div class="bench">
+    <div class="seg" role="group" aria-label="Component"><button id="segD" aria-pressed="true">Diode</button><button id="segT" aria-pressed="false">Transistor</button></div>
+    <div id="diodeBench" class="bench">
+      <div class="stage"><canvas id="c3" style="aspect-ratio:820/360"></canvas>
+        <div class="cap"><span>A spring-loaded flap in a horizontal pipe. It only opens left to right.</span><span id="dState"></span></div></div>
+      <div class="stage"><canvas id="g3" style="aspect-ratio:820/300"></canvas></div>
+      <div class="readouts" id="ro3"></div>
+      <div class="controls" id="k3"><h4>Valve</h4></div>
+    </div>
+    <div id="transBench" class="bench" hidden>
+      <div class="stage"><canvas id="c4" style="aspect-ratio:820/440"></canvas>
+        <div class="cap"><span>Water into the leaky bucket tips the lever and lifts the gate.</span><span id="tState"></span></div></div>
+      <div class="stage"><canvas id="g4" style="aspect-ratio:820/300"></canvas></div>
+      <div class="readouts" id="ro4"></div>
+      <div class="controls" id="k4"><h4>Tanks and lever</h4></div>
+    </div>
+  </div>
+  <aside class="guide">
+    <h2>Student guide</h2>
+    <h3>The diode: a one-way flap valve</h3>
+    <table class="map"><thead><tr><th>Water</th><th>Electricity</th></tr></thead><tbody>
+      <tr><td>Flap valve</td><td>Diode</td></tr>
+      <tr><td>Spring holding the flap shut</td><td>Switch-on voltage (≈ 0.7 V for silicon)</td></tr>
+      <tr><td>Left tank higher</td><td>Forward bias</td></tr>
+      <tr><td>Right tank higher</td><td>Reverse bias</td></tr>
+    </tbody></table>
+    <p>Reverse bias pushes the flap onto its seat, so nothing flows. Forward bias pushes the flap away from the seat, but the spring holds it shut until the head difference is big enough. After that the flow rises quickly, and the pipe's own resistance takes over.</p>
+    <p>The valve sits in a <b>horizontal</b> section so that the flap's weight neither helps nor hinders it. Only the head difference opens it.</p>
+    <span class="eq">well above switch-on: Q ≈ (Δh − Δh<sub>on</sub>) / R</span>
+    <p>As Δh gets bigger, Q gets bigger. The slope of the straight part is 1/R, so a bigger pipe resistance gives a flatter line. This is why a real diode always has a resistor in series with it.</p>
+    <h3>The transistor: a lever-lifted gate</h3>
+    <table class="map"><thead><tr><th>Water</th><th>Electricity (npn)</th></tr></thead><tbody>
+      <tr><td>Main tank</td><td>Collector</td></tr>
+      <tr><td>Outlet tank</td><td>Emitter</td></tr>
+      <tr><td>Control tank and thin pipe</td><td>Base</td></tr>
+      <tr><td>Control flow I<sub>b</sub></td><td>Base current</td></tr>
+      <tr><td>Main flow I<sub>c</sub></td><td>Collector current</td></tr>
+      <tr><td>Lever ratio</td><td>Current gain β</td></tr>
+      <tr><td>Nozzle height</td><td>Base–emitter switch-on (≈ 0.7 V)</td></tr>
+    </tbody></table>
+    <p>A small control flow fills a bucket on the long arm of a lever. The lever lifts a gate in the main pipe and lets a large flow through. The bucket has a hole, so it only stays heavy while control water keeps coming in. Stop the base flow and the gate drops.</p>
+    <span class="eq">β = I<sub>c</sub> / I<sub>b</sub></span>
+    <p>Read as a definition: <b>current gain is the collector current per unit base current</b>. Units: mL s⁻¹ ÷ mL s⁻¹, so β has no unit. As the lever ratio gets bigger, each mL s⁻¹ of control flow lifts the gate further, so β gets bigger.</p>
+    <span class="eq">I<sub>e</sub> = I<sub>b</sub> + I<sub>c</sub></span>
+    <p>Both flows end up in the outlet tank, just as base and collector current both leave by the emitter.</p>
+    <h3>Three regions</h3>
+    <ul>
+      <li><b>Cut-off</b>: control level below the nozzle, I<sub>b</sub> = 0, gate shut. Switch off.</li>
+      <li><b>Active</b>: I<sub>c</sub> = βI<sub>b</sub>. Small changes in I<sub>b</sub> give big changes in I<sub>c</sub>. Amplifier.</li>
+      <li><b>Saturation</b>: gate fully up. The main pipe now limits the flow and more base flow makes no difference. Switch fully on.</li>
+    </ul>
+    <h2>Questions</h2>
+    <ol class="qs">
+      <li>Set Δh negative so the right tank is higher. What happens, and why?
+        <details><summary>Show answer</summary><p>No flow. The water pushes the flap onto its seat. This is reverse bias: the diode blocks.</p></details></li>
+      <li>Raise Δh slowly from zero. At about what head does water start to flow? What sets this value?
+        <details><summary>Show answer</summary><p>At about the spring setting (4 cm by default). The spring stiffness plays the part of the switch-on voltage, about 0.7 V for silicon and 0.3 V for germanium.</p></details></li>
+      <li>Record points from −10 cm to +30 cm. Describe the shape of the graph and compare it with the diode characteristic from the LC experiment.
+        <details><summary>Show answer</summary><p>Zero in reverse, almost zero up to switch-on, then rising sharply and becoming a straight line. Same shape as the forward and reverse I–V curve of a diode.</p></details></li>
+      <li>Well above switch-on the graph becomes a straight line. What limits the flow there, and what is the slope?
+        <details><summary>Show answer</summary><p>The resistance of the pipe. Q = (Δh − Δh<sub>on</sub>) / R, so the slope is 1/R. Without a series resistor, almost nothing would limit the current through a real diode.</p></details></li>
+      <li>Transistor: set the control tank below the nozzle. What are I<sub>b</sub> and I<sub>c</sub>?
+        <details><summary>Show answer</summary><p>Both zero. No control flow, so the bucket is empty and the gate stays shut. Cut-off: the switch is off.</p></details></li>
+      <li>With β = 50, set I<sub>b</sub> to about 0.5 mL s⁻¹. Predict I<sub>c</sub> and I<sub>e</sub>, then check.
+        <details><summary>Show answer</summary><p>I<sub>c</sub> = 50 × 0.5 = 25 mL s⁻¹ (if the main pipe allows it). I<sub>e</sub> = 0.5 + 25 = 25.5 mL s⁻¹.</p></details></li>
+      <li>Keep raising the control tank. I<sub>c</sub> stops increasing. Why?
+        <details><summary>Show answer</summary><p>Saturation. The gate is fully open, so the main head and main pipe resistance now set the flow: I<sub>c</sub> = Δh<sub>main</sub> / R. The transistor is fully on.</p></details></li>
+      <li>Why does the bucket need a hole in it?
+        <details><summary>Show answer</summary><p>So that control water has to keep flowing to keep the gate up. A real transistor switches off when the base current stops. Without the hole, the gate would stay stuck open.</p></details></li>
+      <li>Give a real circuit where a small current controls a much larger one.
+        <details><summary>Show answer</summary><p>For example, a light sensor (LDR) in a potential divider feeds a small base current that switches on a lamp, fan or motor drawing a much larger current.</p></details></li>
+    </ol>
+  </aside>
+</div>
+</section>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const areaOf=d=>Math.PI*d*d/4;            // mm²
+const fx=(v,n=1)=>(Math.abs(v)<0.5*Math.pow(10,-n)?0:v).toFixed(n);
+const niceCeil=v=>{if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));for(const s of [1,2,2.5,5,10])if(s*p>=v-1e-9)return s*p;return 10*p;};
+let T={};
+function readTok(){const cs=getComputedStyle(document.documentElement);const g=n=>cs.getPropertyValue(n).trim();
+  T={bg:g('--bg'),panel:g('--panel'),ink:g('--ink'),muted:g('--muted'),line:g('--line'),grid:g('--grid'),water:g('--water'),water2:g('--water-2'),pipe:g('--pipe'),brass:g('--brass'),accent:g('--accent'),mbg:g('--meter-bg'),mfg:g('--meter-fg'),warn:g('--warn'),good:g('--good')};}
+const BODY='"Atkinson Hyperlegible",system-ui,sans-serif', MONO='"JetBrains Mono",ui-monospace,monospace';
+
+function makeCanvas(el,W,H){
+  const ctx=el.getContext('2d');const o={el,ctx,W,H,s:1};
+  let lastW=0,pend=false;
+  const fit=()=>{pend=false;const w=el.clientWidth;if(!w||w===lastW)return;lastW=w;const dpr=window.devicePixelRatio||1;el.width=Math.round(w*dpr);el.height=Math.round(w*H/W*dpr);o.s=el.width/W;};
+  new ResizeObserver(()=>{if(!pend){pend=true;requestAnimationFrame(fit);}}).observe(el);fit();
+  o.begin=()=>{if(!el.width)return false;ctx.setTransform(o.s,0,0,o.s,0,0);ctx.clearRect(0,0,W,H);return true;};
+  o.pt=e=>{const r=el.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};};
+  return o;
+}
+function addSlider(host,o,cb){
+  const w=document.createElement('div');w.className='ctl';
+  w.innerHTML=`<label for="${o.id}">${o.label}</label><output for="${o.id}"></output><input type="range" id="${o.id}" min="${o.min}" max="${o.max}" step="${o.step}" value="${o.value}">`;
+  host.appendChild(w);const inp=w.querySelector('input'),out=w.querySelector('output');
+  const show=()=>{const v=+inp.value;out.textContent=(o.fmt?o.fmt(v):v)+(o.unit?' '+o.unit:'');};
+  inp.addEventListener('input',()=>{show();cb(+inp.value);});show();cb(+inp.value);
+  return{inp,wrap:w,set(v){inp.value=v;show();}};
+}
+function addHead(host,t){const h=document.createElement('h4');h.textContent=t;host.appendChild(h);}
+function addBtns(host,list){const d=document.createElement('div');d.className='btns';list.forEach(b=>{const e=document.createElement('button');e.className='btn'+(b.primary?' primary':'');e.type='button';e.id=b.id;e.textContent=b.text;e.addEventListener('click',()=>b.on(e));d.appendChild(e);});host.appendChild(d);return d;}
+function addCheck(host,id,text,val,cb){const l=document.createElement('label');l.className='check';l.innerHTML=`<input type="checkbox" id="${id}" ${val?'checked':''}> ${text}`;host.appendChild(l);const i=l.querySelector('input');i.addEventListener('change',()=>cb(i.checked));return i;}
+function readouts(host,items){host.innerHTML=items.map(([k,l,u])=>`<div class="ro"><b>${l}</b><span id="${k}">–</span> <small>${u||''}</small></div>`).join('');}
+const setT=(id,v)=>{const e=document.getElementById(id);if(e&&e.textContent!==v)e.textContent=v;};
+
+/* ---------- drawing helpers ---------- */
+function poly(ctx,pts){ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);}
+function pipe(ctx,pts,th,flow,phase,water=true){
+  ctx.lineJoin='round';ctx.lineCap='butt';
+  poly(ctx,pts);ctx.strokeStyle=T.pipe;ctx.lineWidth=th+4;ctx.stroke();
+  poly(ctx,pts);ctx.strokeStyle=water?T.water2:T.panel;ctx.lineWidth=th;ctx.stroke();
+  if(water&&Math.abs(flow)>0.02){poly(ctx,pts);ctx.setLineDash([Math.max(2,th*.5),Math.max(7,th*1.3)]);ctx.lineDashOffset=-phase;ctx.strokeStyle=T.water;ctx.lineWidth=Math.max(1.6,th*.45);ctx.stroke();ctx.setLineDash([]);}
+}
+function bundle(a,b,n,th,L){
+  const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy),px=-dy/len,py=dx/len;
+  const waves=Math.max(1,Math.round(L/10)),amp=Math.min(12,len/waves*.35),sp=th+6,out=[];
+  for(let i=0;i<n;i++){const off=(i-(n-1)/2)*sp,pts=[];
+    for(let j=0;j<=90;j++){const t=j/90,fan=Math.min(1,t/.14,(1-t)/.14),o=off*fan+amp*Math.sin(Math.PI*waves*t)*fan;pts.push([a[0]+dx*t+px*o,a[1]+dy*t+py*o]);}
+    out.push(pts);}
+  return out;
+}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function chip(ctx,x,y,label,val,lead){
+  ctx.font=`500 9px ${MONO}`;const lw=ctx.measureText(label).width;ctx.font=`700 14px ${MONO}`;const vw=ctx.measureText(val).width;
+  const w=Math.max(lw,vw)+16,h=34;
+  if(lead){ctx.strokeStyle=T.mbg;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y+h/2);ctx.lineTo(lead[0],lead[1]);ctx.stroke();ctx.fillStyle=T.mbg;ctx.beginPath();ctx.arc(lead[0],lead[1],3,0,7);ctx.fill();}
+  rr(ctx,x-w/2,y-h/2,w,h,5);ctx.fillStyle=T.mbg;ctx.fill();
+  ctx.textAlign='center';ctx.fillStyle=T.mfg;ctx.globalAlpha=.75;ctx.font=`500 9px ${MONO}`;ctx.fillText(label,x,y-5);ctx.globalAlpha=1;ctx.font=`700 14px ${MONO}`;ctx.fillText(val,x,y+11);
+}
+function beaker(ctx,xc,w,yb,yt,yw,label){
+  if(yw<yb-0.3){ctx.fillStyle=T.water2;ctx.fillRect(xc-w/2,yw,w,yb-yw);ctx.strokeStyle=T.water;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(xc-w/2,yw);ctx.lineTo(xc+w/2,yw);ctx.stroke();}
+  ctx.strokeStyle=T.ink;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(xc-w/2-5,yt);ctx.lineTo(xc-w/2,yt+4);ctx.lineTo(xc-w/2,yb);ctx.lineTo(xc+w/2,yb);ctx.lineTo(xc+w/2,yt+4);ctx.lineTo(xc+w/2+5,yt);ctx.stroke();
+  if(label){ctx.fillStyle=T.ink;ctx.font=`700 13px ${BODY}`;ctx.textAlign='center';ctx.fillText(label,xc,yb+17);}
+}
+function ruler(ctx,x,yOf,h0,h1){
+  ctx.strokeStyle=T.muted;ctx.fillStyle=T.muted;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,yOf(h0));ctx.lineTo(x,yOf(h1));ctx.stroke();
+  ctx.font=`500 10px ${MONO}`;ctx.textAlign='right';
+  for(let h=h0;h<=h1;h++){const y=yOf(h),L=h%10===0?9:h%5===0?6:3;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+L,y);ctx.stroke();if(h%10===0)ctx.fillText(h,x-4,y+3.5);}
+  ctx.save();ctx.translate(x-26,yOf((h0+h1)/2));ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.font=`500 10px ${MONO}`;ctx.fillText('height / cm',0,0);ctx.restore();
+}
+function hgrid(ctx,x0,x1,yOf,h0,h1){ctx.strokeStyle=T.grid;ctx.lineWidth=1;for(let h=h0;h<=h1;h+=5){const y=yOf(h);ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();}}
+function levelLine(ctx,x0,x1,y){ctx.strokeStyle=T.water;ctx.globalAlpha=.45;ctx.setLineDash([4,5]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+function tag(ctx,x,y,text,align='center',color){ctx.font=`700 12px ${MONO}`;ctx.textAlign=align;ctx.fillStyle=color||T.ink;ctx.fillText(text,x,y);}
+function vArrow(ctx,x,ya,yb,label){
+  if(Math.abs(ya-yb)<2)return;ctx.strokeStyle=T.accent;ctx.fillStyle=T.accent;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,ya);ctx.lineTo(x,yb);ctx.stroke();
+  [[ya,yb],[yb,ya]].forEach(([p,q])=>{const s=Math.sign(q-p)*7;ctx.beginPath();ctx.moveTo(x,p);ctx.lineTo(x-4,p+s);ctx.lineTo(x+4,p+s);ctx.closePath();ctx.fill();});
+  ctx.font=`700 12px ${MONO}`;ctx.textAlign='left';ctx.fillText(label,x+8,(ya+yb)/2+4);
+}
+function graph(c,o){ // o:{x0,x1,y0,y1,xs,ys,xl,yl}
+  const {ctx,W,H}=c,b={l:62,r:W-18,t:16,b:H-38};
+  const X=x=>b.l+(x-o.x0)/(o.x1-o.x0)*(b.r-b.l),Y=y=>b.b-(y-o.y0)/(o.y1-o.y0)*(b.b-b.t);
+  ctx.strokeStyle=T.grid;ctx.lineWidth=1;ctx.font=`500 10px ${MONO}`;ctx.fillStyle=T.muted;
+  for(let x=Math.ceil(o.x0/o.xs)*o.xs;x<=o.x1+1e-9;x+=o.xs){ctx.beginPath();ctx.moveTo(X(x),b.t);ctx.lineTo(X(x),b.b);ctx.stroke();ctx.textAlign='center';ctx.fillText(+x.toFixed(2),X(x),b.b+14);}
+  for(let y=Math.ceil(o.y0/o.ys)*o.ys;y<=o.y1+1e-9;y+=o.ys){ctx.beginPath();ctx.moveTo(b.l,Y(y));ctx.lineTo(b.r,Y(y));ctx.stroke();ctx.textAlign='right';ctx.fillText(+y.toFixed(2),b.l-6,Y(y)+3.5);}
+  ctx.strokeStyle=T.ink;ctx.lineWidth=1.5;const ax=clamp(0,o.x0,o.x1),ay=clamp(0,o.y0,o.y1);
+  ctx.beginPath();ctx.moveTo(b.l,Y(ay));ctx.lineTo(b.r,Y(ay));ctx.moveTo(X(ax),b.t);ctx.lineTo(X(ax),b.b);ctx.stroke();
+  ctx.fillStyle=T.ink;ctx.font=`700 11px ${MONO}`;ctx.textAlign='right';ctx.fillText(o.xl,b.r,b.b+30);
+  ctx.save();ctx.translate(16,(b.t+b.b)/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText(o.yl,0,0);ctx.restore();
+  return{X,Y,b};
+}
+
+/* =============== TAB 1: head and flow =============== */
+const S1={baseA:22,baseB:4,area:20,L:50,d:6,n:1,open:true,VA:0,VB:0,speed:1,t:0,hist:[],acc:0,Q:0,phS:0,phB:0,drag:null};
+const C1=makeCanvas($('#c1'),820,460),G1=makeCanvas($('#g1'),820,170),y1=h=>420-h*6.5;
+const BH=25; // beaker height cm
+function reset1(){S1.VA=16*S1.area;S1.VB=3*S1.area;S1.t=0;S1.hist=[];S1.acc=0;}
+const k1=$('#k1');const sl1={};
+sl1.baseA=addSlider(k1,{id:'s1a',label:'Beaker A base height',min:0,max:35,step:.5,value:S1.baseA,unit:'cm'},v=>S1.baseA=v);
+sl1.baseB=addSlider(k1,{id:'s1b',label:'Beaker B base height',min:0,max:35,step:.5,value:S1.baseB,unit:'cm'},v=>S1.baseB=v);
+addSlider(k1,{id:'s1c',label:'Beaker cross-section (capacitance)',min:10,max:50,step:5,value:S1.area,unit:'cm²'},v=>{if(S1.area){S1.VA*=v/S1.area;S1.VB*=v/S1.area;}S1.area=v;});
+addHead(k1,'Pipe');
+addSlider(k1,{id:'s1L',label:'Length L',min:10,max:100,step:5,value:S1.L,unit:'cm'},v=>S1.L=v);
+addSlider(k1,{id:'s1d',label:'Diameter d',min:2,max:10,step:1,value:S1.d,unit:'mm'},v=>S1.d=v);
+addSlider(k1,{id:'s1n',label:'Number of pipes n',min:1,max:4,step:1,value:S1.n},v=>S1.n=v);
+addBtns(k1,[{id:'b1tap',text:'Close tap',primary:true,on:e=>{S1.open=!S1.open;tapLbl();}},{id:'b1r',text:'Refill and restart',on:()=>reset1()},{id:'b1s',text:'Speed ×1',on:e=>{S1.speed=S1.speed===1?5:1;e.textContent='Speed ×'+S1.speed;}}]);
+function tapLbl(){$('#b1tap').textContent=S1.open?'Close tap':'Open tap';}
+reset1();
+readouts($('#ro1'),[['r1a','Surface A','cm'],['r1b','Surface B','cm'],['r1dh','Head diff Δh','cm'],['r1R','Resistance R','cm s mL⁻¹'],['r1Q','Flow Q','mL s⁻¹'],['r1C','Capacitance C','mL cm⁻¹']]);
+
+function step1(dt){
+  const G=S1.open?S1.n*areaOf(S1.d)/S1.L:0,sub=12,h=dt/sub,cap=S1.area*BH;let over=false;
+  for(let i=0;i<sub;i++){
+    const hA=S1.baseA+S1.VA/S1.area,hB=S1.baseB+S1.VB/S1.area;let Q=G*(hA-hB);
+    Q=Q>0?Math.min(Q,S1.VA/h):Math.max(Q,-S1.VB/h);
+    S1.VA-=Q*h;S1.VB+=Q*h;
+    if(S1.VA>cap||S1.VB>cap)over=true;
+    S1.VA=clamp(S1.VA,0,cap);S1.VB=clamp(S1.VB,0,cap);S1.Q=Q;
+  }
+  setT('t1warn',over?'A beaker is overflowing':'');
+  const v=clamp(S1.Q/(S1.n*areaOf(S1.d))*260,-420,420);S1.phB+=v*dt;S1.phS+=clamp(S1.Q*6,-420,420)*dt;
+  S1.t+=dt;S1.acc+=dt;if(S1.acc>=0.1){S1.acc=0;S1.hist.push([S1.t,S1.Q]);while(S1.hist.length&&S1.hist[0][0]<S1.t-60)S1.hist.shift();}
+}
+function geo1(){const w=30+S1.area*2.4,xa=190,xb=640;return{w,xa,xb,aR:xa+w/2,bL:xb-w/2,yA:y1(S1.baseA+0.9),yB:y1(S1.baseB+0.9)};}
+function draw1(){
+  if(!C1.begin())return;const ctx=C1.ctx,g=geo1();
+  hgrid(ctx,50,810,y1,0,60);ruler(ctx,44,y1,0,60);
+  const hA=S1.baseA+S1.VA/S1.area,hB=S1.baseB+S1.VB/S1.area;
+  levelLine(ctx,48,810,y1(hA));levelLine(ctx,48,810,y1(hB));
+  const th=S1.d*1.6,man=Math.min(th+3,22),m1=[300,g.yA],m2=[530,g.yB];
+  bundle(m1,m2,S1.n,th,S1.L).forEach(p=>pipe(ctx,p,th,S1.Q,S1.phB));
+  pipe(ctx,[[g.aR,g.yA],m1],man,S1.Q,S1.phS);pipe(ctx,[m2,[g.bL,g.yB]],man,S1.Q,S1.phS);
+  beaker(ctx,g.xa,g.w,y1(S1.baseA),y1(S1.baseA+BH),y1(hA),'Beaker A');
+  beaker(ctx,g.xb,g.w,y1(S1.baseB),y1(S1.baseB+BH),y1(hB),'Beaker B');
+  // tap
+  const tx=(g.aR+300)/2,ty=g.yA;S1.tap=[tx,ty];
+  ctx.fillStyle=T.brass;ctx.beginPath();ctx.arc(tx,ty,9,0,7);ctx.fill();ctx.strokeStyle=T.ink;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.strokeStyle=T.brass;ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();
+  if(S1.open){ctx.moveTo(tx-13,ty-14);ctx.lineTo(tx+13,ty-14);}else{ctx.moveTo(tx,ty-28);ctx.lineTo(tx,ty-9);}ctx.stroke();ctx.lineCap='butt';
+  // meters
+  const arrow=S1.Q>0.05?' →':S1.Q<-0.05?' ←':'';
+  chip(ctx,tx,g.yA-58,'FLOWMETER A',fx(Math.abs(S1.Q))+' mL/s'+arrow,[tx+14,g.yA-6]);
+  const mx=(530+g.bL)/2;chip(ctx,mx,g.yB-50,'FLOWMETER B',fx(Math.abs(S1.Q))+' mL/s'+arrow,[mx,g.yB-6]);
+  // labels
+  tag(ctx,g.xa-g.w/2-10,y1(hA)+4,'h = '+fx(hA)+' cm','right',T.water);
+  tag(ctx,g.xb+g.w/2+10,y1(hB)+4,'h = '+fx(hB)+' cm','left',T.water);
+  vArrow(ctx,415,y1(hA),y1(hB),'Δh = '+fx(Math.abs(hA-hB))+' cm');
+}
+function draw1g(){
+  if(!G1.begin())return;const ctx=G1.ctx;const t1=Math.max(60,S1.t),t0=t1-60;
+  const ym=niceCeil(Math.max(5,...S1.hist.map(p=>Math.abs(p[1])))*1.1);
+  const gr=graph(G1,{x0:t0,x1:t1,y0:0,y1:ym,xs:10,ys:ym/4,xl:'time / s',yl:'flow / mL s⁻¹'});
+  if(S1.hist.length>1){ctx.strokeStyle=T.water;ctx.lineWidth=2.2;ctx.beginPath();S1.hist.forEach((p,i)=>{const x=gr.X(p[0]),y=gr.Y(Math.abs(p[1]));i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}
+}
+function ro1(){const hA=S1.baseA+S1.VA/S1.area,hB=S1.baseB+S1.VB/S1.area;setT('r1a',fx(hA));setT('r1b',fx(hB));setT('r1dh',fx(hA-hB));setT('r1R',(S1.L/(S1.n*areaOf(S1.d))).toFixed(2));setT('r1Q',fx(S1.Q));setT('r1C',String(S1.area));}
+C1.el.addEventListener('pointerdown',e=>{const p=C1.pt(e),g=geo1();
+  if(S1.tap&&Math.hypot(p.x-S1.tap[0],p.y-S1.tap[1]+10)<22){S1.open=!S1.open;tapLbl();return;}
+  for(const k of ['A','B']){const xc=k==='A'?g.xa:g.xb,base=k==='A'?S1.baseA:S1.baseB;
+    if(Math.abs(p.x-xc)<g.w/2+8&&p.y<y1(base)+8&&p.y>y1(base+BH)-8){S1.drag={k,y0:p.y,b0:base};C1.el.setPointerCapture(e.pointerId);return;}}
+});
+C1.el.addEventListener('pointermove',e=>{if(!S1.drag)return;const p=C1.pt(e);const nb=clamp(Math.round((S1.drag.b0+(S1.drag.y0-p.y)/6.5)*2)/2,0,35);
+  if(S1.drag.k==='A'){S1.baseA=nb;sl1.baseA.set(nb);}else{S1.baseB=nb;sl1.baseB.set(nb);}});
+['pointerup','pointercancel'].forEach(ev=>C1.el.addEventListener(ev,()=>S1.drag=null));
+
+/* =============== TAB 2: water circuit =============== */
+const S2={hTop:40,hLow:5,mid:false,midBase:8,Vm:0,area:20,sec:[{L:50,d:6,n:1},{L:50,d:6,n:1}],speed:1,probes:new Set(['s1feed','pump']),Q1:0,Q2:0,ph:[0,0,0,0,0,0],slots:[],drag:null,imp:0,over:false};
+S2.Vm=5*S2.area;
+const C2=makeCanvas($('#c2'),840,520),y2=h=>470-h*7.4;
+const Rof=s=>s.L/(s.n*areaOf(s.d));
+const k2=$('#k2');const sl2={},secCtl=[];
+addSlider(k2,{id:'s2t',label:'Top reservoir (pump lift)',min:20,max:55,step:.5,value:S2.hTop,unit:'cm'},v=>S2.hTop=v);
+addSlider(k2,{id:'s2l',label:'Bottom reservoir',min:2,max:15,step:.5,value:S2.hLow,unit:'cm'},v=>S2.hLow=v);
+const midWrap=document.createElement('div');midWrap.className='btns';k2.appendChild(midWrap);
+addCheck(midWrap,'s2mid','Add middle beaker',S2.mid,v=>{S2.mid=v;syncMid();});
+sl2.mb=addSlider(k2,{id:'s2mb',label:'Middle beaker base height',min:0,max:35,step:.5,value:S2.midBase,unit:'cm'},v=>S2.midBase=v);
+[0,1].forEach(i=>{addHead(k2,i?'Section 2: middle → bottom':'Section 1: top → '+'middle (or bottom)');
+  const s=S2.sec[i],w=[];
+  w.push(addSlider(k2,{id:`s2L${i}`,label:'Length L',min:10,max:100,step:5,value:s.L,unit:'cm'},v=>s.L=v).wrap);
+  w.push(addSlider(k2,{id:`s2d${i}`,label:'Diameter d',min:2,max:10,step:1,value:s.d,unit:'mm'},v=>s.d=v).wrap);
+  w.push(addSlider(k2,{id:`s2n${i}`,label:'Number of pipes n',min:1,max:4,step:1,value:s.n},v=>s.n=v).wrap);
+  secCtl[i]=w;});
+addBtns(k2,[{id:'b2p',text:'Remove all probes',on:()=>S2.probes.clear()},{id:'b2e',text:'Empty middle beaker',on:()=>S2.Vm=0},{id:'b2s',text:'Speed ×1',on:e=>{S2.speed=S2.speed===1?5:1;e.textContent='Speed ×'+S2.speed;}}]);
+function syncMid(){secCtl[1].forEach(w=>w.classList.toggle('off',!S2.mid));sl2.mb.wrap.classList.toggle('off',!S2.mid);secCtl[1].forEach(w=>w.querySelector('input').disabled=!S2.mid);sl2.mb.inp.disabled=!S2.mid;$('#b2e').disabled=!S2.mid;
+  document.querySelectorAll('.midro').forEach(e=>e.parentElement.hidden=!S2.mid);}
+readouts($('#ro2'),[['r2t','Top','cm'],['r2m','Middle','cm'],['r2b','Bottom','cm'],['r2d1','Drop 1','cm'],['r2d2','Drop 2','cm'],['r2R1','R₁','cm s mL⁻¹'],['r2R2','R₂','cm s mL⁻¹'],['r2q1','Flow 1','mL s⁻¹'],['r2q2','Flow 2','mL s⁻¹']]);
+['r2m','r2d2','r2R2','r2q2'].forEach(id=>document.getElementById(id).classList.add('midro'));
+syncMid();
+function step2(dt){
+  const R1=Rof(S2.sec[0]),R2=Rof(S2.sec[1]);S2.over=false;
+  if(!S2.mid){S2.Q1=S2.Q2=(S2.hTop-S2.hLow)/R1;}
+  else{const sub=12,h=dt/sub,cap=S2.area*BH;
+    for(let i=0;i<sub;i++){const hm=S2.midBase+S2.Vm/S2.area;let Q1=(S2.hTop-hm)/R1,Q2=(hm-S2.hLow)/R2;
+      if(Q1<0)Q1=Math.max(Q1,-S2.Vm/h);
+      if(Q2>0)Q2=Math.min(Q2,S2.Vm/h+Math.max(0,Q1));
+      S2.Vm+=(Q1-Q2)*h;if(S2.Vm>cap){S2.over=true;}S2.Vm=clamp(S2.Vm,0,cap);S2.Q1=Q1;S2.Q2=Q2;}}
+  const sp=(Q,s)=>clamp(Q/(s.n*areaOf(s.d))*260,-420,420);
+  S2.ph[0]+=sp(S2.Q1,S2.sec[0])*dt;S2.ph[1]+=sp(S2.Q2,S2.sec[1])*dt;S2.ph[2]+=clamp(S2.Q1*6,-420,420)*dt;S2.ph[3]+=clamp(S2.Q2*6,-420,420)*dt;S2.ph[4]+=clamp(S2.Q2*4,-420,420)*dt;S2.imp+=S2.Q2*dt*.25;
+  setT('t2warn',S2.over?'Middle beaker is overflowing':'');
+}
+function draw2(){
+  if(!C2.begin())return;const ctx=C2.ctx;S2.slots=[];
+  hgrid(ctx,66,830,y2,0,60);ruler(ctx,62,y2,0,60);
+  const top={x0:90,x1:200,base:S2.hTop-10},bot={x0:680,x1:800};
+  const mw=30+S2.area*2.4,mx=440,hm=S2.midBase+S2.Vm/S2.area;
+  const s1=S2.sec[0],s2=S2.sec[1],th1=s1.d*1.6,th2=s2.d*1.6;
+  const yT=y2(top.base+0.9),yL=y2(0.9),yM=y2(S2.midBase+0.9);
+  // return pipe + pump
+  const ret=[[740,y2(0)],[740,500],[20,500],[20,y2(S2.hTop+7)],[130,y2(S2.hTop+7)],[130,y2(S2.hTop+4.5)]];
+  pipe(ctx,ret,10,S2.Q2,S2.ph[4]);
+  if(S2.Q2>0.05){ctx.strokeStyle=T.water;ctx.lineWidth=clamp(S2.Q2/8,1.5,6);ctx.beginPath();ctx.moveTo(130,y2(S2.hTop+4.5));ctx.lineTo(130,y2(S2.hTop));ctx.stroke();}
+  const py=420;ctx.fillStyle=T.panel;ctx.strokeStyle=T.ink;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(20,py,17,0,7);ctx.fill();ctx.stroke();
+  ctx.save();ctx.translate(20,py);ctx.rotate(-S2.imp);ctx.strokeStyle=T.accent;ctx.lineWidth=3;for(let i=0;i<3;i++){ctx.rotate(2.094);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-12);ctx.stroke();}ctx.restore();
+  ctx.fillStyle=T.ink;ctx.font=`700 11px ${MONO}`;ctx.textAlign='left';ctx.fillText('PUMP',42,py+4);
+  S2.slots.push({id:'pump',x:20,y:470,label:'PUMP',val:()=>S2.Q2});
+  // sections
+  const sec=(a,b,s,th,Q,ph,phS,inStub,outStub,key,lab)=>{
+    pipe(ctx,inStub,Math.min(th+3,22),Q,phS);pipe(ctx,outStub,Math.min(th+3,22),Q,phS);
+    const bs=bundle(a,b,s.n,th,s.L);bs.forEach(p=>pipe(ctx,p,th,Q,ph));
+    const mid=(p,q)=>[(p[0]+q[0])/2,(p[1]+q[1])/2];const top1=bs.reduce((m,p)=>p[45][1]<m[45][1]?p:m,bs[0]);
+    S2.slots.push({id:key+'feed',...xy(mid(inStub[0],inStub[1])),label:lab+' ALL PIPES',val:()=>Q});
+    S2.slots.push({id:key+'one',...xy(top1[45]),label:lab+' ONE PIPE',val:()=>Q/s.n});
+    S2.slots.push({id:key+'exit',...xy(mid(outStub[0],outStub[1])),label:lab+' OUT',val:()=>Q});
+  };
+  const xy=p=>({x:p[0],y:p[1]});
+  if(S2.mid){
+    sec([235,yT],[370,yM],s1,th1,S2.Q1,S2.ph[0],S2.ph[2],[[top.x1,yT],[235,yT]],[[370,yM],[mx-mw/2,yM]],'s1','S1');
+    sec([mx+mw/2+31,yM],[640,yL],s2,th2,S2.Q2,S2.ph[1],S2.ph[3],[[mx+mw/2,yM],[mx+mw/2+31,yM]],[[640,yL],[bot.x0,yL]],'s2','S2');
+  }else{
+    sec([235,yT],[640,yL],s1,th1,S2.Q1,S2.ph[0],S2.ph[2],[[top.x1,yT],[235,yT]],[[640,yL],[bot.x0,yL]],'s1','S1');
+  }
+  // tanks
+  beaker(ctx,(top.x0+top.x1)/2,top.x1-top.x0,y2(top.base),y2(S2.hTop+4),y2(S2.hTop),'Top');
+  beaker(ctx,(bot.x0+bot.x1)/2,bot.x1-bot.x0,y2(0),y2(20),y2(S2.hLow),'Bottom');
+  levelLine(ctx,66,top.x0,y2(S2.hTop));levelLine(ctx,66,bot.x0,y2(S2.hLow));
+  tag(ctx,205,y2(S2.hTop)-6,fx(S2.hTop)+' cm','left',T.water);
+  tag(ctx,(bot.x0+bot.x1)/2,y2(20)-8,fx(S2.hLow)+' cm','center',T.water);
+  if(S2.mid){beaker(ctx,mx,mw,y2(S2.midBase),y2(S2.midBase+BH),y2(hm),'Middle');levelLine(ctx,66,mx-mw/2,y2(hm));tag(ctx,mx,y2(S2.midBase+BH)-8,fx(hm)+' cm','center',T.water);}
+  // probes
+  S2.slots.forEach(s=>{
+    if(S2.probes.has(s.id)){const up=s.id==='pump'?-60:-48;chip(ctx,s.id==='pump'?125:s.x,s.y+(s.id==='pump'?-10:up),s.label,fx(s.val())+' mL/s',[s.x,s.y]);}
+    else{ctx.strokeStyle=T.accent;ctx.fillStyle=T.panel;ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(s.x,s.y,9,0,7);ctx.fill();ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=T.accent;ctx.font=`700 13px ${MONO}`;ctx.textAlign='center';ctx.fillText('+',s.x,s.y+4.5);}
+  });
+}
+function ro2(){const R1=Rof(S2.sec[0]),R2=Rof(S2.sec[1]),hm=S2.midBase+S2.Vm/S2.area;
+  setT('r2t',fx(S2.hTop));setT('r2b',fx(S2.hLow));setT('r2m',fx(hm));setT('r2R1',R1.toFixed(2));setT('r2R2',R2.toFixed(2));setT('r2q1',fx(S2.Q1));setT('r2q2',fx(S2.Q2));
+  setT('r2d1',fx(S2.mid?S2.hTop-hm:S2.hTop-S2.hLow));setT('r2d2',fx(hm-S2.hLow));}
+C2.el.addEventListener('pointerdown',e=>{const p=C2.pt(e);
+  for(const s of S2.slots){const cx=s.id==='pump'?125:s.x,cy=s.y+(s.id==='pump'?-10:-48);
+    if(Math.hypot(p.x-s.x,p.y-s.y)<14||(S2.probes.has(s.id)&&Math.abs(p.x-cx)<50&&Math.abs(p.y-cy)<18)){S2.probes.has(s.id)?S2.probes.delete(s.id):S2.probes.add(s.id);return;}}
+  if(S2.mid){const mw=30+S2.area*2.4;if(Math.abs(p.x-440)<mw/2+8&&p.y<y2(S2.midBase)+8&&p.y>y2(S2.midBase+BH)-8){S2.drag={y0:p.y,b0:S2.midBase};C2.el.setPointerCapture(e.pointerId);}}
+});
+C2.el.addEventListener('pointermove',e=>{if(!S2.drag)return;const p=C2.pt(e);const nb=clamp(Math.round((S2.drag.b0+(S2.drag.y0-p.y)/7.4)*2)/2,0,35);S2.midBase=nb;sl2.mb.set(nb);});
+['pointerup','pointercancel'].forEach(ev=>C2.el.addEventListener(ev,()=>S2.drag=null));
+
+/* =============== TAB 3a: diode =============== */
+const S3={dv:8,vt:4,R:1.5,show:true,pts:[],ph:0,Q:0};
+const C3=makeCanvas($('#c3'),820,360),G3=makeCanvas($('#g3'),820,300),y3=h=>330-h*6;
+const diodeQ=(dv,vt,R)=>{const s=.5,z=(dv-vt)/s;return dv<=0?0:(s/R)*(z>30?z:Math.log1p(Math.exp(z)));};
+const k3=$('#k3');
+addSlider(k3,{id:'s3v',label:'Head difference Δh (left − right)',min:-15,max:30,step:.5,value:S3.dv,unit:'cm'},v=>S3.dv=v);
+addSlider(k3,{id:'s3t',label:'Spring stiffness (switch-on head)',min:1,max:10,step:.5,value:S3.vt,unit:'cm'},v=>S3.vt=v);
+addSlider(k3,{id:'s3R',label:'Pipe resistance R',min:.5,max:4,step:.1,value:S3.R,fmt:v=>v.toFixed(1),unit:'cm s mL⁻¹'},v=>S3.R=v);
+const bw3=addBtns(k3,[{id:'b3r',text:'Record reading',primary:true,on:()=>{S3.pts.push([S3.dv,S3.Q]);}},{id:'b3c',text:'Clear readings',on:()=>S3.pts=[]}]);
+addCheck(bw3,'s3show','Show characteristic curve',S3.show,v=>S3.show=v);
+readouts($('#ro3'),[['r3dv','Head diff Δh','cm'],['r3q','Flow Q','mL s⁻¹'],['r3n','Readings','']]);
+function step3(dt){S3.Q=diodeQ(S3.dv,S3.vt,S3.R);S3.ph+=clamp(S3.Q*14,0,420)*dt;
+  setT('dState',S3.dv<=0?'Reverse bias: flap pressed onto its seat':S3.Q<0.3?'Forward bias, below switch-on: spring holds the flap shut':'Conducting');}
+function draw3(){
+  if(!C3.begin())return;const ctx=C3.ctx;const hR=20,hL=20+S3.dv;
+  hgrid(ctx,46,810,y3,0,50);ruler(ctx,44,y3,0,50);
+  const py=y3(2),th=18;
+  pipe(ctx,[[200,py],[380,py]],th,S3.Q,S3.ph);pipe(ctx,[[440,py],[620,py]],th,S3.Q,S3.ph);
+  // chamber
+  ctx.fillStyle=T.water2;ctx.fillRect(380,py-24,60,48);ctx.strokeStyle=T.pipe;ctx.lineWidth=4;ctx.strokeRect(380,py-24,60,48);
+  // seat
+  ctx.fillStyle=T.ink;ctx.fillRect(388,py-24,5,15);ctx.fillRect(388,py+9,5,15);
+  const ang=Math.min(1.15,1.15*S3.Q/8),hx=396,hy=py-22,L=44,ex=hx+L*Math.sin(ang),ey=hy+L*Math.cos(ang);
+  // spring
+  const sx=hx+.45*L*Math.sin(ang),sy=hy+.45*L*Math.cos(ang),wx=438;
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(sx,sy);const segs=8;for(let i=1;i<segs;i++){const t=i/segs;ctx.lineTo(sx+(wx-sx)*t,sy+(i%2?-4:4));}ctx.lineTo(wx,sy);ctx.stroke();
+  ctx.strokeStyle=T.brass;ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(ex,ey);ctx.stroke();ctx.lineCap='butt';
+  ctx.fillStyle=T.ink;ctx.beginPath();ctx.arc(hx,hy,3,0,7);ctx.fill();
+  beaker(ctx,135,130,y3(0),y3(52),y3(hL),'Left tank');beaker(ctx,685,130,y3(0),y3(52),y3(hR),'Right tank');
+  levelLine(ctx,200,620,y3(hL));levelLine(ctx,200,620,y3(hR));
+  tag(ctx,205,y3(hL)-6,'h = '+fx(hL)+' cm','left',T.water);tag(ctx,615,y3(hR)-6,'h = '+fx(hR)+' cm','right',T.water);
+  vArrow(ctx,410,y3(hL),y3(hR),'Δh = '+fx(S3.dv)+' cm');
+  chip(ctx,530,py-52,'FLOWMETER',fx(S3.Q)+' mL/s',[530,py-10]);
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='center';ctx.fillText('FLAP VALVE',410,py+40);
+}
+function draw3g(){
+  if(!G3.begin())return;const ctx=G3.ctx;const ym=niceCeil(Math.max(5,diodeQ(30,S3.vt,S3.R),...S3.pts.map(p=>p[1]))*1.05);
+  const gr=graph(G3,{x0:-15,x1:30,y0:0,y1:ym,xs:5,ys:ym/5,xl:'head difference Δh / cm',yl:'flow Q / mL s⁻¹'});
+  if(S3.show){ctx.strokeStyle=T.water;ctx.globalAlpha=.5;ctx.lineWidth=2;ctx.beginPath();for(let x=-15;x<=30;x+=.25){const y=gr.Y(diodeQ(x,S3.vt,S3.R));x===-15?ctx.moveTo(gr.X(x),y):ctx.lineTo(gr.X(x),y);}ctx.stroke();ctx.globalAlpha=1;}
+  ctx.fillStyle=T.ink;S3.pts.forEach(p=>{ctx.beginPath();ctx.arc(gr.X(p[0]),gr.Y(p[1]),3.5,0,7);ctx.fill();});
+  ctx.strokeStyle=T.brass;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(gr.X(S3.dv),gr.Y(S3.Q),7,0,7);ctx.stroke();
+}
+function ro3(){setT('r3dv',fx(S3.dv));setT('r3q',fx(S3.Q));setT('r3n',String(S3.pts.length));}
+
+/* =============== TAB 3b: transistor =============== */
+const S4={hB:34,hC:40,beta:50,Rc:1,Rb:12,nozzle:28,hE:3,Ib:0,Ic:0,ph:[0,0,0],tilt:0};
+const C4=makeCanvas($('#c4'),820,440),G4=makeCanvas($('#g4'),820,300),y4=h=>400-h*7;
+const k4=$('#k4');
+addSlider(k4,{id:'s4b',label:'Control (base) tank level',min:24,max:50,step:.5,value:S4.hB,unit:'cm'},v=>S4.hB=v);
+addSlider(k4,{id:'s4c',label:'Main (collector) tank level',min:15,max:50,step:.5,value:S4.hC,unit:'cm'},v=>S4.hC=v);
+addSlider(k4,{id:'s4g',label:'Lever ratio (gain β)',min:20,max:100,step:5,value:S4.beta},v=>S4.beta=v);
+addSlider(k4,{id:'s4r',label:'Main pipe resistance',min:.5,max:3,step:.1,value:S4.Rc,fmt:v=>v.toFixed(1),unit:'cm s mL⁻¹'},v=>S4.Rc=v);
+readouts($('#ro4'),[['r4b','Base flow Ib','mL s⁻¹'],['r4c','Collector flow Ic','mL s⁻¹'],['r4e','Emitter flow Ie','mL s⁻¹'],['r4g','Ic / Ib',''],['r4z','Region','']]);
+const ibOf=hB=>Math.max(0,(hB-S4.nozzle)/S4.Rb);
+const icMax=()=>Math.max(0,(S4.hC-S4.hE)/S4.Rc);
+function step4(dt){S4.Ib=ibOf(S4.hB);S4.Ic=Math.min(S4.beta*S4.Ib,icMax());
+  const target=0.3*Math.min(1,S4.beta*S4.Ib/60);S4.tilt+=(target-S4.tilt)*Math.min(1,dt*6);
+  S4.ph[0]+=clamp(S4.Ic*5,0,420)*dt;S4.ph[1]+=clamp((S4.Ic+S4.Ib)*5,0,420)*dt;S4.ph[2]+=clamp(S4.Ib*60,0,300)*dt;
+  S4.region=S4.Ib<=0?'Cut-off':S4.beta*S4.Ib<icMax()?'Active':'Saturation';setT('tState',S4.region);}
+function draw4(){
+  if(!C4.begin())return;const ctx=C4.ctx;hgrid(ctx,10,810,y4,0,50);
+  const py=y4(6),th=22,P=[400,240],a=S4.tilt;
+  const Lend=[P[0]-100*Math.cos(a),P[1]+100*Math.sin(a)],Rend=[P[0]+90*Math.cos(a),P[1]-90*Math.sin(a)];
+  // drain tube (behind)
+  pipe(ctx,[[300,344],[560,py-8]],4,S4.Ib,S4.ph[2]);
+  // main pipe
+  pipe(ctx,[[160,py],[490,py]],th,S4.Ic,S4.ph[0],true);
+  pipe(ctx,[[490,py],[640,py],[640,y4(1.5)],[690,y4(1.5)]],th,S4.Ic+S4.Ib,S4.ph[1],S4.Ic>0.02||S4.Ib>0);
+  // gate sleeve and gate
+  ctx.fillStyle=T.pipe;ctx.fillRect(482,py-40,4,30);ctx.fillRect(494,py-40,4,30);
+  const gateTop=Rend[1]+89;ctx.strokeStyle=T.ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(Rend[0],Rend[1]);ctx.lineTo(490,gateTop);ctx.stroke();
+  ctx.fillStyle=T.brass;ctx.fillRect(485,gateTop,10,40);ctx.strokeStyle=T.ink;ctx.lineWidth=1.2;ctx.strokeRect(485,gateTop,10,40);
+  // pivot post and lever
+  ctx.strokeStyle=T.pipe;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(P[0],P[1]);ctx.lineTo(P[0],py-12);ctx.stroke();
+  ctx.strokeStyle=T.ink;ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(Lend[0],Lend[1]);ctx.lineTo(Rend[0],Rend[1]);ctx.stroke();ctx.lineCap='butt';
+  ctx.fillStyle=T.brass;ctx.beginPath();ctx.arc(P[0],P[1],6,0,7);ctx.fill();
+  // bucket
+  const bt=Lend[1]+14,bx=Lend[0],bw=56,bh=38;ctx.strokeStyle=T.ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bx,Lend[1]);ctx.lineTo(bx,bt);ctx.stroke();
+  const fill=Math.min(1,S4.Ib/1.5)*.88;
+  if(fill>0){ctx.fillStyle=T.water2;ctx.fillRect(bx-bw/2+5,bt+bh*(1-fill),bw-10,bh*fill);}
+  ctx.strokeStyle=T.ink;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(bx-bw/2,bt);ctx.lineTo(bx-bw/2+5,bt+bh);ctx.lineTo(bx+bw/2-5,bt+bh);ctx.lineTo(bx+bw/2,bt);ctx.stroke();
+  // drips and funnel
+  ctx.strokeStyle=T.pipe;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(285,330);ctx.lineTo(298,344);ctx.lineTo(302,344);ctx.lineTo(315,330);ctx.stroke();
+  if(S4.Ib>0){ctx.fillStyle=T.water;const n=3;for(let i=0;i<n;i++){const t=((S4.ph[2]/40)+i/n)%1;ctx.beginPath();ctx.arc(bx+ (300-bx)*t,bt+bh+(334-bt-bh)*t,2.2,0,7);ctx.fill();}}
+  // base tank + nozzle
+  beaker(ctx,215,70,y4(24),y4(50),y4(S4.hB),'');ctx.fillStyle=T.ink;ctx.font=`700 12px ${BODY}`;ctx.textAlign='center';ctx.fillText('Control tank',215,y4(50)-8);
+  pipe(ctx,[[250,y4(28)],[268,y4(28)],[268,y4(28)+8]],5,S4.Ib,S4.ph[2]);
+  if(S4.Ib>0){ctx.strokeStyle=T.water;ctx.lineWidth=1.5+S4.Ib*2;ctx.beginPath();ctx.moveTo(268,y4(28)+8);ctx.quadraticCurveTo(272,bt,bx-12,bt+bh*(1-fill));ctx.stroke();}
+  // collector & emitter tanks
+  beaker(ctx,100,120,y4(4),y4(52),y4(S4.hC),'Main tank');
+  beaker(ctx,740,100,y4(0),y4(14),y4(S4.hE),'Outlet tank');
+  tag(ctx,165,y4(S4.hC)-6,'h = '+fx(S4.hC)+' cm','left',T.water);
+  tag(ctx,256,y4(S4.hB)+4,'h = '+fx(S4.hB)+' cm','left',T.water);
+  ctx.strokeStyle=T.muted;ctx.setLineDash([2,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(180,y4(28));ctx.lineTo(250,y4(28));ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='right';ctx.fillText('nozzle 28 cm',176,y4(28)+3);
+  // meters
+  chip(ctx,340,186,'BASE Ib',S4.Ib.toFixed(2)+' mL/s',[262,y4(28)]);
+  chip(ctx,220,320,'COLLECTOR Ic',fx(S4.Ic)+' mL/s',[220,py-11]);
+  chip(ctx,600,318,'EMITTER Ie',fx(S4.Ic+S4.Ib)+' mL/s',[600,py-11]);
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='center';ctx.fillText('GATE',490,py+26);ctx.fillText('PIVOT',P[0]+24,P[1]-10);
+}
+function draw4g(){
+  if(!G4.begin())return;const ctx=G4.ctx;const ibX=2,ym=niceCeil(Math.max(10,Math.min(S4.beta*ibX,icMax()))*1.1);
+  const gr=graph(G4,{x0:0,x1:ibX,y0:0,y1:ym,xs:.25,ys:ym/5,xl:'base flow Ib / mL s⁻¹',yl:'collector flow Ic / mL s⁻¹'});
+  ctx.strokeStyle=T.water;ctx.globalAlpha=.55;ctx.lineWidth=2;ctx.beginPath();for(let x=0;x<=ibX;x+=.01){const y=gr.Y(Math.min(S4.beta*x,icMax()));x?ctx.lineTo(gr.X(x),y):ctx.moveTo(gr.X(x),y);}ctx.stroke();ctx.globalAlpha=1;
+  const xs=icMax()/S4.beta;if(xs<ibX){ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='left';ctx.fillText('saturation →',gr.X(xs)+6,gr.Y(icMax())+16);ctx.textAlign='right';ctx.fillText('active',gr.X(xs/2)-4,gr.Y(icMax()/2));}
+  ctx.strokeStyle=T.brass;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(gr.X(Math.min(S4.Ib,ibX)),gr.Y(S4.Ic),7,0,7);ctx.stroke();
+}
+function ro4(){setT('r4b',S4.Ib.toFixed(2));setT('r4c',fx(S4.Ic));setT('r4e',fx(S4.Ic+S4.Ib));setT('r4g',S4.Ib>0?fx(S4.Ic/S4.Ib):'–');setT('r4z',S4.region||'');}
+
+/* =============== tabs, routing, loop =============== */
+let active='head-and-flow',sub='diode';
+const tabs=[...document.querySelectorAll('.tabs button')];
+function show(id){if(!document.getElementById(id))id='head-and-flow';active=id;
+  tabs.forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===id));
+  document.querySelectorAll('section.tab').forEach(s=>s.hidden=s.id!==id);
+  try{localStorage.setItem('wcl-tab',id);}catch(e){}}
+tabs.forEach(b=>b.addEventListener('click',()=>{show(b.dataset.tab);try{history.replaceState(null,'','#'+b.dataset.tab);}catch(e){}}));
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+let start=location.hash.slice(1);if(!start){try{start=localStorage.getItem('wcl-tab')||'';}catch(e){}}show(start||'head-and-flow');
+function setSub(s){sub=s;$('#segD').setAttribute('aria-pressed',s==='diode');$('#segT').setAttribute('aria-pressed',s==='trans');$('#diodeBench').hidden=s!=='diode';$('#transBench').hidden=s!=='trans';}
+$('#segD').addEventListener('click',()=>setSub('diode'));$('#segT').addEventListener('click',()=>setSub('trans'));
+
+let last=performance.now(),lastRO=0;
+function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;readTok();
+  if(active==='head-and-flow'){step1(dt*S1.speed);draw1();draw1g();}
+  else if(active==='water-circuit'){step2(dt*S2.speed);draw2();}
+  else if(sub==='diode'){step3(dt);draw3();draw3g();}
+  else{step4(dt);draw4();draw4g();}
+  if(now-lastRO>100){lastRO=now;ro1();ro2();ro3();ro4();}
+  requestAnimationFrame(frame);}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</html>
