@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resistance Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#E7E9EC}
+#fit{width:100%;overflow:hidden}
+#stage{width:1190px;height:960px;transform-origin:top left}
+button,select,input{font-family:Inter,system-ui,sans-serif}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #2F6FD6;outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage"></div></div>
+<script>
+(()=>{
+// ---------- Breadboard ----------
+var BAND=['#1A1A1A','#7B4A2A','#D0312D','#F08A24','#F2D338','#2E9E4F','#2F6FD6','#8B4FC9','#9AA0A6','#F5F5F5'];
+var HOLES=[],BYID={};
+function addHole(id,x,y,grp,aria){var h={id:id,x:x,y:y,grp:grp,aria:aria};HOLES.push(h);BYID[id]=h;}
+for(var c=0;c<30;c++){var x=50+c*20,n=c+1,r;
+ addHole('TP'+c,x,30,'TP','Top positive rail, column '+n);
+ addHole('TN'+c,x,50,'TN','Top negative rail, column '+n);
+ for(r=0;r<5;r++)addHole('abcde'[r]+n,x,100+r*20,'T'+c,'Hole '+'abcde'[r]+n);
+ for(r=0;r<5;r++)addHole('fghij'[r]+n,x,240+r*20,'B'+c,'Hole '+'fghij'[r]+n);
+ addHole('BN'+c,x,370,'BN','Bottom negative rail, column '+n);
+ addHole('BP'+c,x,390,'BP','Bottom positive rail, column '+n);}
+var LABELS=[];
+[0,4,9,14,19,24,29].forEach(function(c){LABELS.push({x:40+c*20,y:78,t:String(c+1)});LABELS.push({x:40+c*20,y:330,t:String(c+1)});});
+'abcde'.split('').forEach(function(l,i){LABELS.push({x:18,y:93+i*20,t:l});LABELS.push({x:642,y:93+i*20,t:l});});
+'fghij'.split('').forEach(function(l,i){LABELS.push({x:18,y:233+i*20,t:l});LABELS.push({x:642,y:233+i*20,t:l});});
+var STRIPS=[];
+for(var sc=0;sc<30;sc++){STRIPS.push({l:43+sc*20,t:92,w:14,h:96});STRIPS.push({l:43+sc*20,t:232,w:14,h:96});}
+[30,50,370,390].forEach(function(y){STRIPS.push({l:40,t:y-7,w:620,h:14});});
+
+// ---------- Scenarios: [hole, hole, ohms]; A and B = [half, column] ----------
+var SCEN=[
+ {r:[['b3','b8',100],['d8','d13',200],['b13','b18',300]],A:['T',3],B:['T',18],
+  h:'Follow the current from A to B. Each resistor ends in the column where the next one starts, so the current has only one path through all three: they are in series. In series, R = R₁ + R₂ + R₃. Every resistor added makes the total bigger.'},
+ {r:[['a5','a12',2000],['c5','c12',2000]],A:['T',5],B:['T',12],
+  h:'Both resistors start in the A column and end in the B column, so the current can take either one: they are in parallel. Use 1/R = 1/R₁ + 1/R₂. Adding a path makes the total smaller, so it must be less than either resistor.'},
+ {r:[['a6','a14',6000],['c6','c14',3000]],A:['T',6],B:['T',14],
+  h:'Same start column and same end column means parallel. Use 1/R = 1/R₁ + 1/R₂, then flip your answer to get R. Check: the total must be smaller than the smaller resistor.'},
+ {r:[['a5','a12',600],['c5','c12',300],['e5','e12',200]],A:['T',5],B:['T',12],
+  h:'All three resistors connect the A column to the B column: three parallel paths. Use 1/R = 1/R₁ + 1/R₂ + 1/R₃. The total must be smaller than the smallest resistor.'},
+ {r:[['b3','b8',1000],['a8','a14',2000],['c8','c14',2000]],A:['T',3],B:['T',14],
+  h:'Split the circuit at column 8. From column 8 to the B column there are two paths: find that parallel pair first. Then add the single resistor in series with it.'},
+ {r:[['a5','a10',100],['b10','b15',200],['d5','d15',300]],A:['T',5],B:['T',15],
+  h:'There are two routes from A to B. The top route goes through two resistors one after the other: add them (series). Then combine that route with the other route in parallel.'},
+ {r:[['a4','a10',6000],['c4','c10',3000],['b10','b16',1000],['d10','d16',1000]],A:['T',4],B:['T',16],
+  h:'Split the circuit at column 10. Each half is a parallel pair: work out each pair on its own, then add the two results, because the halves are in series.'},
+ {r:[['c5','c10',1000],['d10','g10',1000],['h10','h16',3000],['j10','j16',6000]],A:['T',5],B:['B',16],
+  h:'The centre channel splits every column into a top strip and a bottom strip that are not connected. Press Remove cover: you will see a gap in the copper strips at the centre channel. Follow the path from A down across the channel to B. Two resistors in the bottom half share both columns: that pair is in parallel.'},
+ {r:[['a5','TP8',1000],['TP9','TP12',10000],['TP13','a18',2000]],A:['T',5],B:['T',18],
+  h:'Press Remove cover. The + rail is one copper strip running the whole length of the board, so every hole along it is connected. Where are both legs of the 10 kΩ resistor? If both ends are on the same strip, does any current need to go through it?'}
+];
+function bandsOf(R){var e=Math.floor(Math.log10(R))-1,two=Math.round(R/Math.pow(10,e));return [Math.floor(two/10),two%10,e];}
+function rLabel(R){return R>=1000?(R/1000)+' kΩ':R+' Ω';}
+
+// Equivalent resistance between two nodes (nodal analysis: 1 A in at a, b grounded).
+function eqR(edges,a,b){
+ if(a===b)return 0;
+ var adj={};
+ edges.forEach(function(e){if(e[0]===e[1])return;(adj[e[0]]=adj[e[0]]||[]).push(e[1]);(adj[e[1]]=adj[e[1]]||[]).push(e[0]);});
+ var seen={},q=[a];seen[a]=true;
+ while(q.length){var u=q.shift();(adj[u]||[]).forEach(function(v){if(!seen[v]){seen[v]=true;q.push(v);}});}
+ if(!seen[b])return Infinity;
+ var nodes=Object.keys(seen).filter(function(k){return k!==b;}),idx={};
+ nodes.forEach(function(k,i){idx[k]=i;});
+ var N=nodes.length,M=[];
+ for(var i=0;i<N;i++)M.push(new Array(N+1).fill(0));
+ edges.forEach(function(e){var p=e[0],q2=e[1],g=1/e[2];
+  if(p===q2||!seen[p])return;
+  if(p!==b)M[idx[p]][idx[p]]+=g;
+  if(q2!==b)M[idx[q2]][idx[q2]]+=g;
+  if(p!==b&&q2!==b){M[idx[p]][idx[q2]]-=g;M[idx[q2]][idx[p]]-=g;}});
+ M[idx[a]][N]=1;
+ for(var col=0;col<N;col++){var piv=col;
+  for(var rr=col+1;rr<N;rr++)if(Math.abs(M[rr][col])>Math.abs(M[piv][col]))piv=rr;
+  var t=M[col];M[col]=M[piv];M[piv]=t;
+  if(Math.abs(M[col][col])<1e-15)continue;
+  for(var r2=0;r2<N;r2++){if(r2===col)continue;var f=M[r2][col]/M[col][col];
+   if(f)for(var k=col;k<=N;k++)M[r2][k]-=f*M[col][k];}}
+ return M[idx[a]][N]/M[idx[a]][idx[a]];
+}
+function edgesOf(s){return s.r.map(function(rr){return [BYID[rr[0]].grp,BYID[rr[1]].grp,rr[2]];});}
+var ANS=SCEN.map(function(s){return eqR(edgesOf(s),s.A[0]+(s.A[1]-1),s.B[0]+(s.B[1]-1));});
+
+// ---------- Multimeter ----------
+var AR=[['2m',2,1e-3,3],['20m',20,1e-3,2],['200m',200,1e-3,1],['10A',10,1,2]];
+var SECT=[
+ {g:'off',key:'OFF',ranges:[['OFF']]},
+ {g:'v',key:'VDC',main:'V',dc:true,code:'VDC',ranges:[['200m',200,1e-3,1],['2',2,1,3],['20',20,1,2],['200',200,1,1],['1000',1000,1,0]]},
+ {g:'v',key:'VAC',main:'V',ac:true,code:'VAC',ranges:[['2',2,1,3],['20',20,1,2],['200',200,1,1],['750',750,1,0]]},
+ {g:'r',key:'OHM',main:'Ω',code:'OHMS',ranges:[['200',200,1,1],['2k',2,1e3,3],['20k',20,1e3,2],['200k',200,1e3,1],['2000k',2000,1e3,0]]},
+ {g:'r',key:'CONT',cont:true,ranges:[['',200,1,1]]},
+ {g:'a',key:'ADC',main:'A',dc:true,code:'ADC',ranges:AR},
+ {g:'a',key:'AAC',main:'A',ac:true,code:'AAC',ranges:AR}];
+var COL={off:'#C9CDD3',v:'#F5C84B',r:'#8ED1C6',a:'#F4A291'};
+var POS=[];
+SECT.forEach(function(s){s.ranges.forEach(function(r){POS.push({s:s,lbl:r[0],full:r[1],scale:r[2],dec:r[3],id:s.key+':'+r[0]});});});
+var STEP=360/POS.length,C=180;
+function xy(a,rad,w,h){var r=a*Math.PI/180;return {x:(C+rad*Math.sin(r)-w/2).toFixed(1),y:(C-rad*Math.cos(r)-h/2).toFixed(1)};}
+var PORTS=[{id:'10A',lbl:'10A',ring:'#D93A3A',note:'FUSED'},{id:'mA',lbl:'mA',ring:'#D93A3A',note:'FUSED'},{id:'COM',lbl:'COM',ring:'#15171A',note:''},{id:'VO',lbl:'VΩ',ring:'#D93A3A',note:''}];
+function fmt(x,cur){var d=x/cur.scale,p=Math.pow(10,cur.dec),counts=Math.round(Math.abs(d)*p);
+ if(counts>=2000)return {t:'1',over:true};return {t:(counts/p).toFixed(cur.dec),over:false};}
+var DC_SVG='<svg width="14" height="12" viewBox="0 0 18 14" aria-hidden="true"><line x1="1" y1="4" x2="17" y2="4" stroke="currentColor" stroke-width="2"></line><circle cx="3" cy="10" r="1.6" fill="currentColor"></circle><circle cx="9" cy="10" r="1.6" fill="currentColor"></circle><circle cx="15" cy="10" r="1.6" fill="currentColor"></circle></svg>';
+var AC_SVG='<svg width="14" height="12" viewBox="0 0 18 14" aria-hidden="true"><path d="M1 7 C 4 1.5, 7 1.5, 9 7 S 14 12.5, 17 7" fill="none" stroke="currentColor" stroke-width="2"></path></svg>';
+var CONT_SVG='<svg width="20" height="12" viewBox="0 0 28 16" aria-hidden="true"><polygon points="2,2 2,14 11,8" fill="currentColor"></polygon><line x1="12" y1="2" x2="12" y2="14" stroke="currentColor" stroke-width="2"></line><path d="M17 4 Q 20 8 17 12" fill="none" stroke="currentColor" stroke-width="1.8"></path><path d="M21 2 Q 26 8 21 14" fill="none" stroke="currentColor" stroke-width="1.8"></path></svg>';
+
+// static dial geometry
+var DIV=[],ARCS=[],GROUPS=[];
+POS.forEach(function(p,i){if(POS[(i-1+POS.length)%POS.length].s!==p.s)DIV.push(((i-0.5)*STEP).toFixed(2));});
+SECT.forEach(function(s){var ii=[];POS.forEach(function(p,i){if(p.s===s)ii.push(i);});
+ var a0=(ii[0]*STEP-5)*Math.PI/180,a1=(ii[ii.length-1]*STEP+5)*Math.PI/180,R=106;
+ ARCS.push({c:COL[s.g],d:'M '+(C+R*Math.sin(a0)).toFixed(1)+' '+(C-R*Math.cos(a0)).toFixed(1)+' A '+R+' '+R+' 0 0 1 '+(C+R*Math.sin(a1)).toFixed(1)+' '+(C-R*Math.cos(a1)).toFixed(1)});
+ if(s.code){var pt=xy((ii[0]+ii[ii.length-1])*STEP/2,163,46,28);GROUPS.push({s:s,x:pt.x,y:pt.y});}});
+
+// ---------- State ----------
+var S={sc:0,ansVal:'',ansU:'Ω',ansErr:'',answers:{},hints:{},hintShow:false,results:false,name:'',nameErr:'',
+ sel:'OFF:OFF',red:null,black:null,pr:null,pb:null,lead:'red',cover:false,showVals:true};
+function set(o){Object.assign(S,o);render();}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+var BTN='border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;';
+
+function render(){
+ var scen=SCEN[S.sc],mine=S.answers[S.sc],locked=!!mine;
+ var answered=Object.keys(S.answers).length,allDone=answered===SCEN.length;
+ var o='<div style="width:1190px;height:960px;box-sizing:border-box;padding:28px;background:#E7E9EC;font-family:Inter,system-ui,sans-serif;color:#1B1D20;display:flex;gap:24px;align-items:flex-start">';
+
+ // ----- left column -----
+ o+='<div style="width:680px;flex-shrink:0;display:flex;flex-direction:column;gap:14px">';
+ o+='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h1 style="margin:0;font-size:24px;font-weight:800">Resistance challenge</h1><div style="display:flex;gap:6px;flex-wrap:wrap">';
+ SCEN.forEach(function(_,i){var on=i===S.sc,done=!!S.answers[i];
+  o+='<button type="button" data-sc="'+i+'" aria-label="Scenario '+(i+1)+(done?', answered':'')+'" aria-pressed="'+on+'" style="width:40px;height:40px;border-radius:8px;border:2px solid '+((on||done)?'#2459B5':'#C9CDD3')+';background:'+(on?'#2459B5':done?'#DCE7F8':'#FFFFFF')+';color:'+(on?'#FFFFFF':'#1B1D20')+';font-size:15px;font-weight:800;cursor:pointer">'+(i+1)+'</button>';});
+ o+='</div></div>';
+
+ o+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><label for="nameIn" style="font-size:14px;font-weight:700">Your name</label><input id="nameIn" type="text" value="'+esc(S.name)+'" placeholder="Enter your name" autocomplete="off" style="width:260px;height:40px;box-sizing:border-box;padding:0 10px;border-radius:8px;border:1px solid #A8ADB3;background:#FFFFFF;font-size:15px;color:#1B1D20"><span style="font-size:13px;font-weight:600;color:#A3262B">'+esc(S.nameErr)+'</span></div>';
+
+ if(!S.results){
+  // task card
+  o+='<div style="box-sizing:border-box;padding:16px 18px;border-radius:12px;background:#FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.08);display:flex;flex-direction:column;gap:12px">';
+  o+='<div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:13px;font-weight:800;letter-spacing:0.08em;color:#2459B5">SCENARIO '+(S.sc+1)+' OF '+SCEN.length+'</span><span style="font-size:13px;font-weight:700;color:#4A4F57">Answered '+answered+' of '+SCEN.length+'</span></div>';
+  o+='<span style="font-size:16px;font-weight:600">Work out the total resistance between <b>A</b> and <b>B</b>. Lock in your answer, then check it with the multimeter.</span></div>';
+  if(!locked){
+   o+='<div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">';
+   o+='<label style="display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:#4A4F57">Your answer<input id="ansIn" type="number" min="0" step="any" value="'+esc(S.ansVal)+'" style="width:150px;height:44px;box-sizing:border-box;padding:0 10px;border-radius:8px;border:1px solid #A8ADB3;font-size:15px;color:#1B1D20"></label>';
+   o+='<label style="display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:#4A4F57">Unit<select id="unitSel" style="width:84px;height:44px;padding:0 8px;border-radius:8px;border:1px solid #A8ADB3;background:#FFFFFF;font-size:15px;color:#1B1D20"><option value="Ω"'+(S.ansU==='Ω'?' selected':'')+'>Ω</option><option value="kΩ"'+(S.ansU==='kΩ'?' selected':'')+'>kΩ</option></select></label>';
+   o+='<button type="button" data-a="lock" style="height:44px;padding:0 18px;border-radius:8px;border:0;background:#2459B5;color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer">Lock in answer</button>';
+   o+='<span style="font-size:13px;color:#A3262B;font-weight:600">'+esc(S.ansErr)+'</span></div>';
+  } else {
+   o+='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><span style="padding:10px 14px;border-radius:8px;background:#EAF1FC;font-size:15px;font-weight:700">Your answer: '+esc(mine.text)+'</span><span style="font-size:13px;color:#4A4F57">Now measure between A and B.</span></div>';
+  }
+  o+='<div style="display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid #E1E3E6"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">';
+  o+='<button type="button" data-a="hint" aria-expanded="'+S.hintShow+'" style="height:40px;padding:0 16px;border:1px solid #C99A2E;background:#FFF6DD;color:#6B4A06;'+BTN+'">'+(S.hintShow?'Hide hint':'Show hint')+'</button>';
+  if(allDone)o+='<button type="button" data-a="results" style="height:40px;padding:0 18px;border-radius:8px;border:0;background:#1F6B3A;color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer">See your score</button>';
+  o+='</div>';
+  if(S.hintShow){var ht=scen.h.indexOf('Remove cover')>=0?scen.h:scen.h+' Press Remove cover to see which holes are joined by the copper strips.';
+   o+='<div style="padding:10px 12px;border-radius:8px;background:#FFF6DD;border:1px solid #E9C66A;font-size:14px;line-height:1.45;color:#3A2C05">'+esc(ht)+'</div>';}
+  o+='</div></div>';
+
+  // board
+  o+='<div style="position:relative;width:680px;height:420px;flex-shrink:0;border-radius:10px;background:'+(S.cover?'#2F3237':'#F4F2EC')+';box-shadow:0 10px 24px rgba(0,0,0,0.18),inset 0 0 0 1px #D9D5CB">';
+  o+='<div style="position:absolute;left:0;top:196px;width:680px;height:28px;background:'+(S.cover?'#24272B':'#E2DED3')+';box-shadow:inset 0 2px 4px rgba(0,0,0,0.12)"></div>';
+  if(S.cover)STRIPS.forEach(function(s){o+='<div aria-hidden="true" style="position:absolute;left:'+s.l+'px;top:'+s.t+'px;width:'+s.w+'px;height:'+s.h+'px;box-sizing:border-box;border-radius:4px;background:#C8743A;border:1px solid #8A4A20;box-shadow:inset 0 1px 0 rgba(255,214,170,0.6)"></div>';});
+  [[15,'#D93A3A'],[63,'#2F6FD6'],[355,'#2F6FD6'],[403,'#D93A3A']].forEach(function(l){o+='<div style="position:absolute;left:40px;top:'+l[0]+'px;width:600px;height:2px;background:'+l[1]+'"></div>';});
+  [[20,21,'+','#C0282E'],[21,39,'−','#2459B5'],[21,359,'−','#2459B5'],[20,379,'+','#C0282E'],[650,21,'+','#C0282E'],[651,39,'−','#2459B5'],[651,359,'−','#2459B5'],[650,379,'+','#C0282E']].forEach(function(p){
+   o+='<span style="position:absolute;left:'+p[0]+'px;top:'+p[1]+'px;font-size:16px;font-weight:800;color:'+p[3]+'">'+p[2]+'</span>';});
+  LABELS.forEach(function(lb){o+='<span style="position:absolute;left:'+lb.x+'px;top:'+lb.y+'px;width:20px;text-align:center;font-size:10px;font-weight:700;color:'+(S.cover?'#C9CDD3':'#6B7078')+'">'+lb.t+'</span>';});
+  HOLES.forEach(function(h){o+='<button type="button" data-h="'+h.id+'" aria-label="'+h.aria+'" style="position:absolute;left:'+(h.x-6)+'px;top:'+(h.y-6)+'px;width:12px;height:12px;padding:0;border:0;border-radius:2px;cursor:pointer;background:'+(S.cover?'#5E646C':'#2B2B2B')+'"></button>';});
+  var tags='';
+  scen.r.forEach(function(rr){
+   var a=BYID[rr[0]],b=BYID[rr[1]],dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy),bd=bandsOf(rr[2]),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+   o+='<div aria-hidden="true" style="position:absolute;left:'+(mx-len/2).toFixed(1)+'px;top:'+(my-9).toFixed(1)+'px;width:'+len.toFixed(1)+'px;height:18px;transform:rotate('+(Math.atan2(dy,dx)*180/Math.PI).toFixed(2)+'deg);pointer-events:none">';
+   o+='<div style="position:absolute;left:0;top:8px;width:100%;height:2px;background:#9AA0A6"></div><div style="position:absolute;left:-3px;top:6px;width:6px;height:6px;border-radius:50%;background:#9AA0A6"></div><div style="position:absolute;right:-3px;top:6px;width:6px;height:6px;border-radius:50%;background:#9AA0A6"></div>';
+   o+='<div style="position:absolute;left:'+((len-48)/2).toFixed(1)+'px;top:1px;width:48px;height:16px;padding:0 7px;box-sizing:border-box;border-radius:8px;background:#E3C99A;box-shadow:0 2px 3px rgba(0,0,0,0.3);display:flex;align-items:stretch;gap:3px">';
+   o+='<span style="width:4px;background:'+BAND[bd[0]]+'"></span><span style="width:4px;background:'+BAND[bd[1]]+'"></span><span style="width:4px;background:'+BAND[bd[2]]+'"></span><span style="flex:1"></span><span style="width:4px;background:#C9A23A"></span></div></div>';
+   if(S.showVals)tags+='<span aria-hidden="true" style="position:absolute;left:'+(mx-35).toFixed(1)+'px;top:'+(my-26).toFixed(1)+'px;width:70px;text-align:center;pointer-events:none"><span style="display:inline-block;padding:1px 5px;border-radius:4px;background:#1B1D20;color:#FFFFFF;font-size:11px;font-weight:700;white-space:nowrap">'+rLabel(rr[2])+'</span></span>';
+  });
+  o+=tags;
+  [[scen.A,'A','#2459B5'],[scen.B,'B','#B4540F']].forEach(function(t){
+   o+='<span aria-hidden="true" style="position:absolute;left:'+(50+(t[0][1]-1)*20-10)+'px;top:'+(t[0][0]==='T'?68:331)+'px;width:20px;height:20px;border-radius:50%;background:'+t[2]+';color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 0 0 2px #FFFFFF">'+t[1]+'</span>';});
+  [[S.pr,'#D93A3A'],[S.pb,'#1A1A1A']].forEach(function(p){if(!p[0])return;var h=BYID[p[0]];
+   o+='<span aria-hidden="true" style="position:absolute;left:'+(h.x-8)+'px;top:'+(h.y-8)+'px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:'+p[1]+';border:3px solid #FFFFFF;box-shadow:0 2px 5px rgba(0,0,0,0.5);pointer-events:none"></span>';});
+  o+='</div>';
+
+  o+='<div style="display:flex;gap:10px;flex-wrap:wrap">';
+  o+='<button type="button" data-a="cover" aria-pressed="'+S.cover+'" style="height:40px;padding:0 16px;border:1px solid #A8ADB3;background:'+(S.cover?'#1B1D20':'#FFFFFF')+';color:'+(S.cover?'#FFFFFF':'#1B1D20')+';'+BTN+'">'+(S.cover?'Replace cover':'Remove cover')+'</button>';
+  o+='<button type="button" data-a="vals" aria-pressed="'+S.showVals+'" style="height:40px;padding:0 16px;border:1px solid #A8ADB3;background:#FFFFFF;color:#1B1D20;'+BTN+'">'+(S.showVals?'Hide values (use colour code)':'Show values')+'</button>';
+  o+='</div>';
+ } else {
+  // results card
+  var score=0,rows='';
+  SCEN.forEach(function(_,i){var a=S.answers[i],ok=!!a&&Math.abs(a.ohms-ANS[i])<=0.01*ANS[i];if(ok)score++;
+   rows+='<div style="display:grid;grid-template-columns:80px 1fr 1fr 110px 80px;gap:8px;padding:9px 0;border-bottom:1px solid #E1E3E6;font-size:14px"><span style="font-weight:700">'+(i+1)+'</span><span>'+(a?esc(a.text):'—')+'</span><span>'+rLabel(Number(ANS[i].toPrecision(4)))+'</span><span style="font-weight:700;color:'+(ok?'#1F6B3A':'#A3262B')+'">'+(ok?'✓ Correct':'✗ Incorrect')+'</span><span style="color:#4A4F57">'+(S.hints[i]?'Used':'—')+'</span></div>';});
+  o+='<div style="box-sizing:border-box;padding:22px 24px;border-radius:12px;background:#FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.08);display:flex;flex-direction:column;gap:16px">';
+  o+='<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px"><div style="display:flex;flex-direction:column;gap:4px"><h2 style="margin:0;font-size:22px;font-weight:800">Challenge complete</h2><span style="font-size:16px;font-weight:600;color:#4A4F57">Name: <b style="color:#1B1D20">'+esc(S.name)+'</b></span></div><span style="font-size:30px;font-weight:800;color:#2459B5">'+score+' / '+SCEN.length+'</span></div>';
+  o+='<div style="display:flex;flex-direction:column"><div style="display:grid;grid-template-columns:80px 1fr 1fr 110px 80px;gap:8px;padding:8px 0;border-bottom:2px solid #C9CDD3;font-size:12px;font-weight:800;letter-spacing:0.06em;color:#4A4F57"><span>SCENARIO</span><span>YOUR ANSWER</span><span>CORRECT</span><span>RESULT</span><span>HINT</span></div>'+rows+'</div>';
+  o+='<div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" data-a="back" style="height:44px;padding:0 18px;border:1px solid #A8ADB3;background:#FFFFFF;color:#1B1D20;'+BTN+'font-size:14px">Back to the board</button><button type="button" data-a="restart" style="height:44px;padding:0 18px;border:0;background:#2459B5;color:#FFFFFF;'+BTN+'font-size:14px">Restart challenge</button></div></div>';
+ }
+ o+='</div>';
+
+ // ----- right column: meter -----
+ var idx=Math.max(0,POS.findIndex(function(p){return p.id===S.sel;})),cur=POS[idx],s=cur.s,off=s.key==='OFF',out={t:'',over:false};
+ if(locked&&!off){
+  if(s.g==='r'){var leadsOk=(S.red==='VO'&&S.black==='COM')||(S.red==='COM'&&S.black==='VO');
+   if(leadsOk&&S.pr&&S.pb){var R=eqR(edgesOf(scen),BYID[S.pr].grp,BYID[S.pb].grp);out=isFinite(R)?fmt(R,cur):{t:'1',over:true};}
+   else out={t:'1',over:true};}
+  else out=fmt(0,cur);}
+ o+='<div style="width:420px;flex-shrink:0;display:flex;flex-direction:column;gap:14px">';
+ o+='<div style="box-sizing:border-box;padding:14px;border-radius:40px;background:#E9B52A;box-shadow:0 20px 40px rgba(0,0,0,0.22),inset 0 -6px 0 rgba(0,0,0,0.12)"><div style="box-sizing:border-box;padding:16px 16px 18px;border-radius:28px;background:#2A2D32;display:flex;flex-direction:column;gap:14px">';
+ o+='<div style="display:flex;justify-content:space-between;color:#C9CDD3;font-size:11px;font-weight:700;letter-spacing:0.18em"><span>DIGITAL MULTIMETER</span><span style="color:#F5C84B">3½ DIGIT</span></div>';
+ o+='<div style="height:92px;box-sizing:border-box;border-radius:10px;border:6px solid #15171A;background:'+((off||!locked)?'#97A284':'#C3D0A9')+';box-shadow:inset 0 3px 10px rgba(0,0,0,0.35);padding:8px 22px;display:flex;align-items:center"><div style="flex:1;text-align:'+(out.over?'left':'right')+';font-family:\'Share Tech Mono\',monospace;font-size:64px;line-height:1;color:#1C2416">'+out.t+'</div></div>';
+ // dial
+ o+='<div style="position:relative;width:360px;height:360px;align-self:center"><div style="position:absolute;left:38px;top:38px;width:284px;height:284px;border-radius:50%;background:#23262A;box-shadow:inset 0 0 0 2px #3A3E44"></div>';
+ o+='<svg width="360" height="360" viewBox="0 0 360 360" aria-hidden="true" style="position:absolute;left:0;top:0;pointer-events:none">'+ARCS.map(function(a){return '<path d="'+a.d+'" fill="none" stroke="'+a.c+'" stroke-width="4" stroke-linecap="round"></path>';}).join('')+'</svg>';
+ DIV.forEach(function(a){o+='<div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;transform:rotate('+a+'deg)"><div style="position:absolute;left:179px;top:7px;width:2px;height:77px;background:#8A9099"></div></div>';});
+ POS.forEach(function(p,i){var on=i===idx;o+='<div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;transform:rotate('+(i*STEP).toFixed(2)+'deg)"><div style="position:absolute;left:178px;top:82px;width:4px;height:10px;border-radius:2px;background:'+(on?COL[p.s.g]:'#6B7078')+'"></div></div>';});
+ GROUPS.forEach(function(g){o+='<div aria-hidden="true" style="position:absolute;left:'+g.x+'px;top:'+g.y+'px;width:46px;height:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:'+COL[g.s.g]+'"><span style="display:flex;align-items:center;gap:2px;font-size:14px;font-weight:800;line-height:1">'+g.s.main+(g.s.dc?DC_SVG:'')+(g.s.ac?AC_SVG:'')+'</span><span style="font-size:8px;font-weight:700;letter-spacing:0.06em">'+g.s.code+'</span></div>';});
+ POS.forEach(function(p,i){var on=i===idx,col=COL[p.s.g],pt=xy(i*STEP,125,30,18);
+  var aria=p.s.key==='OFF'?'Off':p.s.cont?'Continuity and diode':(p.s.code+' '+p.lbl+' range');
+  o+='<button type="button" data-pos="'+i+'" aria-label="'+aria+'" aria-pressed="'+on+'" style="position:absolute;left:'+pt.x+'px;top:'+pt.y+'px;width:30px;height:18px;box-sizing:border-box;border:0;border-radius:5px;cursor:pointer;padding:0;font-size:10px;font-weight:800;letter-spacing:-0.03em;display:flex;align-items:center;justify-content:center;color:'+(on?'#1B1D20':col)+';background:'+(on?col:'transparent')+'">'+p.lbl+(p.s.cont?CONT_SVG:'')+'</button>';});
+ o+='<button type="button" data-a="turn" aria-label="Turn dial to next setting" style="position:absolute;left:101px;top:101px;width:158px;height:158px;box-sizing:border-box;padding:0;border-radius:50%;border:5px solid #3A3E44;background:#1A1C20;box-shadow:0 8px 18px rgba(0,0,0,0.5);cursor:grab;transform:rotate('+(idx*STEP).toFixed(2)+'deg)"><div style="position:absolute;left:59px;top:3px;width:30px;height:142px;border-radius:15px;background:#33373D;box-shadow:inset 0 2px 0 rgba(255,255,255,0.08);pointer-events:none"><div style="position:absolute;left:12px;top:7px;width:6px;height:34px;border-radius:3px;background:#FFFFFF"></div></div></button>';
+ o+='</div>';
+ // ports
+ o+='<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding-top:4px;border-top:1px solid #3A3E44">';
+ PORTS.forEach(function(p){var hr=S.red===p.id,hb=S.black===p.id;
+  o+='<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:8px"><span style="color:#FFFFFF;font-size:13px;font-weight:800">'+p.lbl+'</span>';
+  o+='<button type="button" data-port="'+p.id+'" aria-label="'+p.lbl+' socket'+(hr?', red lead plugged in':hb?', black lead plugged in':'')+'" style="position:relative;width:46px;height:46px;box-sizing:border-box;padding:0;border-radius:50%;border:7px solid '+p.ring+';background:#0B0C0E;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #4A4F57;cursor:pointer"><span style="width:14px;height:14px;border-radius:50%;background:#000000;box-shadow:0 0 0 3px #8E949B"></span>';
+  if(hr||hb)o+='<span style="position:absolute;left:-2px;top:-2px;width:36px;height:36px;box-sizing:border-box;border-radius:50%;background:'+(hr?'#D93A3A':'#1A1A1A')+';border:3px solid '+(hr?'#F08A8A':'#5A5F66')+';box-shadow:0 4px 8px rgba(0,0,0,0.5)"></span>';
+  o+='</button><span style="min-height:12px;color:#C9CDD3;font-size:9px;font-weight:700;letter-spacing:0.12em">'+p.note+'</span><span aria-hidden="true" style="width:9px;height:22px;border-radius:0 0 5px 5px;background:'+(hr?'#D93A3A':hb?'#111111':'transparent')+'"></span></div>';});
+ o+='</div></div></div>';
+ // lead card
+ function sock(id){var p=PORTS.find(function(z){return z.id===id;});return p?p.lbl:'not plugged in';}
+ function hole(id){return id?(/^(TP|TN|BP|BN)/.test(id)?'rail':id):'not on the board';}
+ o+='<div style="box-sizing:border-box;padding:14px 16px;border-radius:12px;background:#FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.08);display:flex;flex-direction:column;gap:10px">';
+ o+='<span style="font-size:13px;font-weight:700;color:'+(locked?'#1F6B3A':'#A3262B')+'">'+(locked?'Answer locked in: check it with the meter.':'Lock in an answer to switch on the meter.')+'</span>';
+ o+='<div style="display:flex;gap:8px">';
+ [['red','Red lead','#D93A3A'],['black','Black lead','#1A1A1A']].forEach(function(l){var on=S.lead===l[0];
+  o+='<button type="button" data-lead="'+l[0]+'" aria-pressed="'+on+'" style="flex:1;height:44px;border-radius:8px;border:2px solid '+(on?'#2F6FD6':'#C9CDD3')+';background:#FFFFFF;font-size:13px;font-weight:700;color:#1B1D20;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:14px;height:14px;border-radius:50%;background:'+l[2]+'"></span>'+l[1]+'</button>';});
+ o+='</div><span style="font-size:12px;color:#4A4F57">Pick a lead, then click a meter socket to plug it in, or a breadboard hole to touch the probe there.</span>';
+ o+='<span style="font-size:12px;font-weight:600;color:#4A4F57">Red: '+sock(S.red)+', probe '+hole(S.pr)+' · Black: '+sock(S.black)+', probe '+hole(S.pb)+'</span></div>';
+ o+='</div></div>';
+ document.getElementById('stage').innerHTML=o;
+}
+
+var stage=document.getElementById('stage');
+stage.addEventListener('input',function(e){
+ if(e.target.id==='nameIn'){S.name=e.target.value;}
+ else if(e.target.id==='ansIn'){S.ansVal=e.target.value;}
+});
+stage.addEventListener('change',function(e){if(e.target.id==='unitSel')S.ansU=e.target.value;});
+stage.addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b)return;var d=b.dataset;
+ if(d.sc!=null)set({sc:+d.sc,ansVal:'',ansErr:'',hintShow:false,pr:null,pb:null,results:false});
+ else if(d.h){var k=S.lead==='red'?'pr':'pb',u={};u[k]=S[k]===d.h?null:d.h;set(u);}
+ else if(d.pos!=null)set({sel:POS[+d.pos].id});
+ else if(d.port){var lead=S.lead,other=lead==='red'?'black':'red',u2={};
+  if(S[lead]===d.port)u2[lead]=null;else{u2[lead]=d.port;if(S[other]===d.port)u2[other]=null;}set(u2);}
+ else if(d.lead)set({lead:d.lead});
+ else if(d.a==='turn'){var i=POS.findIndex(function(p){return p.id===S.sel;});set({sel:POS[(i+1)%POS.length].id});}
+ else if(d.a==='lock'){var v=parseFloat(S.ansVal);
+  if(!isFinite(v)||v<=0){set({ansErr:'Enter a value first.'});return;}
+  var ans=Object.assign({},S.answers);ans[S.sc]={ohms:v*(S.ansU==='kΩ'?1000:1),text:v+' '+S.ansU};set({answers:ans,ansErr:''});}
+ else if(d.a==='hint'){var h=Object.assign({},S.hints);h[S.sc]=true;set({hintShow:!S.hintShow,hints:h});}
+ else if(d.a==='results'){if(!S.name.trim()){set({nameErr:'Enter your name to see your score.'});return;}set({results:true,nameErr:''});}
+ else if(d.a==='back')set({results:false});
+ else if(d.a==='restart')set({answers:{},hints:{},results:false,sc:0,ansVal:'',ansErr:'',hintShow:false,pr:null,pb:null,name:'',nameErr:''});
+ else if(d.a==='cover')set({cover:!S.cover});
+ else if(d.a==='vals')set({showVals:!S.showVals});
+});
+function fit(){var w=document.getElementById('fit').clientWidth,s=Math.min(1,w/1190),st=document.getElementById('stage');
+ st.style.transform='scale('+s+')';document.getElementById('fit').style.height=(960*s)+'px';
+ st.style.marginLeft=(s===1?Math.max(0,(w-1190)/2):0)+'px';}
+window.addEventListener('resize',fit);render();fit();
+})();
+</script>
+</body>
+</html>
