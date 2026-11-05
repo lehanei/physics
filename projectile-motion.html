@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Projectile Motion</title>
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=STIX+Two+Text:ital@0;1&display=swap">
+<style>
+/* Layout: single reading column of numbered lesson steps; "your turn" questions gate each reveal; graphs on graph-paper panels */
+:root{
+  --bg:#f4f6f9; --panel:#ffffff; --ink:#18212d; --muted:#5a6676; --rule:#d8dee7;
+  --grid:#e3e9f1; --grid2:#ccd6e3;
+  --vel:#2457a6; --tri:#d97a1e; --area:#2e8b57; --areaFill:rgba(46,139,87,.16); --triFill:rgba(217,122,30,.38);
+  --qbg:#eef3fb; --ok:#2e8b57; --bad:#c0392b;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,sans-serif;
+  --math:"STIX Two Text","Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11161d; --panel:#18202a; --ink:#e7ecf2; --muted:#9aa6b5; --rule:#2b3542;
+  --grid:#222c38; --grid2:#2f3b4a;
+  --vel:#7fb0ff; --tri:#f0a050; --area:#5fcf8f; --areaFill:rgba(95,207,143,.16); --triFill:rgba(240,160,80,.40);
+  --qbg:#1a2738; --ok:#5fcf8f; --bad:#ff8a7a;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161d; --panel:#18202a; --ink:#e7ecf2; --muted:#9aa6b5; --rule:#2b3542;
+  --grid:#222c38; --grid2:#2f3b4a;
+  --vel:#7fb0ff; --tri:#f0a050; --area:#5fcf8f; --areaFill:rgba(95,207,143,.16); --triFill:rgba(240,160,80,.40);
+  --qbg:#1a2738; --ok:#5fcf8f; --bad:#ff8a7a;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding-block:40px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:44px}
+header h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,6vw,2.9rem);line-height:1.05;margin:0 0 12px;text-wrap:balance}
+.kicker{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+header p{margin:0;max-width:62ch;color:var(--muted)}
+.score{font-size:.92rem;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:12px!important}
+.score b{color:var(--vel)}
+section{display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--display);font-weight:600;font-size:1.45rem;margin:0;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font-size:.85rem;color:var(--vel);font-variant-numeric:tabular-nums;min-width:1.6em}
+p{margin:0;max-width:65ch}
+.m{font-family:var(--math);font-style:italic;font-size:1.08em}
+.work{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:16px 20px;font-family:var(--math);font-size:1.2rem;display:flex;flex-direction:column;gap:4px;overflow-x:auto}
+.work .line{white-space:nowrap}
+.work .ans{color:var(--vel);font-weight:bold}
+.work .note{font-family:var(--body);font-size:.9rem;color:var(--muted);white-space:normal}
+.terms{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0}
+.terms dt{font-family:var(--math);font-style:italic;font-size:1.15rem}
+.terms dd{margin:0;color:var(--muted)}
+.key{border-left:4px solid var(--vel);padding:12px 18px;background:var(--panel);display:flex;flex-direction:column;gap:6px}
+.key .eqs{font-family:var(--math);font-size:1.5rem;display:flex;flex-wrap:wrap;gap:8px 40px}
+.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.compare div{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.compare b{font-family:var(--math);font-size:1.15rem}
+.compare span{color:var(--muted);font-size:.92rem}
+.compare .yes{border-color:var(--vel)}
+figure{margin:0;background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:12px}
+svg{width:100%;height:auto;display:block}
+svg text{font-family:var(--body);fill:var(--ink);font-size:14px}
+svg .mt{font-family:var(--math);font-size:16px}
+svg .muted{fill:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-size:.92rem;padding:8px 14px;border-radius:999px;border:1.5px solid var(--vel);background:transparent;color:var(--vel);cursor:pointer}
+button:hover:not(:disabled){background:var(--vel);color:var(--panel)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--tri);outline-offset:2px}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.ghost{border-color:var(--rule);color:var(--muted)}
+button.ghost:hover:not(:disabled){background:var(--rule);color:var(--ink)}
+.caption{min-height:4.8em;font-size:.98rem;padding:0 4px}
+.fade{transition:opacity .5s}
+/* question card */
+.q{background:var(--qbg);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.q .tag{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--vel);font-weight:700}
+.q label,.q .prompt{font-weight:700}
+.q .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.q input{font:inherit;font-family:var(--math);font-size:1.15rem;width:7.5em;padding:6px 10px;border:1.5px solid var(--rule);border-radius:6px;background:var(--panel);color:var(--ink);font-variant-numeric:tabular-nums}
+.q .unit{font-family:var(--math);color:var(--muted);min-width:3em}
+.q .fb{font-size:.95rem;min-height:0}
+.q .fb.ok{color:var(--ok)}
+.q .fb.bad{color:var(--bad)}
+.q.done{border-left:4px solid var(--ok)}
+.q .mc{display:flex;flex-wrap:wrap;gap:8px}
+.q .mc button{border-color:var(--rule);color:var(--ink);font-family:var(--math)}
+.q .mc button.picked-bad{border-color:var(--bad);color:var(--bad)}
+.q .mc button.picked-ok{border-color:var(--ok);background:var(--ok);color:var(--panel)}
+.lock{font-size:.88rem;color:var(--muted)}
+.gen .work{font-size:1.1rem}
+/* derivation stage */
+.dstage{position:relative;min-height:3em}
+.dstage .line .eqn{white-space:nowrap}
+.dstage .ans .eqn{color:var(--vel);font-weight:bold}
+.hl{background:var(--qbg);color:var(--tri);border-radius:4px;padding:0 3px;transition:background .4s,color .4s}
+.out{opacity:.15;transition:opacity .4s}
+.flyer{position:absolute;white-space:nowrap;background:var(--qbg);color:var(--tri);border-radius:4px;padding:0 3px;transition:transform 1.2s ease-in-out;z-index:2;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.flyer{transition:none}}
+/* tab 4 columns */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:620px){.cols{grid-template-columns:1fr}}
+.col{gap:10px;min-width:0}
+.colh{font-family:var(--display);font-weight:600;font-size:1.05rem}
+.chip{align-self:flex-start;font-size:1.05rem;padding:2px 10px;border-radius:999px;background:var(--qbg);color:var(--tri);font-weight:bold}
+.erow{white-space:nowrap;transition:opacity .35s,background .4s;border-radius:4px;padding:0 4px;font-size:1.12rem}
+.erow.dim,.a.dim{opacity:.1}
+.a{transition:opacity .35s;border-radius:3px}
+.hlrow{background:var(--qbg)}
+.erow.res{border-top:1px solid var(--rule);padding-top:8px;color:var(--vel);font-weight:bold;white-space:normal}
+.tlink{color:var(--tri);font-weight:bold}
+/* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:4px 24px;border-bottom:1px solid var(--rule);margin-bottom:-16px}
+.tabs a{font-family:var(--display);font-weight:600;font-size:1.05rem;color:var(--muted);text-decoration:none;padding:8px 2px;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs a[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--vel)}
+.tabs a:hover{color:var(--ink)}
+.tabs a:focus-visible{outline:3px solid var(--tri);outline-offset:2px}
+.tab{display:flex;flex-direction:column;gap:44px}
+/* reverse derivation */
+.derive{gap:14px}
+.derive .line{display:flex;flex-direction:column;gap:0}
+.derive .note{font-size:.85rem}
+.st{opacity:0;transform:translateY(6px);transition:opacity .6s,transform .6s}
+.st.in{opacity:1;transform:none}
+.morph{display:flex;align-items:flex-start;gap:10px;font-size:1.9rem;padding-block:4px}
+.morph .op{line-height:1.3;transition:opacity .6s,max-width .6s,margin .6s;max-width:1em;overflow:hidden}
+.morph .op.gone{opacity:0;max-width:0;margin-left:-10px}
+.tok{display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:6px;padding:0 6px;transition:background .3s}
+.tok.active{background:var(--qbg)}
+.tok .face{display:grid;line-height:1.3}
+.tok .num,.tok .sym{grid-area:1/1;text-align:center;transition:opacity .5s,transform .5s}
+.tok .sym{font-style:italic;color:var(--vel);font-weight:bold;opacity:0;transform:translateY(60%)}
+.tok.swap .num{opacity:0;transform:translateY(-60%)}
+.tok.swap .sym{opacity:1;transform:none}
+.tok .lab{font-family:var(--body);font-size:.72rem;line-height:1.25;color:var(--muted);text-align:center;width:6.8em;opacity:0;transition:opacity .5s}
+.tok.swap .lab{opacity:1}
+.say{font-family:var(--body);font-size:.95rem;min-height:1.6em;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.st,.tok .num,.tok .sym,.tok .lab,.morph .op{transition:none}}
+@media (prefers-reduced-motion:reduce){.fade{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="kicker">Mechanics · Projectile motion · Part 1</p>
+  <h1>Uniformly Accelerated Motion</h1>
+  <p>Projectile motion is the resultant of two motions happening at the same time: a horizontal motion and a vertical motion. Motion in each direction obeys the equations of motion. So before projectiles, we need those equations for motion in a straight line with constant acceleration.</p>
+  <p class="score">Answer each question to unlock the next part. Score: <b id="score">0</b> of <span id="total">0</span> correct first time</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Lesson parts">
+  <a href="#uam" role="tab" id="tabbtn-uam">1 · Equations of UAM</a>
+  <a href="#derive" role="tab" id="tabbtn-derive">2 · Deriving the other equations</a>
+  <a href="#vertical" role="tab" id="tabbtn-vertical">3 · Vertical motion</a>
+  <a href="#projectile" role="tab" id="tabbtn-projectile">4 · Projectile motion</a>
+</nav>
+
+<div class="tab" id="tab-uam" role="tabpanel">
+
+<!-- 1 -->
+<section>
+  <h2><span class="n">1</span>How fast is it going at the end?</h2>
+  <p>A car is moving at 20 m s⁻¹. It accelerates at 6 m s⁻² for 4 s. What is its final velocity?</p>
+
+  <div class="q" data-ans="6" data-hint="An acceleration of 6 m s⁻² means 6 m s⁻¹ is gained every second." data-ok="Yes. Every second the car gains 6 m s⁻¹." data-show="6 m s⁻¹ every second.">
+    <span class="tag">Your turn</span>
+    <label for="q1a">By how much does the velocity increase each second?</label>
+    <div class="row"><input id="q1a" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+
+  <div class="q" data-ans="44" data-unlock="w1" data-hint="Start at 20 m s⁻¹. Add 6 m s⁻¹ for each of the 4 seconds." data-ok="Correct. 20 + 24 = 44 m s⁻¹." data-show="20 + (6)(4) = 44 m s⁻¹">
+    <span class="tag">Your turn</span>
+    <label for="q1b">What is the final velocity after 4 s?</label>
+    <div class="row"><input id="q1b" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+
+  <div id="w1" hidden>
+    <div style="display:flex;flex-direction:column;gap:14px">
+    <p>Here is what you just did. Watch your calculation turn into an equation.</p>
+    <div class="work derive">
+      <div class="line st" id="d1"><span>20 + 24 = 44</span><span class="note">starting velocity + velocity gained = final velocity</span></div>
+      <div class="line st" id="d2"><span>20 + 6 × 4 = 44</span><span class="note">velocity gained = 6 m s⁻¹ every second, for 4 seconds</span></div>
+      <div class="morph st" id="d3">
+        <span class="tok" data-say="20 m s⁻¹ is the velocity at the start: the initial velocity, u."><span class="face"><span class="num">20</span><span class="sym">u</span></span><span class="lab">initial velocity<br>m s⁻¹</span></span>
+        <span class="op">+</span>
+        <span class="tok" data-say="6 m s⁻² is the acceleration, a."><span class="face"><span class="num">6</span><span class="sym">a</span></span><span class="lab">acceleration<br>m s⁻²</span></span>
+        <span class="op times">×</span>
+        <span class="tok" data-say="4 s is the time, t."><span class="face"><span class="num">4</span><span class="sym">t</span></span><span class="lab">time<br>s</span></span>
+        <span class="op">=</span>
+        <span class="tok" data-say="44 m s⁻¹ is the velocity at the end: the final velocity, v."><span class="face"><span class="num">44</span><span class="sym">v</span></span><span class="lab">final velocity<br>m s⁻¹</span></span>
+      </div>
+      <div class="line ans st" id="d4"><span>so &nbsp;<i>v</i> = <i>u</i> + <i>at</i></span><span class="note">This works for any object with constant acceleration. Put in its own <i>u</i>, <i>a</i> and <i>t</i>.</span></div>
+      <p class="say" id="say" aria-live="polite"></p>
+      <div class="controls"><button type="button" class="ghost" id="replay">Replay</button></div>
+    </div>
+
+    <div class="q" data-type="mc" data-ans="bigger" data-hint="If a is positive, a × t is a positive amount added on to u." data-ok="Right. With a positive acceleration, a × t is added on to u, so the longer it accelerates, the bigger v gets." data-show="v gets bigger.">
+      <span class="tag">Your turn</span>
+      <span class="prompt">In <span class="m">v</span> = <span class="m">u</span> + <span class="m">at</span>, if <span class="m">a</span> is positive (speeding up), as <span class="m">t</span> gets bigger, <span class="m">v</span>…</span>
+      <div class="mc"><button type="button" data-v="bigger">gets bigger</button><button type="button" data-v="smaller">gets smaller</button><button type="button" data-v="same">stays the same</button></div>
+      <p class="fb" aria-live="polite"></p>
+    </div>
+
+    <div class="q" data-type="mc" data-ans="smaller" data-hint="If a is negative, a × t is negative. What happens when you add a negative number to u?" data-ok="Right. With a negative acceleration, a × t is negative, so velocity is taken away every second. The longer it goes on, the smaller v gets." data-show="v gets smaller.">
+      <span class="tag">Your turn</span>
+      <span class="prompt">Now if <span class="m">a</span> is negative (slowing down), as <span class="m">t</span> gets bigger, <span class="m">v</span>…</span>
+      <div class="mc"><button type="button" data-v="bigger">gets bigger</button><button type="button" data-v="smaller">gets smaller</button><button type="button" data-v="same">stays the same</button></div>
+      <p class="fb" aria-live="polite"></p>
+    </div>
+
+    <div class="q" data-ans="4" data-unlock="w1b" data-hint="Find the change in velocity (30 − 10), then divide by the time it took." data-ok="Correct. (30 − 10) ÷ 5 = 4 m s⁻²." data-show="(30 − 10) ÷ 5 = 4 m s⁻²">
+      <span class="tag">Your turn</span>
+      <label for="q1d">A different car goes from 10 m s⁻¹ to 30 m s⁻¹ in 5 s. What is its acceleration?</label>
+      <div class="row"><input id="q1d" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻²</span><button type="button" class="chk">Check</button></div>
+      <p class="fb" aria-live="polite"></p>
+    </div>
+
+    <div id="w1b" hidden>
+      <div style="display:flex;flex-direction:column;gap:14px">
+      <p>You rearranged the equation to find <span class="m">a</span>. That rearrangement is the definition of acceleration:</p>
+      <div class="work">
+        <div class="line"><i>a</i> = (<i>v</i> − <i>u</i>) / <i>t</i> = Δ<i>v</i> / Δ<i>t</i></div>
+        <div class="line note">Acceleration is the change in velocity per unit time.</div>
+        <div class="line note">Units: (m s⁻¹) / s = m s⁻², metres per second, per second.</div>
+      </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section>
+  <h2><span class="n">2</span>How far did it go?</h2>
+  <p>Back to the first car: 20 m s⁻¹ up to 44 m s⁻¹ in 4 s. How far did it travel while accelerating?</p>
+
+  <div class="q" data-ans="80" data-hint="Distance = velocity × time. Use 20 m s⁻¹ for 4 s." data-ok="Correct. 20 × 4 = 80 m." data-show="20 × 4 = 80 m">
+    <span class="tag">Your turn</span>
+    <label for="q2a">If the car stayed at 20 m s⁻¹ for all 4 s, how far would it go?</label>
+    <div class="row"><input id="q2a" inputmode="decimal" autocomplete="off"><span class="unit">m</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="176" data-hint="Distance = velocity × time. Use 44 m s⁻¹ for 4 s." data-ok="Correct. 44 × 4 = 176 m." data-show="44 × 4 = 176 m">
+    <span class="tag">Your turn</span>
+    <label for="q2b">If it was at 44 m s⁻¹ for all 4 s, how far would it go?</label>
+    <div class="row"><input id="q2b" inputmode="decimal" autocomplete="off"><span class="unit">m</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-type="mc" data-ans="between" data-unlock="w2a" data-hint="Was the car slower than 20 m s⁻¹ at any time? Faster than 44 m s⁻¹?" data-ok="Right. It was faster than 20 m s⁻¹ for most of the time, but never as fast as 44 m s⁻¹ until the very end." data-show="Between 80 m and 176 m.">
+    <span class="tag">Your turn</span>
+    <span class="prompt">So the real distance is…</span>
+    <div class="mc"><button type="button" data-v="less">less than 80 m</button><button type="button" data-v="between">between 80 m and 176 m</button><button type="button" data-v="more">more than 176 m</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+
+  <div id="w2a" hidden>
+    <div style="display:flex;flex-direction:column;gap:14px">
+    <p><span class="m">u</span> × <span class="m">t</span> is too small and <span class="m">v</span> × <span class="m">t</span> is too big. We need a velocity in between: the average.</p>
+    <div class="q" data-ans="32" data-hint="Add the start and end velocities, then divide by 2." data-ok="Correct. (20 + 44) ÷ 2 = 32 m s⁻¹." data-show="(20 + 44) ÷ 2 = 32 m s⁻¹">
+      <span class="tag">Your turn</span>
+      <label for="q2d">What is the average velocity?</label>
+      <div class="row"><input id="q2d" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+      <p class="fb" aria-live="polite"></p>
+    </div>
+    <div class="q" data-ans="128" data-unlock="w2b" data-hint="Distance = average velocity × time." data-ok="Correct. 32 × 4 = 128 m." data-show="32 × 4 = 128 m">
+      <span class="tag">Your turn</span>
+      <label for="q2e">So how far did the car actually travel?</label>
+      <div class="row"><input id="q2e" inputmode="decimal" autocomplete="off"><span class="unit">m</span><button type="button" class="chk">Check</button></div>
+      <p class="fb" aria-live="polite"></p>
+    </div>
+    </div>
+  </div>
+
+  <div id="w2b" hidden>
+    <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="compare">
+      <div><b>u × t = 80 m</b><span>Too small. It only went 20 m s⁻¹ at the very start.</span></div>
+      <div><b>v × t = 176 m</b><span>Too big. It only reached 44 m s⁻¹ at the very end.</span></div>
+      <div class="yes"><b>(u + v)/2 × t = 128 m</b><span>Use the average velocity, 32 m s⁻¹.</span></div>
+    </div>
+    <div class="work">
+      <div class="line"><i>s</i> = ((<i>u</i> + <i>v</i>) / 2) <i>t</i></div>
+      <div class="line"><i>s</i> = ((20 + 44) / 2)(4)</div>
+      <div class="line"><i>s</i> = (32)(4)</div>
+      <div class="line ans"><i>s</i> = 128 m</div>
+      <div class="line note"><i>s</i> = displacement (m). (<i>u</i> + <i>v</i>)/2 is the average velocity, so displacement = average velocity × time.</div>
+    </div>
+    <div class="key">
+      <p>These are the two equations of uniformly accelerated motion. Every UAM question can be solved using these two equations.</p>
+      <div class="eqs"><span><i>v</i> = <i>u</i> + <i>at</i></span><span><i>s</i> = ((<i>u</i> + <i>v</i>)/2) <i>t</i></span></div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section>
+  <h2><span class="n">3</span>The same idea on a graph: constant velocity</h2>
+  <p>First, a car moving at a constant 32 m s⁻¹ for 4 s. On a velocity–time graph this is a horizontal line, and the region under it is a rectangle.</p>
+  <figure>
+    <svg viewBox="0 0 520 380" role="img" aria-label="Velocity-time graph: constant 32 metres per second for 4 seconds, rectangle under the line">
+      <g id="axes1"></g>
+      <rect x="60" y="131.6" width="440" height="198.4" fill="var(--areaFill)" stroke="var(--area)" stroke-width="2"/>
+      <line x1="60" y1="131.6" x2="500" y2="131.6" stroke="var(--vel)" stroke-width="3"/>
+      <text x="72" y="236" class="mt">height = 32 m s⁻¹</text>
+      <text x="280" y="316" text-anchor="middle" class="mt">length = 4 s</text>
+      <text id="area1" hidden x="280" y="210" text-anchor="middle" class="mt" style="font-size:19px;fill:var(--area);font-weight:bold">area = 32 m s⁻¹ × 4 s = 128 m</text>
+    </svg>
+  </figure>
+  <div class="q" data-ans="128" data-unlock="area1" data-hint="Area of a rectangle = height × length." data-ok="Correct. 32 × 4 = 128." data-show="32 × 4 = 128">
+    <span class="tag">Your turn</span>
+    <label for="q3a">What is the area of the rectangle?</label>
+    <div class="row"><input id="q3a" inputmode="decimal" autocomplete="off"><span class="unit"></span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-type="mc" data-ans="m" data-unlock="w3" data-hint="Multiply the units: m s⁻¹ × s. The s⁻¹ and the s cancel." data-ok="Right. m s⁻¹ × s = m. The area is a distance in metres." data-show="m s⁻¹ × s = m">
+    <span class="tag">Your turn</span>
+    <span class="prompt">What unit does that area have? (m s⁻¹ × s = ?)</span>
+    <div class="mc"><button type="button" data-v="ms">m s⁻¹</button><button type="button" data-v="m">m</button><button type="button" data-v="s">s</button><button type="button" data-v="ms2">m s⁻²</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div id="w3" hidden>
+    <div class="key"><p><b>The area under a velocity–time graph is the displacement.</b> A car going 32 m s⁻¹ for 4 s travels 128 m, and that is the area of the rectangle.</p></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section>
+  <h2><span class="n">4</span>The graph of the accelerating car</h2>
+  <p>Now the car from steps 1 and 2: it starts at 20 m s⁻¹ and accelerates at 6 m s⁻² for 4 s.</p>
+
+  <div class="q" data-ans="32" data-hint="Use v = u + at with t = 2." data-ok="Correct. 20 + 6(2) = 32 m s⁻¹. Press button 1 and check it against the readout when the dot passes t = 2 s." data-show="20 + 6(2) = 32 m s⁻¹">
+    <span class="tag">Predict</span>
+    <label for="q4a">Before you press play: what will the velocity be at t = 2 s?</label>
+    <div class="row"><input id="q4a" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+
+  <figure>
+    <svg id="g2" viewBox="0 0 520 380" role="img" aria-label="Velocity-time graph of a car accelerating from 20 to 44 metres per second in 4 seconds">
+      <g id="axes2"></g>
+      <polygon id="trap" class="fade" points="60,330 60,206 500,57.2 500,330" fill="var(--areaFill)" opacity="0"/>
+      <g id="slope" class="fade" opacity="0">
+        <line x1="60" y1="206" x2="500" y2="206" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5"/>
+        <line x1="500" y1="206" x2="500" y2="57.2" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5"/>
+        <text x="280" y="226" text-anchor="middle" class="mt">Δt = 4 s</text>
+        <text x="490" y="140" text-anchor="end" class="mt">Δv = 44 − 20 = 24 m s⁻¹</text>
+        <text x="76" y="78" class="mt" style="fill:var(--vel);font-weight:bold">slope = Δv/Δt = 24/4 = 6 m s⁻² = a</text>
+      </g>
+      <g id="avg" class="fade" opacity="0">
+        <line x1="60" y1="131.6" x2="500" y2="131.6" stroke="var(--area)" stroke-width="2" stroke-dasharray="8 5"/>
+        <polygon points="60,206 280,131.6 60,131.6" fill="none" stroke="var(--tri)" stroke-width="2" stroke-dasharray="5 4"/>
+        <text x="76" y="120" class="mt" style="fill:var(--area)">average = (u + v)/2 = 32 m s⁻¹</text>
+      </g>
+      <polygon id="tri" points="280,131.6 500,57.2 500,131.6" fill="var(--triFill)" stroke="var(--tri)" stroke-width="2" opacity="0"/>
+      <g id="final" class="fade" opacity="0">
+        <rect x="60" y="131.6" width="440" height="198.4" fill="none" stroke="var(--area)" stroke-width="3"/>
+        <text x="280" y="240" text-anchor="middle" class="mt" style="font-size:19px;fill:var(--area);font-weight:bold">s = 32 × 4 = 128 m</text>
+      </g>
+      <path id="trail" d="M60,206" stroke="var(--vel)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle id="dot" cx="60" cy="206" r="8" fill="var(--vel)" stroke="var(--panel)" stroke-width="2"/>
+      <text id="readout" x="76" y="44" class="mt">t = 0.0 s   v = 20 + 6(0.0) = 20.0 m s⁻¹</text>
+    </svg>
+    <div class="controls">
+      <button id="b1" type="button">1 · Move the dot</button>
+      <button id="b2" type="button" disabled>2 · Show the slope</button>
+      <button id="b3" type="button" disabled>3 · Cut and move the triangle</button>
+      <button id="b0" type="button" class="ghost">Reset</button>
+    </div>
+    <p class="caption" id="cap" aria-live="polite">The dot starts at (0, 20). The line meets the velocity axis at <span class="m">u</span> = 20 m s⁻¹.</p>
+  </figure>
+
+  <div class="q" data-ans="6" data-unlock="b2" data-hint="Slope = rise ÷ run. Rise = 44 − 20. Run = 4 s." data-ok="Correct. 24 ÷ 4 = 6. Press button 2 to see it on the graph." data-show="(44 − 20) ÷ 4 = 6 m s⁻²">
+    <span class="tag">Your turn</span>
+    <label for="q4b">Work out the slope of the line (rise ÷ run).</label>
+    <div class="row"><input id="q4b" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻²</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-type="mc" data-ans="a" data-hint="What were the units of your slope? Which quantity has units m s⁻²?" data-ok="Right. The slope of a v–t graph is the acceleration." data-show="The acceleration, a.">
+    <span class="tag">Your turn</span>
+    <span class="prompt">The slope of a velocity–time graph is the…</span>
+    <div class="mc"><button type="button" data-v="s">displacement</button><button type="button" data-v="v">velocity</button><button type="button" data-v="a">acceleration</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="2" data-unlock="b3" data-hint="The average velocity is 32 m s⁻¹. Find the time when v = 32 using v = u + at: 32 = 20 + 6t." data-ok="Correct. The line crosses 32 m s⁻¹ at t = 2 s, exactly halfway. Press button 3 to see why that matters." data-show="32 = 20 + 6t, so t = 2 s">
+    <span class="tag">Your turn</span>
+    <label for="q4d">At what time does the line pass the average velocity, 32 m s⁻¹?</label>
+    <div class="row"><input id="q4d" inputmode="decimal" autocomplete="off"><span class="unit">s</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <p class="lock" id="lockmsg">Buttons 2 and 3 unlock when you answer the questions about the slope and the halfway point.</p>
+  <p>Both equations are on the graph. The <b>slope</b> is the acceleration, <span class="m">a</span> = (<span class="m">v</span> − <span class="m">u</span>)/<span class="m">t</span>, which rearranges to <span class="m">v</span> = <span class="m">u</span> + <span class="m">at</span>. The <b>area</b> is the displacement, and moving the triangle shows it equals the average velocity × time: <span class="m">s</span> = ((<span class="m">u</span> + <span class="m">v</span>)/2) <span class="m">t</span>.</p>
+</section>
+
+<!-- 5 -->
+<section class="gen" data-more="uam"></section>
+</div><!-- /tab-uam -->
+
+<div class="tab" id="tab-derive" role="tabpanel" hidden>
+
+<section>
+  <h2><span class="n">1</span>Two equations, two questions</h2>
+  <p>You know two equations of uniformly accelerated motion. In the log tables they are numbered 1 and 4.</p>
+  <div class="key">
+    <div class="eqs"><span>(1) <i>v</i> = <i>u</i> + <i>at</i></span><span>(4) <i>s</i> = ((<i>u</i> + <i>v</i>)/2) <i>t</i></span></div>
+  </div>
+  <p>Solve the two questions below using only these. Then look closely at how you solved them.</p>
+</section>
+
+<section>
+  <h2><span class="n">2</span>When you're not told the final velocity</h2>
+  <p>A car moving at 20 m s⁻¹ accelerates at 6 m s⁻² for 4 s. How far does it travel?</p>
+  <div class="q" data-ans="128" data-unlock="dA" data-hint="Equation 4 needs v, and you aren't given it. Find v first with v = u + at, then use s = ((u + v)/2) t." data-ok="Correct. Now look at how you solved it." data-show="v = 20 + 6(4) = 44, then s = ((20 + 44)/2)(4) = 128 m">
+    <span class="tag">Your turn</span>
+    <label for="dq1">Find <span class="m">s</span>.</label>
+    <div class="row"><input id="dq1" inputmode="decimal" autocomplete="off"><span class="unit">m</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div id="dA" hidden>
+    <figure>
+      <div class="work derive dstage" id="stageA"></div>
+      <p class="say" id="sayA" aria-live="polite">Press Next step to look at how you solved it.</p>
+      <div class="controls"><button type="button" id="nextA">Next step</button><button type="button" id="allA" class="ghost">Play all</button><button type="button" id="resetA" class="ghost">Reset</button></div>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>When you're not told the time</h2>
+  <p>A car speeds up from 20 m s⁻¹ to 44 m s⁻¹ with an acceleration of 6 m s⁻². How far does it travel? This time you are not told how long it took.</p>
+  <div class="q" data-ans="128" data-unlock="dB" data-hint="Equation 4 needs t, and you aren't given it. Find t first with v = u + at: 44 = 20 + 6t. Then use s = ((u + v)/2) t." data-ok="Correct. Now look at how you solved it." data-show="44 = 20 + 6t gives t = 4, then s = ((20 + 44)/2)(4) = 128 m">
+    <span class="tag">Your turn</span>
+    <label for="dq2">Find <span class="m">s</span>.</label>
+    <div class="row"><input id="dq2" inputmode="decimal" autocomplete="off"><span class="unit">m</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div id="dB" hidden>
+    <figure>
+      <div class="work derive dstage" id="stageB"></div>
+      <p class="say" id="sayB" aria-live="polite">Press Next step to look at how you solved it.</p>
+      <div class="controls"><button type="button" id="nextB">Next step</button><button type="button" id="allB" class="ghost">Play all</button><button type="button" id="resetB" class="ghost">Reset</button></div>
+    </figure>
+  </div>
+</section>
+
+<section id="dAll" hidden>
+  <h2><span class="n">4</span>All four equations</h2>
+  <div class="work">
+    <div class="line">(1) &nbsp;<i>v</i> = <i>u</i> + <i>at</i> <span class="note">&nbsp; no <i>s</i></span></div>
+    <div class="line">(2) &nbsp;<i>s</i> = <i>ut</i> + ½<i>at</i>² <span class="note">&nbsp; no <i>v</i></span></div>
+    <div class="line">(3) &nbsp;<i>v</i>² = <i>u</i>² + 2<i>as</i> <span class="note">&nbsp; no <i>t</i></span></div>
+    <div class="line">(4) &nbsp;<i>s</i> = ((<i>u</i> + <i>v</i>)/2) <i>t</i> <span class="note">&nbsp; no <i>a</i></span></div>
+    <div class="line note">Each equation leaves out one quantity. Equations 2 and 3 are shortcuts. They do the two steps of 1 and 4 in one go.</div>
+  </div>
+</section>
+<section class="gen" data-more="der" id="dMore" hidden></section>
+</div><!-- /tab-derive -->
+
+<div class="tab" id="tab-vertical" role="tabpanel" hidden>
+
+<section>
+  <h2><span class="n">1</span>A special case of UAM</h2>
+  <p>Anything moving freely straight up or down, whether thrown, dropped or falling, is doing uniformly accelerated motion. It is a special case because we always know the acceleration: <b>10 m s⁻² downwards</b>, caused by gravity. It is the same on the way up, at the very top, and on the way down.</p>
+  <p>Direction matters, so pick a positive direction and stick to it. On this page, <b>up is positive</b>. Gravity acts down, so <span class="m">a</span> = −10 m s⁻².</p>
+  <div class="key">
+    <p>Put <span class="m">a</span> = −10 into the two equations of UAM:</p>
+    <div class="eqs"><span><i>v</i> = <i>u</i> − 10<i>t</i></span><span><i>s</i> = ((<i>u</i> + <i>v</i>)/2) <i>t</i></span></div>
+    <p class="lock">Positive <span class="m">v</span>: moving up. Negative <span class="m">v</span>: moving down. Positive <span class="m">s</span>: above the start. Negative <span class="m">s</span>: below the start.</p>
+  </div>
+  <p>Read <span class="m">v</span> = <span class="m">u</span> − 10<span class="m">t</span> as a relationship: for every second the object is in the air, 10 m s⁻¹ is taken off its velocity. That is what an acceleration of 10 m s⁻² downwards means.</p>
+
+  <div class="q" data-ans="15" data-hint="10 m s⁻¹ is taken off the velocity every second." data-ok="Correct. 25 − 10 = 15 m s⁻¹, still moving up." data-show="25 − 10(1) = 15 m s⁻¹">
+    <span class="tag">Your turn</span>
+    <label for="v1a">A ball is moving up at 25 m s⁻¹. What is its velocity 1 s later?</label>
+    <div class="row"><input id="v1a" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-type="mc" data-ans="down" data-hint="Does gravity switch off when the ball stops for an instant?" data-ok="Right. Gravity never switches off. At the top the velocity is zero for an instant, but it is still changing at 10 m s⁻² downwards. That is why it comes back down." data-show="10 m s⁻² downwards.">
+    <span class="tag">Your turn</span>
+    <span class="prompt">At the very top of its flight, the ball's acceleration is…</span>
+    <div class="mc"><button type="button" data-v="zero">zero</button><button type="button" data-v="down">10 m s⁻² downwards</button><button type="button" data-v="up">10 m s⁻² upwards</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>Throwing a ball straight up</h2>
+  <p>A ball is thrown straight up at 30 m s⁻¹.</p>
+
+  <div class="q" data-ans="10" data-hint="Use v = u − 10t with u = 30 and t = 2." data-ok="Correct. 30 − 10(2) = 10 m s⁻¹. Still going up, but slower." data-show="30 − 10(2) = 10 m s⁻¹">
+    <span class="tag">Your turn</span>
+    <label for="v2a">What is its velocity after 2 s?</label>
+    <div class="row"><input id="v2a" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="0" data-hint="At the top the ball has stopped going up and has not yet started coming down." data-ok="Correct. At the highest point v = 0. This is the key fact for every 'maximum height' question." data-show="v = 0 at the top.">
+    <span class="tag">Your turn</span>
+    <label for="v2b">What is its velocity at the highest point?</label>
+    <div class="row"><input id="v2b" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="3" data-unlock="vw1" data-hint="Use v = u − 10t with v = 0 at the top: 0 = 30 − 10t." data-ok="Correct. It loses 10 m s⁻¹ every second, so 30 m s⁻¹ takes 3 s to lose." data-show="0 = 30 − 10t, so t = 3 s">
+    <span class="tag">Your turn</span>
+    <label for="v2c">How long does it take to reach the top?</label>
+    <div class="row"><input id="v2c" inputmode="decimal" autocomplete="off"><span class="unit">s</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div id="vw1" hidden>
+    <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="work">
+      <div class="line"><i>v</i> = <i>u</i> − 10<i>t</i></div>
+      <div class="line">0 = 30 − 10<i>t</i></div>
+      <div class="line">10<i>t</i> = 30</div>
+      <div class="line ans"><i>t</i> = 3 s</div>
+    </div>
+    <div class="q" data-ans="45" data-unlock="vw2" data-hint="Use s = ((u + v)/2) t with u = 30, v = 0 and t = 3." data-ok="Correct. The average velocity on the way up is 15 m s⁻¹, for 3 s." data-show="((30 + 0)/2)(3) = 45 m">
+      <span class="tag">Your turn</span>
+      <label for="v2d">What is the maximum height?</label>
+      <div class="row"><input id="v2d" inputmode="decimal" autocomplete="off"><span class="unit">m</span><button type="button" class="chk">Check</button></div>
+      <p class="fb" aria-live="polite"></p>
+    </div>
+    </div>
+  </div>
+  <div id="vw2" hidden>
+    <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="work">
+      <div class="line"><i>s</i> = ((<i>u</i> + <i>v</i>)/2) <i>t</i></div>
+      <div class="line"><i>s</i> = ((30 + 0)/2)(3)</div>
+      <div class="line"><i>s</i> = (15)(3)</div>
+      <div class="line ans"><i>s</i> = 45 m</div>
+    </div>
+    <div class="q" data-ans="-20" data-hint="Use v = 30 − 10(5). A negative answer is allowed." data-ok="Correct. v = 30 − 50 = −20 m s⁻¹." data-show="30 − 10(5) = −20 m s⁻¹">
+      <span class="tag">Your turn</span>
+      <label for="v2e">What is its velocity after 5 s?</label>
+      <div class="row"><input id="v2e" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+      <p class="fb" aria-live="polite"></p>
+    </div>
+    <div class="q" data-type="mc" data-ans="down" data-hint="Up is positive. What does the minus sign on a velocity tell you?" data-ok="Right. The minus sign is a direction. After 5 s the ball has passed the top and is coming down at 20 m s⁻¹." data-show="It is moving downwards at 20 m s⁻¹.">
+      <span class="tag">Your turn</span>
+      <span class="prompt"><span class="m">v</span> = −20 m s⁻¹ means the ball is…</span>
+      <div class="mc"><button type="button" data-v="below">below where it started</button><button type="button" data-v="down">moving downwards at 20 m s⁻¹</button><button type="button" data-v="slow">slowing down</button></div>
+      <p class="fb" aria-live="polite"></p>
+    </div>
+    <div class="q" data-ans="6" data-hint="The way down mirrors the way up. Or: back at your hand, s = 0, and s = ((u + v)/2) t is only 0 if v = −30. Then use v = u − 10t." data-ok="Correct. 3 s up and 3 s down. It arrives back at your hand at 30 m s⁻¹ moving down: v = −30 m s⁻¹." data-show="−30 = 30 − 10t, so t = 6 s">
+      <span class="tag">Your turn</span>
+      <label for="v2f">How long is the ball in the air before it is back in your hand?</label>
+      <div class="row"><input id="v2f" inputmode="decimal" autocomplete="off"><span class="unit">s</span><button type="button" class="chk">Check</button></div>
+      <p class="fb" aria-live="polite"></p>
+    </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>Watch the throw on a graph</h2>
+  <div class="q" data-ans="-10" data-hint="The slope of a v–t graph is the acceleration. Up is positive." data-ok="Correct. The slope is the acceleration, −10 m s⁻². Press Throw and watch the line." data-show="−10 m s⁻²">
+    <span class="tag">Predict</span>
+    <label for="v3a">Before you press Throw: what will the slope of the v–t graph be?</label>
+    <div class="row"><input id="v3a" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻²</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <figure>
+    <svg id="g3" viewBox="0 0 520 380" role="img" aria-label="A ball thrown up at 30 metres per second beside its velocity-time graph">
+      <defs>
+        <marker id="hv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--vel)"/></marker>
+        <marker id="hg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--tri)"/></marker>
+      </defs>
+      <g id="axes3"></g>
+      <polygon id="up3" class="fade" opacity="0" points="" fill="var(--areaFill)" stroke="var(--area)" stroke-width="1.5"/>
+      <polygon id="dn3" class="fade" opacity="0" points="" fill="var(--triFill)" stroke="var(--tri)" stroke-width="1.5"/>
+      <g id="lab3" class="fade" opacity="0">
+        <text id="lu3" class="mt" style="fill:var(--area);font-weight:bold">+45 m</text>
+        <text id="ld3" class="mt" style="fill:var(--tri);font-weight:bold">−45 m</text>
+      </g>
+      <g id="top3" class="fade" opacity="0"><text id="tt3" class="mt" text-anchor="middle">top: v = 0</text></g>
+      <path id="trail3" d="" stroke="var(--vel)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle id="dot3" r="7" fill="var(--vel)" stroke="var(--panel)" stroke-width="2"/>
+      <!-- ball column -->
+      <line x1="40" x2="150" y1="345" y2="345" stroke="var(--ink)" stroke-width="2"/>
+      <line id="hmax" x1="60" x2="150" stroke="var(--muted)" stroke-dasharray="4 4"/>
+      <text id="hmaxl" x="150" text-anchor="end" class="muted" style="font-size:12px">45 m</text>
+      <line id="garrow" x1="0" y1="0" x2="0" y2="0" stroke="var(--tri)" stroke-width="2.5" marker-end="url(#hg)"/>
+      <text id="glab" class="mt" style="fill:var(--tri);font-size:13px">a = 10 ↓</text>
+      <line id="varrow" x1="0" y1="0" x2="0" y2="0" stroke="var(--vel)" stroke-width="3.5" marker-end="url(#hv)"/>
+      <circle id="ball" cx="80" r="9" fill="var(--ink)"/>
+      <text x="95" y="368" text-anchor="middle" class="muted" style="font-size:12px">ball</text>
+      <text id="ro1" x="20" y="26" class="mt">t = 0.0 s   v = 30 − 10(0.0) = 30.0 m s⁻¹</text>
+      <text id="ro2" x="20" y="48" class="mt">s = ((30 + 30.0)/2)(0.0) = 0.0 m</text>
+    </svg>
+    <div class="controls">
+      <button id="throw" type="button">Throw</button>
+      <button id="reset3" type="button" class="ghost">Reset</button>
+    </div>
+    <p class="caption" id="cap3" aria-live="polite">The ball leaves your hand at 30 m s⁻¹ upwards. The blue arrow is its velocity. The orange arrow is its acceleration, which never changes.</p>
+  </figure>
+  <p>The v–t graph is one straight line with slope −10 m s⁻² for the whole flight, up and down. The area above the time axis is the 45 m it rises. The area below is the 45 m it falls, so it counts as negative. The total displacement is 45 − 45 = 0, because it lands back where it started.</p>
+</section>
+
+<section>
+  <h2><span class="n">4</span>Dropping an object</h2>
+  <p>A stone is dropped from rest off a cliff. It hits the sea 4 s later.</p>
+  <div class="q" data-type="mc" data-ans="0" data-hint="'From rest' tells you how fast it was moving at the start." data-ok="Right. Dropped from rest means u = 0. Look out for this phrase: it gives you a value without stating a number." data-show="u = 0">
+    <span class="tag">Your turn</span>
+    <span class="prompt">What is <span class="m">u</span>?</span>
+    <div class="mc"><button type="button" data-v="0">0</button><button type="button" data-v="10">10 m s⁻¹</button><button type="button" data-v="-10">−10 m s⁻¹</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="-40" data-hint="Use v = u − 10t with u = 0 and t = 4. Up is positive, so expect a negative answer." data-ok="Correct. v = 0 − 40 = −40 m s⁻¹: 40 m s⁻¹ downwards." data-show="0 − 10(4) = −40 m s⁻¹">
+    <span class="tag">Your turn</span>
+    <label for="v4b">What is its velocity as it hits the sea?</label>
+    <div class="row"><input id="v4b" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="80" data-unlock="vw4" data-hint="Use s = ((u + v)/2) t with u = 0 and v = −40. s comes out negative because the sea is below the start. The height is the size of s." data-ok="Correct. s = −80 m: the sea is 80 m below where the stone was dropped." data-show="((0 + (−40))/2)(4) = −80 m, so the cliff is 80 m high">
+    <span class="tag">Your turn</span>
+    <label for="v4c">How high is the cliff?</label>
+    <div class="row"><input id="v4c" inputmode="decimal" autocomplete="off"><span class="unit">m</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div id="vw4" hidden>
+    <div class="work">
+      <div class="line"><i>u</i> = 0, &nbsp;<i>a</i> = −10 m s⁻², &nbsp;<i>t</i> = 4 s</div>
+      <div class="line"><i>v</i> = <i>u</i> − 10<i>t</i> = 0 − 10(4) = −40 m s⁻¹</div>
+      <div class="line"><i>s</i> = ((<i>u</i> + <i>v</i>)/2) <i>t</i> = ((0 + (−40))/2)(4) = (−20)(4)</div>
+      <div class="line ans"><i>s</i> = −80 m &nbsp;→ the cliff is 80 m high</div>
+      <div class="line note">Find the velocity first, then use it to find the displacement. The two equations are enough.</div>
+    </div>
+  </div>
+</section>
+
+<section class="gen" data-more="vert"></section>
+</div><!-- /tab-vertical -->
+<div class="tab" id="tab-projectile" role="tabpanel" hidden>
+
+<section>
+  <h2><span class="n">1</span>Throwing a ball from a moving train</h2>
+  <p>In tab 3 you threw a ball straight up at 30 m s⁻¹. It went up 45 m, came back down, and landed in your hand 6 s later.</p>
+  <p>Now you stand in an open wagon of a train moving along a straight, level track at a steady 10 m s⁻¹, and you throw the ball straight up in exactly the same way.</p>
+  <div class="q" data-type="mc" data-ans="hand" data-hint="Before you threw it, the ball was already moving forward with the train. Once it is in the air, does anything push it backwards?" data-ok="Right. The ball was already moving forward at 10 m s⁻¹ with you when it left your hand. Nothing pushes it backwards, because gravity only pulls downwards. So it keeps up with the train." data-show="Back in your hand.">
+    <span class="tag">Predict</span>
+    <span class="prompt">Where does the ball land?</span>
+    <div class="mc"><button type="button" data-v="behind">behind you</button><button type="button" data-v="hand">back in your hand</button><button type="button" data-v="front">in front of you</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">2</span>The same throw, seen two ways</h2>
+  <p>Throw the ball. Then switch between riding on the train and watching from the ground. It is the same flight both times.</p>
+  <figure>
+    <div class="controls" role="group" aria-label="Viewpoint">
+      <button type="button" id="pvTrain" class="ghost">Ride on the train</button>
+      <button type="button" id="pvGround">Watch from the ground</button>
+    </div>
+    <svg id="g4" viewBox="0 0 520 300" role="img" aria-label="A ball thrown straight up from a moving train, seen from the train or from the ground">
+      <defs>
+        <marker id="hx" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--area)"/></marker>
+        <marker id="hy" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--vel)"/></marker>
+      </defs>
+      <line x1="0" x2="520" y1="270.8" y2="270.8" stroke="var(--ink)" stroke-width="2"/>
+      <g id="posts4"></g>
+      <polyline id="trail4" fill="none" stroke="var(--tri)" stroke-width="2.5" stroke-dasharray="1 0"/>
+      <g id="ghost4"><circle id="gb4" r="6" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="3 2"/><text id="gl4" class="muted" style="font-size:11px" text-anchor="middle">thrown up from the ground</text></g>
+      <g id="shadow4"><line id="sl4" stroke="var(--muted)" stroke-dasharray="3 4"/><circle id="sd4" r="3.5" fill="var(--area)"/></g>
+      <g id="cart4">
+        <rect id="ct4" height="8.8" rx="2" fill="var(--grid2)" stroke="var(--ink)" stroke-width="1.5"/>
+        <circle id="w14" r="3.5" fill="var(--ink)"/><circle id="w24" r="3.5" fill="var(--ink)"/>
+        <text id="cl4" class="muted" style="font-size:11px" text-anchor="middle">train</text>
+      </g>
+      <line id="ax4" stroke="var(--area)" stroke-width="3" marker-end="url(#hx)"/>
+      <line id="ay4" stroke="var(--vel)" stroke-width="3" marker-end="url(#hy)"/>
+      <circle id="ball4" r="6.5" fill="var(--ink)"/>
+    </svg>
+    <div class="controls">
+      <button type="button" id="pThrow">Throw</button>
+      <button type="button" id="pReset" class="ghost">Reset</button>
+      <label class="lock" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="pGhost"> Compare with a ball thrown straight up from the ground</label>
+    </div>
+    <div class="row" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+      <label for="pVx" class="lock">Train speed <span class="m">v<sub>x</sub></span> = <b id="pVxl">10</b> m s⁻¹</label>
+      <input type="range" id="pVx" min="0" max="15" step="1" value="10" style="flex:1;min-width:140px">
+    </div>
+    <div class="work" id="pro4" style="font-size:1.02rem"></div>
+    <p class="caption" id="cap4" aria-live="polite"></p>
+    <p class="lock">Green arrow: horizontal velocity <span class="m">v<sub>x</sub></span>. Blue arrow: vertical velocity <span class="m">v<sub>y</sub></span>. Orange line: the path.</p>
+  </figure>
+</section>
+
+<section>
+  <h2><span class="n">3</span>What did you see?</h2>
+  <p>Use <span class="m">v<sub>x</sub></span> = 10 m s⁻¹ and the ball thrown up at 30 m s⁻¹.</p>
+  <div class="q" data-type="mc" data-ans="straight" data-hint="Watch the ball in the train view." data-ok="Right. From the train the ball goes straight up and straight down. It is exactly the vertical motion from tab 3." data-show="Straight up and down.">
+    <span class="tag">Your turn</span>
+    <span class="prompt">Seen from the train, the ball's path is…</span>
+    <div class="mc"><button type="button" data-v="straight">straight up and down</button><button type="button" data-v="back">a curve backwards</button><button type="button" data-v="fwd">a curve forwards</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="6" data-hint="The vertical motion is the same as in tab 3: up at 30 m s⁻¹ with a = −10 m s⁻². Moving sideways doesn't change it." data-ok="Correct. 3 s up and 3 s down, exactly as in tab 3. The sideways motion makes no difference to the time." data-show="6 s, the same as in tab 3">
+    <span class="tag">Your turn</span>
+    <label for="p3a">How long is the ball in the air?</label>
+    <div class="row"><input id="p3a" inputmode="decimal" autocomplete="off"><span class="unit">s</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="60" data-hint="Sideways, nothing speeds it up or slows it down, so distance = velocity × time: s_x = v_x t." data-ok="Correct. 10 × 6 = 60 m. The train and the ball both move 60 m forward, so the ball lands back in your hand." data-show="10 × 6 = 60 m">
+    <span class="tag">Your turn</span>
+    <label for="p3b">How far forward does the ball travel while it is in the air?</label>
+    <div class="row"><input id="p3b" inputmode="decimal" autocomplete="off"><span class="unit">m</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="45" data-hint="Vertical motion only: at the top v_y = 0 after 3 s. Use s = ((u + v)/2) t." data-ok="Correct. Same as in tab 3: ((30 + 0)/2)(3) = 45 m." data-show="((30 + 0)/2)(3) = 45 m">
+    <span class="tag">Your turn</span>
+    <label for="p3c">What is the maximum height?</label>
+    <div class="row"><input id="p3c" inputmode="decimal" autocomplete="off"><span class="unit">m</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-ans="10" data-hint="At the top v_y = 0. But what is v_x doing?" data-ok="Correct. At the top the vertical velocity is zero, but the ball is still moving sideways at 10 m s⁻¹. Seen from the ground, it is never at rest." data-show="10 m s⁻¹, all of it horizontal">
+    <span class="tag">Your turn</span>
+    <label for="p3d">Seen from the ground, how fast is the ball moving at its highest point?</label>
+    <div class="row"><input id="p3d" inputmode="decimal" autocomplete="off"><span class="unit">m s⁻¹</span><button type="button" class="chk">Check</button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+  <div class="q" data-type="mc" data-ans="0" data-hint="Watch the green arrow during the flight. Does it change?" data-ok="Right. Nothing pushes the ball sideways (ignoring air resistance), so its horizontal velocity never changes. The horizontal acceleration is zero." data-show="Zero.">
+    <span class="tag">Your turn</span>
+    <span class="prompt">What is the ball's horizontal acceleration?</span>
+    <div class="mc"><button type="button" data-v="0">zero</button><button type="button" data-v="10">10 m s⁻²</button><button type="button" data-v="dep">it depends on v<sub>x</sub></button></div>
+    <p class="fb" aria-live="polite"></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>Projectile motion</h2>
+  <div class="key">
+    <p><b>A projectile is the vertical motion from tab 3, carried sideways at a constant horizontal velocity.</b> The two motions happen at the same time and don't affect each other.</p>
+  </div>
+  <p>Motion in each direction obeys the equations of motion. So write all four UAM equations twice: once for the horizontal direction (subscript <span class="m">x</span>) and once for the vertical direction (subscript <span class="m">y</span>). Then put in the acceleration for each direction.</p>
+  <figure>
+    <div class="cols">
+      <div class="work col" id="colX">
+        <div class="colh">Horizontal</div>
+        <div class="chip" id="chipX" hidden><i>a<sub>x</sub></i> = 0</div>
+        <div class="erow" id="x1"></div><div class="erow" id="x2"></div><div class="erow" id="x3"></div><div class="erow" id="x4"></div>
+        <div class="erow res" id="xr" hidden></div>
+      </div>
+      <div class="work col" id="colY">
+        <div class="colh">Vertical</div>
+        <div class="chip" id="chipY" hidden><i>a<sub>y</sub></i> = −10 m s⁻²</div>
+        <div class="erow" id="y1"></div><div class="erow" id="y2"></div><div class="erow" id="y3"></div><div class="erow" id="y4"></div>
+        <div class="erow res" id="yr" hidden></div>
+      </div>
+    </div>
+    <p class="say" id="sayP" aria-live="polite"></p>
+    <div class="controls"><button type="button" id="nextP">Next step</button><button type="button" id="allP" class="ghost">Play all</button><button type="button" id="resetP" class="ghost">Reset</button></div>
+  </figure>
+  <p>Horizontally, <span class="m">s<sub>x</sub></span> = <span class="m">u<sub>x</sub></span><span class="m">t</span>, so <span class="m">u<sub>x</sub></span> = <span class="m">s<sub>x</sub></span>/<span class="m">t</span>: the horizontal velocity is the horizontal displacement per unit time. As <span class="m">t</span> gets bigger, <span class="m">s<sub>x</sub></span> gets bigger in direct proportion.</p>
+  <p><b>Time is what links the two columns.</b> The same <span class="m">t</span> appears in both. Usually you find <span class="m">t</span> from the vertical motion, then use it in the horizontal motion.</p>
+</section>
+
+<section class="gen" data-more="proj"></section>
+</div><!-- /tab-projectile -->
+
+</div>
+
+<script>
+const X=t=>60+t*110, Y=v=>330-v*6.2, NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+function el(tag,attrs,txt){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;return e}
+function axes(g,marks){
+  for(let v=0;v<=50;v+=2){g.append(el("line",{x1:60,x2:500,y1:Y(v),y2:Y(v),stroke:v%10?"var(--grid)":"var(--grid2)","stroke-width":1}))}
+  for(let i=0;i<=20;i++){const t=i/5;g.append(el("line",{x1:X(t),x2:X(t),y1:20,y2:330,stroke:i%5?"var(--grid)":"var(--grid2)","stroke-width":1}))}
+  g.append(el("line",{x1:60,x2:505,y1:330,y2:330,stroke:"var(--ink)","stroke-width":2}));
+  g.append(el("line",{x1:60,x2:60,y1:330,y2:15,stroke:"var(--ink)","stroke-width":2}));
+  for(let t=0;t<=4;t++)g.append(el("text",{x:X(t),y:350,"text-anchor":"middle",class:"muted"},t));
+  for(let v=0;v<=50;v+=10)if(!marks.includes(v))g.append(el("text",{x:50,y:Y(v)+5,"text-anchor":"end",class:"muted"},v));
+  for(const v of marks)g.append(el("text",{x:50,y:Y(v)+5,"text-anchor":"end","font-weight":"bold"},v));
+  g.append(el("text",{x:280,y:374,"text-anchor":"middle"},"time (s)"));
+  g.append(el("text",{x:16,y:175,"text-anchor":"middle",transform:"rotate(-90 16 175)"},"velocity (m s⁻¹)"));
+}
+axes($("axes1"),[32]);
+axes($("axes2"),[20,32,44]);
+
+/* ---------- questions ---------- */
+const num=s=>parseFloat(String(s).trim().replace(",", ".").replace(/[−–]/g,"-").replace(/\s+/g,""));
+const close=(x,a)=>isFinite(x)&&Math.abs(x-a)<=Math.max(0.01,Math.abs(a)*0.005);
+let score=0;const qs=[...document.querySelectorAll(".q[data-ans]")];$("total").textContent=qs.length;
+function unlock(id){if(!id)return;const t=$(id);if(!t)return;if(t.tagName==="BUTTON")t.disabled=false;else t.hidden=false;
+  if(id==="w1")derive();
+  if(!$("b2").disabled&&!$("b3").disabled)$("lockmsg").hidden=true}
+qs.forEach(q=>{
+  let tries=0,done=false;const fb=q.querySelector(".fb");const ans=q.dataset.ans;
+  function finish(first,shown){if(done)return;done=true;q.classList.add("done");
+    if(first){score++;$("score").textContent=score}
+    fb.className="fb ok";fb.textContent=shown?("Answer: "+q.dataset.show):q.dataset.ok;
+    q.querySelectorAll("input,.chk,.mc button").forEach(e=>e.disabled=true);unlock(q.dataset.unlock)}
+  function wrong(){tries++;fb.className="fb bad";fb.textContent="Not quite. Hint: "+q.dataset.hint;
+    if(tries>=2&&!q.querySelector(".reveal")){const b=document.createElement("button");b.type="button";b.className="ghost reveal";b.textContent="Show answer";
+      b.onclick=()=>{b.remove();finish(false,true)};fb.after(b)}}
+  if(q.dataset.type==="mc"){q.querySelectorAll(".mc button").forEach(b=>b.onclick=()=>{
+      if(b.dataset.v===ans){b.classList.add("picked-ok");finish(tries===0,false)}else{b.classList.add("picked-bad");wrong()}})}
+  else{const inp=q.querySelector("input"),chk=q.querySelector(".chk");
+    const go=()=>{if(inp.value.trim()==="")return;close(num(inp.value),num(ans))?finish(tries===0,false):wrong()};
+    chk.onclick=go;inp.addEventListener("keydown",e=>{if(e.key==="Enter")go()})}
+});
+
+/* ---------- reverse derivation: calculation -> equation ---------- */
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let dTok=0;
+async function derive(){const my=++dTok;const pause=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
+  const toks=[...document.querySelectorAll("#d3 .tok")],say=$("say");
+  ["d1","d2","d3","d4"].forEach(i=>$(i).classList.remove("in"));toks.forEach(t=>t.classList.remove("swap","active"));
+  document.querySelector("#d3 .times").classList.remove("gone");say.textContent="";
+  await pause(300);if(my!==dTok)return;$("d1").classList.add("in");
+  await pause(1600);if(my!==dTok)return;$("d2").classList.add("in");
+  await pause(1800);if(my!==dTok)return;$("d3").classList.add("in");say.textContent="Now replace each number with the quantity it stands for.";
+  await pause(1600);
+  for(const t of toks){if(my!==dTok)return;t.classList.add("active");say.textContent=t.dataset.say;
+    await pause(700);if(my!==dTok)return;t.classList.add("swap");await pause(1500);t.classList.remove("active")}
+  if(my!==dTok)return;document.querySelector("#d3 .times").classList.add("gone");say.textContent="a × t is written as at.";
+  await pause(1500);if(my!==dTok)return;$("d4").classList.add("in");say.textContent="Turn it around so v is on its own on the left.";
+}
+$("replay").onclick=derive;
+
+/* ---------- graph 2 animation ---------- */
+const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+function anim(ms,fn){return new Promise(r=>{if(reduce||ms===0){fn(1);return r()}const s=performance.now();(function f(n){const p=Math.min(1,(n-s)/ms);fn(p);p<1?requestAnimationFrame(f):r()})(s)})}
+const wait=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
+let stage=0,busy=false,token=0;const cap=$("cap");
+function setDot(t){const v=20+6*t;$("dot").setAttribute("cx",X(t));$("dot").setAttribute("cy",Y(v));$("trail").setAttribute("d",`M${X(0)},${Y(20)} L${X(t)},${Y(v)}`);
+  $("readout").textContent=`t = ${t.toFixed(1)} s   v = 20 + 6(${t.toFixed(1)}) = ${v.toFixed(1)} m s⁻¹`}
+function show(id,on){$(id).setAttribute("opacity",on?1:0)}
+async function step1(fast){const my=token;
+  cap.innerHTML="Every second the velocity goes up by 6 m s⁻¹. Watch the readout: <span class='m'>v</span> = <span class='m'>u</span> + <span class='m'>at</span> at every instant. Check your prediction at <span class='m'>t</span> = 2 s.";
+  await anim(fast?0:4000,p=>{if(my===token)setDot(4*p)});if(my!==token)return;
+  stage=1;cap.innerHTML="After 4 s: <span class='m'>v</span> = 20 + 6(4) = 44 m s⁻¹. The graph is a straight line because the acceleration is constant.";}
+async function step2(){if(stage<1)await step1(true);show("slope",1);stage=2;
+  cap.innerHTML="Slope = rise/run = Δ<span class='m'>v</span>/Δ<span class='m'>t</span> = 24/4 = 6 m s⁻². That is <span class='m'>a</span> = (<span class='m'>v</span> − <span class='m'>u</span>)/<span class='m'>t</span>. <b>The slope of a v–t graph is the acceleration.</b> Rearrange it and you get <span class='m'>v</span> = <span class='m'>u</span> + <span class='m'>at</span>.";}
+async function step3(){if(stage<1)await step1(true);const my=token;
+  show("slope",0);show("trap",1);
+  cap.innerHTML="The shaded area is the displacement, but it isn't a rectangle. Draw the average velocity, 32 m s⁻¹. It crosses the line at <span class='m'>t</span> = 2 s.";
+  await wait(600);if(my!==token)return;show("avg",1);show("tri",1);$("tri").removeAttribute("transform");
+  await wait(1800);if(my!==token)return;
+  cap.innerHTML="Cut off the triangle above 32 m s⁻¹ on the right. Rotate it half a turn about (2, 32) into the gap on the left.";
+  await anim(2200,p=>{if(my===token)$("tri").setAttribute("transform",`rotate(${180*ease(p)} ${X(2)} ${Y(32)})`)});if(my!==token)return;
+  show("final",1);stage=3;
+  cap.innerHTML="The shape is now a rectangle 32 m s⁻¹ high and 4 s long: <span class='m'>s</span> = 32 × 4 = 128 m. The height is the average velocity (<span class='m'>u</span> + <span class='m'>v</span>)/2, so <b><span class='m'>s</span> = ((<span class='m'>u</span> + <span class='m'>v</span>)/2) <span class='m'>t</span></b>.";}
+function reset(){token++;stage=0;busy=false;setDot(0);["slope","trap","avg","tri","final"].forEach(i=>show(i,0));$("tri").removeAttribute("transform");
+  cap.innerHTML="The dot starts at (0, 20). The line meets the velocity axis at <span class='m'>u</span> = 20 m s⁻¹.";}
+async function run(f){if(busy)return;busy=true;const my=token;try{await f()}finally{if(my===token)busy=false}}
+$("b1").onclick=()=>{reset();run(()=>step1(false))};
+$("b2").onclick=()=>run(step2);
+$("b3").onclick=()=>{if(stage===3)reset();run(step3)};
+$("b0").onclick=reset;
+
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+
+/* ---------- tabs ---------- */
+function showTab(){const h=location.hash.slice(1),name=["vertical","derive","projectile"].includes(h)?h:"uam";
+  document.querySelectorAll(".tab").forEach(p=>p.hidden=p.id!=="tab-"+name);
+  document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-selected",a.id==="tabbtn-"+name))}
+addEventListener("hashchange",showTab);showTab();
+
+/* ---------- derivation players ---------- */
+const dDone={};function markDone(s){dDone[s]=1;if(dDone.A&&dDone.B){$("dAll").hidden=false;$("dMore").hidden=false}}
+function player(sfx,steps){
+  const stage=$("stage"+sfx),say=$("say"+sfx),nb=$("next"+sfx);let i=0,busy=false,tok=0;
+  const pause=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
+  const api={
+    line(html,note,ans){const d=document.createElement("div");d.className="line st"+(ans?" ans":"");
+      d.innerHTML=`<span class="eqn">${html}</span>`+(note?`<span class="note">${note}</span>`:"");stage.append(d);
+      void d.offsetWidth;d.classList.add("in");return d},
+    async fly(srcLine,dstLine,html){const src=srcLine.querySelector('[data-k="src"]'),dst=dstLine.querySelector('[data-k="dst"]'),my=tok;
+      src.classList.add("hl");await pause(500);if(my!==tok)return;
+      const st=stage.getBoundingClientRect(),sr=src.getBoundingClientRect(),dr=dst.getBoundingClientRect();
+      const c=document.createElement("span");c.className="flyer";c.innerHTML=src.innerHTML;
+      c.style.left=(sr.left-st.left-stage.clientLeft+stage.scrollLeft)+"px";c.style.top=(sr.top-st.top-stage.clientTop)+"px";
+      stage.append(c);dst.classList.add("out");void c.offsetWidth;
+      c.style.transform=`translate(${dr.left-sr.left}px,${dr.top-sr.top}px)`;await pause(1300);c.remove();if(my!==tok)return;
+      dst.innerHTML=html;dst.classList.remove("out");dst.classList.add("hl");src.classList.remove("hl")},
+    pause};
+  async function next(){if(busy||i>=steps.length)return;busy=true;const my=tok,s=steps[i++];say.innerHTML=s.say;
+    await s.run(api);if(my===tok){busy=false;nb.disabled=i>=steps.length;if(i>=steps.length)markDone(sfx)}}
+  function reset(){tok++;i=0;busy=false;stage.innerHTML="";nb.disabled=false;say.textContent="Press Next step to look at how you solved it."}
+  nb.onclick=next;$("reset"+sfx).onclick=reset;
+  $("all"+sfx).onclick=async()=>{if(i>=steps.length)reset();while(i<steps.length){const my=tok;await next();if(my!==tok)return;await pause(1400)}};
+}
+const D={};
+player("A",[
+  {say:"First you found <span class='m'>v</span> using equation 1.",run:a=>{D.a1=a.line(`<i>v</i> = <span data-k="src">20 + 6(4)</span> = 44 m s⁻¹`,"equation 1")}},
+  {say:"Then you put <span class='m'>v</span> = 44 into equation 4.",run:a=>{D.a2=a.line(`<i>s</i> = ((20 + <span data-k="dst">44</span>)/2)(4)`,"equation 4")}},
+  {say:"But 44 came from 20 + 6(4). So you could put 20 + 6(4) straight in where the 44 is.",run:async a=>{await a.fly(D.a1,D.a2,"(20 + 6(4))");a.line(`<i>s</i> = 128 m`,"same answer, in one step")}},
+  {say:"Now do exactly the same thing with letters instead of numbers.",run:async a=>{D.b1=a.line(`<i>v</i> = <span data-k="src"><i>u</i> + <i>at</i></span>`,"equation 1");await a.pause(700);D.b2=a.line(`<i>s</i> = ((<i>u</i> + <span data-k="dst"><i>v</i></span>)/2) <i>t</i>`,"equation 4")}},
+  {say:"Substitute <span class='m'>u</span> + <span class='m'>at</span> in place of <span class='m'>v</span>.",run:a=>a.fly(D.b1,D.b2,"(<i>u</i> + <i>at</i>)")},
+  {say:"Tidy up the bracket: <span class='m'>u</span> + <span class='m'>u</span> = 2<span class='m'>u</span>.",run:a=>{a.line(`<i>s</i> = ((2<i>u</i> + <i>at</i>)/2) <i>t</i>`)}},
+  {say:"Divide each term in the bracket by 2.",run:a=>{a.line(`<i>s</i> = (<i>u</i> + ½<i>at</i>) <i>t</i>`)}},
+  {say:"Multiply out the bracket by <span class='m'>t</span>: <span class='m'>u</span> × <span class='m'>t</span> = <span class='m'>ut</span> and <span class='m'>at</span> × <span class='m'>t</span> = <span class='m'>at</span>².",run:a=>{a.line(`<i>s</i> = <i>ut</i> + ½<i>at</i>²`,"equation 2",true)}},
+  {say:"Check it with the numbers. The <span class='m'>ut</span> part, 80 m, is how far the car would go at a steady 20 m s⁻¹. The ½<span class='m'>at</span>² part, 48 m, is the extra distance from speeding up.",run:a=>{a.line(`<i>s</i> = 20(4) + ½(6)(4)² = 80 + 48 = 128 m ✓`)}}
+]);
+player("B",[
+  {say:"You weren't given <span class='m'>t</span>, so first you found it using equation 1.",run:a=>{D.c1=a.line(`44 = 20 + 6<i>t</i> &nbsp;→&nbsp; <i>t</i> = <span data-k="src">(44 − 20)/6</span> = 4 s`,"equation 1, rearranged")}},
+  {say:"Then you put <span class='m'>t</span> = 4 into equation 4.",run:a=>{D.c2=a.line(`<i>s</i> = ((20 + 44)/2) <span data-k="dst">(4)</span>`,"equation 4")}},
+  {say:"But 4 came from (44 − 20)/6. So you could put that straight in where the 4 is.",run:async a=>{await a.fly(D.c1,D.c2,"((44 − 20)/6)");a.line(`<i>s</i> = (32)(4) = 128 m`,"same answer, in one step")}},
+  {say:"Now with letters. Rearrange equation 1 to get <span class='m'>t</span> on its own.",run:async a=>{D.d1=a.line(`<i>v</i> = <i>u</i> + <i>at</i> &nbsp;→&nbsp; <i>t</i> = <span data-k="src">(<i>v</i> − <i>u</i>)/<i>a</i></span>`,"equation 1, rearranged");await a.pause(700);D.d2=a.line(`<i>s</i> = ((<i>u</i> + <i>v</i>)/2) <span data-k="dst"><i>t</i></span>`,"equation 4")}},
+  {say:"Substitute (<span class='m'>v</span> − <span class='m'>u</span>)/<span class='m'>a</span> in place of <span class='m'>t</span>.",run:a=>a.fly(D.d1,D.d2,"((<i>v</i> − <i>u</i>)/<i>a</i>)")},
+  {say:"Multiply both sides by 2<span class='m'>a</span> to clear the fractions.",run:a=>{a.line(`2<i>as</i> = (<i>v</i> + <i>u</i>)(<i>v</i> − <i>u</i>)`)}},
+  {say:"Multiply out the brackets. The −<span class='m'>uv</span> and +<span class='m'>uv</span> cancel.",run:a=>{a.line(`2<i>as</i> = <i>v</i>² − <i>uv</i> + <i>uv</i> − <i>u</i>² = <i>v</i>² − <i>u</i>²`)}},
+  {say:"Add <span class='m'>u</span>² to both sides.",run:a=>{a.line(`<i>v</i>² = <i>u</i>² + 2<i>as</i>`,"equation 3",true)}},
+  {say:"Check it with the numbers: both sides come to 1936.",run:a=>{a.line(`44² = 20² + 2(6)(128) &nbsp;→&nbsp; 1936 = 400 + 1536 ✓`)}}
+]);
+
+/* ---------- vertical throw ---------- */
+const TX=t=>215+t*47, TV=v=>200-v*4.4, HY=h=>345-h*5.6;
+(function(){const g=$("axes3");
+  for(let v=-30;v<=30;v+=5)g.append(el("line",{x1:215,x2:497,y1:TV(v),y2:TV(v),stroke:v%10?"var(--grid)":"var(--grid2)"}));
+  for(let i=0;i<=12;i++)g.append(el("line",{x1:TX(i/2),x2:TX(i/2),y1:TV(32),y2:TV(-32),stroke:i%2?"var(--grid)":"var(--grid2)"}));
+  g.append(el("line",{x1:215,x2:505,y1:200,y2:200,stroke:"var(--ink)","stroke-width":2}));
+  g.append(el("line",{x1:215,x2:215,y1:TV(-34),y2:TV(34),stroke:"var(--ink)","stroke-width":2}));
+  for(let t=1;t<=6;t++)g.append(el("text",{x:TX(t),y:216,"text-anchor":"middle",class:"muted"},t));
+  for(let v=-30;v<=30;v+=10)g.append(el("text",{x:207,y:TV(v)+5,"text-anchor":"end",class:"muted"},v));
+  g.append(el("text",{x:505,y:190,"text-anchor":"end"},"t (s)"));
+  g.append(el("text",{x:222,y:TV(34)+4},"v (m s⁻¹)"));
+  $("hmax").setAttribute("y1",HY(45));$("hmax").setAttribute("y2",HY(45));$("hmaxl").setAttribute("y",HY(45)-4);
+  $("up3").setAttribute("points",`${TX(0)},${TV(0)} ${TX(0)},${TV(30)} ${TX(3)},${TV(0)}`);
+  $("dn3").setAttribute("points",`${TX(3)},${TV(0)} ${TX(6)},${TV(-30)} ${TX(6)},${TV(0)}`);
+  $("lu3").setAttribute("x",TX(0.35));$("lu3").setAttribute("y",TV(8));
+  $("ld3").setAttribute("x",TX(4.3));$("ld3").setAttribute("y",TV(-10));
+  $("tt3").setAttribute("x",TX(3));$("tt3").setAttribute("y",TV(0)-10);
+})();
+function setT3(t){const v=30-10*t,s=((30+v)/2)*t,by=HY(s)-9;
+  $("ball").setAttribute("cy",by);
+  const va=$("varrow");va.setAttribute("x1",80);va.setAttribute("x2",80);va.setAttribute("y1",by);va.setAttribute("y2",by-v*2.4);va.style.opacity=Math.abs(v)<1?0:1;
+  const ga=$("garrow");ga.setAttribute("x1",110);ga.setAttribute("x2",110);ga.setAttribute("y1",by-12);ga.setAttribute("y2",by+18);
+  $("glab").setAttribute("x",118);$("glab").setAttribute("y",by+6);
+  $("dot3").setAttribute("cx",TX(t));$("dot3").setAttribute("cy",TV(v));
+  $("trail3").setAttribute("d",`M${TX(0)},${TV(30)} L${TX(t)},${TV(v)}`);
+  $("ro1").textContent=`t = ${t.toFixed(1)} s   v = 30 − 10(${t.toFixed(1)}) = ${v.toFixed(1)} m s⁻¹`;
+  $("ro2").textContent=`s = ((30 + ${v.toFixed(1)})/2)(${t.toFixed(1)}) = ${s.toFixed(1)} m`;
+  const c=$("cap3");
+  if(t<2.85)c.innerHTML="Going up: <span class='m'>v</span> is positive and 10 m s⁻¹ is taken off it every second. The ball slows down.";
+  else if(t<3.15)c.innerHTML="At the top: <span class='m'>v</span> = 0 for an instant, at <span class='m'>t</span> = 3 s and 45 m high. The acceleration is still 10 m s⁻² down.";
+  else if(t<5.99)c.innerHTML="Coming down: <span class='m'>v</span> is negative and getting bigger in size. The line keeps the same slope, −10 m s⁻².";
+}
+let t3tok=0,t3busy=false;
+function reset3(){t3tok++;t3busy=false;setT3(0);["up3","dn3","lab3","top3"].forEach(i=>$(i).setAttribute("opacity",0));
+  $("cap3").innerHTML="The ball leaves your hand at 30 m s⁻¹ upwards. The blue arrow is its velocity. The orange arrow is its acceleration, which never changes."}
+$("throw").onclick=async()=>{if(t3busy)return;reset3();t3busy=true;const my=t3tok;
+  await anim(6000,p=>{if(my===t3tok){setT3(6*p);if(p>=0.5)$("top3").setAttribute("opacity",1)}});
+  if(my!==t3tok)return;t3busy=false;["up3","dn3","lab3","top3"].forEach(i=>$(i).setAttribute("opacity",1));
+  $("cap3").innerHTML="Back in your hand after 6 s at −30 m s⁻¹. Area above the axis = +45 m (up). Area below = −45 m (down). Total displacement = 0.";};
+$("reset3").onclick=reset3;reset3();
+
+
+
+/* ---------- tab 4: projectile scene ---------- */
+const P4={vx:10,t:0,frame:"train",ghost:false};const PXm=4.4,Yw=y=>262-PXm*y;
+const yAt=t=>30*t-5*t*t;
+function cOff(t){return P4.frame==="ground"?0:P4.vx*t}
+function ox4(){return P4.frame==="ground"?40:250}
+function sx4(x,tRef){return ox4()+PXm*(x-cOff(tRef))}
+function set(id,o){const e=$(id);for(const k in o)e.setAttribute(k,o[k])}
+function render4(){const t=P4.t,vx=P4.vx,vy=30-10*t,bx=vx*t,by=yAt(t);
+  let g="";for(let x=-200;x<=300;x+=10){const X=sx4(x,t);if(X<-20||X>540)continue;
+    g+=`<line x1="${X}" x2="${X}" y1="270.8" y2="${x%50?277:281}" stroke="var(--ink)" stroke-width="1.5"/>`;
+    if(x%20===0)g+=`<text x="${X}" y="294" text-anchor="middle" class="muted" style="font-size:10px">${x} m</text>`}
+  $("posts4").innerHTML=g;
+  const cx=sx4(bx,t);set("ct4",{x:cx-PXm*8,y:Yw(0),width:PXm*16});set("w14",{cx:cx-PXm*5.5,cy:Yw(-1.2)});set("w24",{cx:cx+PXm*5.5,cy:Yw(-1.2)});set("cl4",{x:cx,y:Yw(0)+20});
+  const bX=sx4(bx,t),bY=Yw(by)-6.5;set("ball4",{cx:bX,cy:bY});
+  let pts=[];const n=Math.ceil(t/0.05);for(let i=0;i<=n;i++){const tau=Math.min(t,i*0.05);pts.push(`${(ox4()+PXm*(vx*tau-cOff(tau))).toFixed(1)},${(Yw(yAt(tau))-6.5).toFixed(1)}`)}
+  $("trail4").setAttribute("points",t>0?pts.join(" "):"");
+  const vxr=P4.frame==="ground"?vx:0,k=2.2;
+  set("ax4",{x1:bX,y1:bY,x2:bX+vxr*k,y2:bY});$("ax4").style.opacity=Math.abs(vxr)<0.5?0:1;
+  set("ay4",{x1:bX,y1:bY,x2:bX,y2:bY-vy*k});$("ay4").style.opacity=Math.abs(vy)<0.6?0:1;
+  $("ghost4").style.display=P4.ghost?"":"none";const gX=sx4(0,t);set("gb4",{cx:gX,cy:bY});set("gl4",{x:gX,y:Yw(0)+20});
+  $("shadow4").style.display=P4.frame==="ground"&&t>0?"":"none";set("sl4",{x1:bX,x2:bX,y1:bY+6.5,y2:270.8});set("sd4",{cx:bX,cy:270.8});
+  const f=v=>v.toFixed(1);
+  $("pro4").innerHTML=`<div class="line"><i>t</i> = ${f(t)} s</div>`+
+   (P4.frame==="ground"?`<div class="line">Horizontal: <i>s<sub>x</sub></i> = <i>v<sub>x</sub></i><i>t</i> = ${vx}(${f(t)}) = ${f(bx)} m &nbsp; <span class="note">(<i>v<sub>x</sub></i> = ${vx} m s⁻¹, constant)</span></div>`
+     :`<div class="line">Horizontal: 0 m from the thrower &nbsp; <span class="note">(relative to the train, <i>v<sub>x</sub></i> = 0)</span></div>`)+
+   `<div class="line">Vertical: <i>v<sub>y</sub></i> = 30 − 10(${f(t)}) = ${f(vy)} m s⁻¹, &nbsp;<i>s<sub>y</sub></i> = ${f(by)} m</div>`;
+  $("pvTrain").className=P4.frame==="train"?"":"ghost";$("pvGround").className=P4.frame==="ground"?"":"ghost";
+  $("pvTrain").setAttribute("aria-pressed",P4.frame==="train");$("pvGround").setAttribute("aria-pressed",P4.frame==="ground");
+  const cap=$("cap4");
+  if(P4.frame==="train")cap.innerHTML=t===0?"You are riding on the train. The ground slides past underneath you. Press Throw.":"From the train, the ball goes straight up and straight down. This is exactly the vertical motion from tab 3."+(t>=6?" It lands back in your hand.":"");
+  else cap.innerHTML=t===0?"You are standing on the ground watching the train go past. Press Throw.":`From the ground, the same ball also moves sideways at ${vx} m s⁻¹ the whole time. Up-and-down plus steady sideways motion gives a curved path: a parabola.`+(t>=6?` It lands ${f(bx)} m along, back in the thrower's hand.`:"");
+}
+let p4tok=0,p4busy=false;
+function reset4(){p4tok++;p4busy=false;P4.t=0;render4()}
+$("pThrow").onclick=async()=>{if(p4busy)return;reset4();p4busy=true;const my=p4tok;
+  await anim(6000,p=>{if(my===p4tok){P4.t=6*p;render4()}});if(my===p4tok)p4busy=false};
+$("pReset").onclick=reset4;
+$("pvTrain").onclick=()=>{P4.frame="train";render4()};
+$("pvGround").onclick=()=>{P4.frame="ground";render4()};
+$("pGhost").onchange=e=>{P4.ghost=e.target.checked;render4()};
+$("pVx").oninput=e=>{P4.vx=+e.target.value;$("pVxl").textContent=P4.vx;reset4()};
+render4();
+
+
+/* ---------- tab 4: equations in each direction ---------- */
+(function(){
+  const S=(q,d)=>`<i>${q}<sub>${d}</sub></i>`;
+  const A=d=>`<span class="a" data-a>${S("a",d)}</span>`;
+  const gen=d=>[`${S("v",d)} = ${S("u",d)} + ${A(d)}<i>t</i>`,`${S("s",d)} = ${S("u",d)}<i>t</i> + ½${A(d)}<i>t</i>²`,`${S("v",d)}² = ${S("u",d)}² + 2${A(d)}${S("s",d)}`,`${S("s",d)} = ((${S("u",d)} + ${S("v",d)})/2) <i>t</i>`];
+  const say=$("sayP"),nb=$("nextP");let i=0,busy=false,tok=0;
+  const pause=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
+  async function swap(id,html){const e=$(id);e.classList.add("dim");await pause(350);e.innerHTML=html;e.classList.remove("dim");e.classList.add("hlrow");setTimeout(()=>e.classList.remove("hlrow"),900)}
+  async function subA(col,val){const my=tok;document.querySelectorAll(`#${col} [data-a]`).forEach(a=>a.classList.add("hl"));await pause(900);if(my!==tok)return;
+    document.querySelectorAll(`#${col} [data-a]`).forEach(a=>{a.classList.add("dim");});await pause(350);if(my!==tok)return;
+    document.querySelectorAll(`#${col} [data-a]`).forEach(a=>{a.innerHTML=val;a.classList.remove("dim")})}
+  const ux=S("u","x"),uy=S("u","y"),vx=S("v","x"),vy=S("v","y"),sx=S("s","x"),sy=S("s","y");
+  const steps=[
+    {say:"Every motion in a straight line obeys the four equations of UAM. Write them for each direction.",run:()=>{}},
+    {say:"Horizontally, nothing pushes the ball forwards or backwards. So <span class='m'>a<sub>x</sub></span> = 0.",run:async()=>{$("chipX").hidden=false;await pause(500);await subA("colX","(0)")}},
+    {say:"Anything multiplied by 0 is 0, so those terms disappear.",run:async()=>{const my=tok;
+      for(const [id,h] of [["x1",`${vx} = ${ux}`],["x2",`${sx} = ${ux}<i>t</i>`],["x3",`${vx}² = ${ux}² &nbsp;→&nbsp; ${vx} = ${ux}`],["x4",`${sx} = ((${ux} + ${ux})/2) <i>t</i> = ${ux}<i>t</i>`]]){if(my!==tok)return;await swap(id,h);await pause(500)}}},
+    {say:"The four equations say only two things: the horizontal velocity never changes, and horizontal displacement = horizontal velocity × time.",run:()=>{$("xr").innerHTML=`${vx} = ${ux} &nbsp;(constant)<br>${sx} = ${ux}<i>t</i>`;$("xr").hidden=false}},
+    {say:"Vertically, gravity pulls the ball down. Taking up as positive, <span class='m'>a<sub>y</sub></span> = −10 m s⁻².",run:async()=>{$("chipY").hidden=false;await pause(500);await subA("colY","(−10)")}},
+    {say:"Tidy up each one. Equation 4 has no <span class='m'>a</span> in it, so it stays the same.",run:async()=>{const my=tok;
+      for(const [id,h] of [["y1",`${vy} = ${uy} − 10<i>t</i>`],["y2",`${sy} = ${uy}<i>t</i> − 5<i>t</i>²`],["y3",`${vy}² = ${uy}² − 20${sy}`]]){if(my!==tok)return;await swap(id,h);await pause(500)}}},
+    {say:"These are the vertical motion equations from tab 3. The same <span class='m'>t</span> runs through both columns. It is what links the two motions.",run:()=>{$("yr").innerHTML=`the vertical motion from tab 3`;$("yr").hidden=false;document.querySelectorAll("#tab-projectile .erow i").forEach(e=>{if(e.textContent==="t")e.classList.add("tlink")})}}
+  ];
+  function reset(){tok++;i=0;busy=false;const gx=gen("x"),gy=gen("y");
+    gx.forEach((h,k)=>$("x"+(k+1)).innerHTML=h);gy.forEach((h,k)=>$("y"+(k+1)).innerHTML=h);
+    ["chipX","chipY","xr","yr"].forEach(id=>$(id).hidden=true);nb.disabled=false;
+    say.textContent="Press Next step.";}
+  async function next(){if(busy||i>=steps.length)return;busy=true;const my=tok,s=steps[i++];say.innerHTML=s.say;await s.run();if(my===tok){busy=false;nb.disabled=i>=steps.length}}
+  nb.onclick=next;$("resetP").onclick=reset;
+  $("allP").onclick=async()=>{if(i>=steps.length)reset();while(i<steps.length){const my=tok;await next();if(my!==tok)return;await pause(1500)}};
+  reset();
+})();
+
+/* ---------- more questions ---------- */
+const f2=x=>String(+x.toFixed(2));
+const ms="m s⁻¹",ms2="m s⁻²";
+const SETS={
+uam:[
+ ()=>{const u=ri(0,20),a=ri(2,8),t=ri(2,8),v=u+a*t;return{q:`An object moving at <b>${u} ${ms}</b> accelerates at <b>${a} ${ms2}</b> for <b>${t} s</b>. Find its final velocity.`,ans:v,unit:ms,hint:"Use v = u + at.",
+   sol:[`<i>v</i> = <i>u</i> + <i>at</i>`,`<i>v</i> = ${u} + (${a})(${t})`,`<b class="ans"><i>v</i> = ${v} ${ms}</b>`]}},
+ ()=>{const u=ri(0,20),a=ri(2,8),t=ri(2,8),v=u+a*t,s=(u+v)/2*t;return{q:`An object moving at <b>${u} ${ms}</b> accelerates at <b>${a} ${ms2}</b> for <b>${t} s</b>. How far does it travel?`,ans:s,unit:"m",hint:"Find v first with v = u + at, then use s = ((u + v)/2) t.",
+   sol:[`<i>v</i> = <i>u</i> + <i>at</i> = ${u} + (${a})(${t}) = ${v} ${ms}`,`<i>s</i> = ((<i>u</i> + <i>v</i>)/2) <i>t</i> = ((${u} + ${v})/2)(${t})`,`<b class="ans"><i>s</i> = ${f2(s)} m</b>`]}},
+ ()=>{const u=ri(0,20),a=ri(2,8),t=ri(2,8),v=u+a*t;return{q:`An object speeds up from <b>${u} ${ms}</b> to <b>${v} ${ms}</b> in <b>${t} s</b>. Find its acceleration.`,ans:a,unit:ms2,hint:"Acceleration is the change in velocity per unit time: a = (v − u)/t.",
+   sol:[`<i>a</i> = (<i>v</i> − <i>u</i>)/<i>t</i>`,`<i>a</i> = (${v} − ${u})/${t} = ${v-u}/${t}`,`<b class="ans"><i>a</i> = ${a} ${ms2}</b>`]}},
+ ()=>{const u=ri(0,20),a=ri(2,8),t=ri(2,8),v=u+a*t;return{q:`An object speeds up from <b>${u} ${ms}</b> to <b>${v} ${ms}</b> with an acceleration of <b>${a} ${ms2}</b>. How long does this take?`,ans:t,unit:"s",hint:"Put the numbers into v = u + at and solve for t.",
+   sol:[`<i>v</i> = <i>u</i> + <i>at</i>`,`${v} = ${u} + ${a}<i>t</i>`,`${a}<i>t</i> = ${v-u}`,`<b class="ans"><i>t</i> = ${t} s</b>`]}},
+ ()=>{const u=ri(0,20),a=ri(2,8),t=ri(2,8),v=u+a*t,s=(u+v)/2*t;return{q:`An object speeds up from <b>${u} ${ms}</b> to <b>${v} ${ms}</b> in <b>${t} s</b>. How far does it travel?`,ans:s,unit:"m",hint:"Use s = ((u + v)/2) t: average velocity × time.",
+   sol:[`<i>s</i> = ((<i>u</i> + <i>v</i>)/2) <i>t</i>`,`<i>s</i> = ((${u} + ${v})/2)(${t}) = (${f2((u+v)/2)})(${t})`,`<b class="ans"><i>s</i> = ${f2(s)} m</b>`]}},
+ ()=>{const a=ri(2,8),t=ri(2,6),u=a*t;return{q:`A car moving at <b>${u} ${ms}</b> brakes with a deceleration of <b>${a} ${ms2}</b> until it stops. How long does it take to stop?`,ans:t,unit:"s",hint:"It stops, so v = 0. Slowing down means a is negative: a = −"+a+".",
+   sol:[`<i>v</i> = 0, &nbsp;<i>a</i> = −${a} ${ms2}`,`<i>v</i> = <i>u</i> + <i>at</i> → 0 = ${u} − ${a}<i>t</i>`,`<b class="ans"><i>t</i> = ${t} s</b>`]}},
+ ()=>{const a=ri(2,8),t=ri(2,6),u=a*t,s=u/2*t;return{q:`A car moving at <b>${u} ${ms}</b> brakes with a deceleration of <b>${a} ${ms2}</b> until it stops. How far does it travel while braking?`,ans:s,unit:"m",hint:"Find the stopping time first: 0 = u − at. Then s = ((u + v)/2) t with v = 0.",
+   sol:[`0 = ${u} − ${a}<i>t</i> → <i>t</i> = ${t} s`,`<i>s</i> = ((${u} + 0)/2)(${t})`,`<b class="ans"><i>s</i> = ${f2(s)} m</b>`]}}
+],
+der:[
+ ()=>{const u=ri(0,20),a=ri(2,8),t=ri(2,8),s=u*t+a*t*t/2;return{q:`An object moving at <b>${u} ${ms}</b> accelerates at <b>${a} ${ms2}</b> for <b>${t} s</b>. How far does it travel? Do it in one step.`,ans:s,unit:"m",hint:"You have u, a and t and want s. Which equation has no v in it?",
+   sol:[`No <i>v</i>, so use <i>s</i> = <i>ut</i> + ½<i>at</i>²`,`<i>s</i> = (${u})(${t}) + ½(${a})(${t})² = ${u*t} + ${f2(a*t*t/2)}`,`<b class="ans"><i>s</i> = ${f2(s)} m</b>`]}},
+ ()=>{const a=ri(2,8),t=ri(2,8),s=a*t*t/2;return{q:`An object starts from rest and accelerates at <b>${a} ${ms2}</b> for <b>${t} s</b>. How far does it travel?`,ans:s,unit:"m",hint:"From rest means u = 0. You have u, a and t: use s = ut + ½at².",
+   sol:[`<i>u</i> = 0, so <i>s</i> = <i>ut</i> + ½<i>at</i>² = 0 + ½(${a})(${t})²`,`<i>s</i> = ½(${a})(${t*t})`,`<b class="ans"><i>s</i> = ${f2(s)} m</b>`]}},
+ ()=>{const u=ri(0,20),a=ri(2,8),t=ri(2,8),v=u+a*t,s=(v*v-u*u)/(2*a);return{q:`An object speeds up from <b>${u} ${ms}</b> to <b>${v} ${ms}</b> with an acceleration of <b>${a} ${ms2}</b>. How far does it travel?`,ans:s,unit:"m",hint:"You aren't given t. Which equation has no t in it?",
+   sol:[`No <i>t</i>, so use <i>v</i>² = <i>u</i>² + 2<i>as</i>`,`${v}² = ${u}² + 2(${a})<i>s</i> → ${v*v} = ${u*u} + ${2*a}<i>s</i>`,`${2*a}<i>s</i> = ${v*v-u*u}`,`<b class="ans"><i>s</i> = ${f2(s)} m</b>`]}},
+ ()=>{const u=ri(0,20),a=ri(2,8),t=ri(2,8),v=u+a*t,s=(v*v-u*u)/(2*a);return{q:`An object moving at <b>${u} ${ms}</b> accelerates at <b>${a} ${ms2}</b> over a distance of <b>${f2(s)} m</b>. What is its final velocity?`,ans:v,unit:ms,hint:"You have u, a and s, and no t. Use v² = u² + 2as, then take the square root.",
+   sol:[`<i>v</i>² = <i>u</i>² + 2<i>as</i>`,`<i>v</i>² = ${u}² + 2(${a})(${f2(s)}) = ${u*u} + ${f2(2*a*s)} = ${v*v}`,`<b class="ans"><i>v</i> = √${v*v} = ${v} ${ms}</b>`]}},
+ ()=>{const u=ri(0,20),a=ri(2,8),t=ri(2,8),v=u+a*t,s=(v*v-u*u)/(2*a);return{q:`An object speeds up from <b>${u} ${ms}</b> to <b>${v} ${ms}</b> over a distance of <b>${f2(s)} m</b>. Find its acceleration.`,ans:a,unit:ms2,hint:"You have u, v and s, and no t. Use v² = u² + 2as and solve for a.",
+   sol:[`<i>v</i>² = <i>u</i>² + 2<i>as</i>`,`${v*v} = ${u*u} + 2<i>a</i>(${f2(s)})`,`${f2(2*s)}<i>a</i> = ${v*v-u*u}`,`<b class="ans"><i>a</i> = ${a} ${ms2}</b>`]}}
+],
+vert:[
+ ()=>{const u=ri(2,8)*5,t=u/10;return{q:`A ball is thrown straight up at <b>${u} ${ms}</b>. How long does it take to reach the top?`,ans:t,unit:"s",hint:"At the top v = 0. Use 0 = u − 10t.",
+   sol:[`At the top <i>v</i> = 0`,`0 = ${u} − 10<i>t</i>`,`<b class="ans"><i>t</i> = ${f2(t)} s</b>`]}},
+ ()=>{const u=ri(2,8)*5,t=u/10,h=u/2*t;return{q:`A ball is thrown straight up at <b>${u} ${ms}</b>. What is its maximum height?`,ans:h,unit:"m",hint:"Find the time to the top first (v = 0), then s = ((u + v)/2) t.",
+   sol:[`0 = ${u} − 10<i>t</i> → <i>t</i> = ${f2(t)} s`,`<i>s</i> = ((${u} + 0)/2)(${f2(t)})`,`<b class="ans"><i>s</i> = ${f2(h)} m</b>`]}},
+ ()=>{const u=ri(2,6)*5,t=ri(1,7),v=u-10*t;return{q:`A ball is thrown straight up at <b>${u} ${ms}</b>. What is its velocity after <b>${t} s</b>? (Up is positive.)`,ans:v,unit:ms,hint:"Use v = u − 10t. A negative answer means it is moving down.",
+   sol:[`<i>v</i> = <i>u</i> − 10<i>t</i> = ${u} − 10(${t})`,`<b class="ans"><i>v</i> = ${v} ${ms}</b>`,v<0?`<span class="note">Negative: the ball is moving down at ${-v} ${ms}.</span>`:v>0?`<span class="note">Positive: still moving up.</span>`:`<span class="note">Zero: the ball is at the top.</span>`]}},
+ ()=>{const u=ri(2,8)*5,T=u/5;return{q:`A ball is thrown straight up at <b>${u} ${ms}</b> and caught at the same height. How long is it in the air?`,ans:T,unit:"s",hint:"Find the time to the top (v = 0). The way down takes the same time.",
+   sol:[`Time to top: 0 = ${u} − 10<i>t</i> → <i>t</i> = ${f2(u/10)} s`,`Up and down take the same time`,`<b class="ans">Total time = ${f2(T)} s</b>`]}},
+ ()=>{const t=ri(1,6),v=-10*t,d=5*t*t;return{q:`A stone is dropped from rest and falls for <b>${t} s</b>. How far does it fall?`,ans:d,unit:"m",hint:"u = 0. Find v = u − 10t, then s = ((u + v)/2) t. The size of s is the distance.",
+   sol:[`<i>v</i> = 0 − 10(${t}) = ${v} ${ms}`,`<i>s</i> = ((0 + (${v}))/2)(${t}) = −${d} m`,`<b class="ans">It falls ${d} m</b>`]}},
+ ()=>{const t=ri(1,6),h=5*t*t;return{q:`A stone is dropped from rest from a height of <b>${h} m</b>. How long does it take to hit the ground?`,ans:t,unit:"s",hint:"You have u = 0, a = −10 and s = −"+h+". No v, so use s = ut + ½at².",
+   sol:[`<i>s</i> = <i>ut</i> + ½<i>at</i>²`,`−${h} = 0 + ½(−10)<i>t</i>² → ${h} = 5<i>t</i>²`,`<i>t</i>² = ${t*t}`,`<b class="ans"><i>t</i> = ${t} s</b>`]}}
+],
+proj:[
+ ()=>{const uy=ri(2,8)*5,vx=ri(2,20),T=uy/5;return{q:`A ball is launched with a vertical velocity of <b>${uy} ${ms}</b> upwards and a horizontal velocity of <b>${vx} ${ms}</b>. How long is it in the air before it lands at the same height?`,ans:T,unit:"s",hint:"Time comes from the vertical motion only. Find the time to the top (v_y = 0), then double it.",
+   sol:[`Vertical: 0 = ${uy} − 10<i>t</i> → <i>t</i> = ${f2(uy/10)} s to the top`,`Up and down take the same time`,`<b class="ans"><i>t</i> = ${f2(T)} s</b>`,`<span class="note">The horizontal velocity makes no difference to the time.</span>`]}},
+ ()=>{const uy=ri(2,8)*5,vx=ri(2,20),T=uy/5,R=vx*T;return{q:`A ball is launched with a vertical velocity of <b>${uy} ${ms}</b> upwards and a horizontal velocity of <b>${vx} ${ms}</b>. How far away does it land (at the same height)?`,ans:R,unit:"m",hint:"Find the time in the air from the vertical motion first. Then horizontally: s_x = v_x t.",
+   sol:[`Vertical: 0 = ${uy} − 10<i>t</i> → ${f2(uy/10)} s up, so ${f2(T)} s in the air`,`Horizontal: <i>s<sub>x</sub></i> = <i>v<sub>x</sub></i><i>t</i> = ${vx}(${f2(T)})`,`<b class="ans"><i>s<sub>x</sub></i> = ${f2(R)} m</b>`]}},
+ ()=>{const uy=ri(2,8)*5,vx=ri(2,20),h=uy*uy/20;return{q:`A ball is launched with a vertical velocity of <b>${uy} ${ms}</b> upwards and a horizontal velocity of <b>${vx} ${ms}</b>. What is its maximum height?`,ans:h,unit:"m",hint:"Height depends on the vertical motion only. At the top v_y = 0.",
+   sol:[`Vertical: 0 = ${uy} − 10<i>t</i> → <i>t</i> = ${f2(uy/10)} s`,`<i>s<sub>y</sub></i> = ((${uy} + 0)/2)(${f2(uy/10)})`,`<b class="ans"><i>s<sub>y</sub></i> = ${f2(h)} m</b>`,`<span class="note">${vx} ${ms} sideways doesn't affect the height.</span>`]}},
+ ()=>{const uy=ri(2,8)*5,vx=ri(2,20);return{q:`A ball is launched with a vertical velocity of <b>${uy} ${ms}</b> upwards and a horizontal velocity of <b>${vx} ${ms}</b>. How fast is it moving at its highest point?`,ans:vx,unit:ms,hint:"At the top v_y = 0. What about v_x?",
+   sol:[`At the top <i>v<sub>y</sub></i> = 0`,`<i>v<sub>x</sub></i> never changes`,`<b class="ans">Speed at the top = ${vx} ${ms}, all horizontal</b>`]}},
+ ()=>{const t=ri(1,5),h=5*t*t,vx=ri(2,20);return{q:`A ball is thrown horizontally at <b>${vx} ${ms}</b> off the edge of a cliff <b>${h} m</b> high. How long does it take to reach the ground?`,ans:t,unit:"s",hint:"Thrown horizontally means u_y = 0. It falls "+h+" m: s_y = −"+h+". No v_y given, so use s = ut + ½at².",
+   sol:[`Vertical: <i>u<sub>y</sub></i> = 0, <i>a</i> = −10, <i>s<sub>y</sub></i> = −${h} m`,`−${h} = 0 + ½(−10)<i>t</i>² → <i>t</i>² = ${t*t}`,`<b class="ans"><i>t</i> = ${t} s</b>`,`<span class="note">The same time as if it were just dropped.</span>`]}},
+ ()=>{const t=ri(1,5),h=5*t*t,vx=ri(2,20);return{q:`A ball is thrown horizontally at <b>${vx} ${ms}</b> off the edge of a cliff <b>${h} m</b> high. How far from the bottom of the cliff does it land?`,ans:vx*t,unit:"m",hint:"Find the time to fall "+h+" m from the vertical motion (u_y = 0). Then s_x = v_x t.",
+   sol:[`Vertical: −${h} = ½(−10)<i>t</i>² → <i>t</i> = ${t} s`,`Horizontal: <i>s<sub>x</sub></i> = ${vx}(${t})`,`<b class="ans"><i>s<sub>x</sub></i> = ${vx*t} m</b>`]}}
+]};
+const near=(x,a)=>isFinite(x)&&Math.abs(x-a)<=Math.max(0.05,Math.abs(a)*0.01);
+document.querySelectorAll("[data-more]").forEach(sec=>{
+  const key=sec.dataset.more,gens=SETS[key];
+  sec.innerHTML=`<h2><span class="n">5</span>More questions</h2>
+  <p>A new question is made at random each time. Answer it, check, then move on to the next one.</p>
+  <div class="controls mstartw"><button type="button" class="mstart">Try more questions</button></div>
+  <div class="mpanel" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="q">
+      <span class="tag">Question <span class="mn">1</span></span>
+      <p class="mq"></p>
+      <div class="row"><input id="m-${key}" inputmode="decimal" autocomplete="off" aria-label="Your answer"><span class="unit mu"></span><button type="button" class="mchk">Check</button></div>
+      <p class="fb mfb" aria-live="polite"></p>
+      <div class="controls"><button type="button" class="ghost msol">Show solution</button><button type="button" class="mnext">Next question</button></div>
+    </div>
+    <div class="work msolw" hidden></div>
+    <p class="score">Correct first time: <b class="mscore">0</b> of <span class="matt">0</span></p>
+  </div>`;
+  const $$=c=>sec.querySelector(c),inp=$$("input");let cur,last=-1,n=0,tries=0,solved=false,first=0,att=0;
+  function next(){let k;do{k=Math.floor(Math.random()*gens.length)}while(k===last&&gens.length>1);last=k;cur=gens[k]();
+    n++;tries=0;solved=false;$$(".mn").textContent=n;$$(".mq").innerHTML=cur.q;$$(".mu").textContent=cur.unit;
+    inp.value="";inp.disabled=false;$$(".mchk").disabled=false;$$(".mfb").textContent="";$$(".mfb").className="fb mfb";$$(".msolw").hidden=true}
+  function score(){$$(".mscore").textContent=first;$$(".matt").textContent=att}
+  function check(){if(solved||inp.value.trim()==="")return;if(tries===0)att++;
+    if(near(num(inp.value),cur.ans)){if(tries===0)first++;solved=true;$$(".mfb").className="fb mfb ok";$$(".mfb").textContent="Correct.";inp.disabled=true;$$(".mchk").disabled=true}
+    else{tries++;$$(".mfb").className="fb mfb bad";$$(".mfb").textContent="Not quite. Hint: "+cur.hint}score()}
+  $$(".mstart").onclick=()=>{$$(".mstartw").hidden=true;$$(".mpanel").hidden=false;next();inp.focus()};
+  $$(".mchk").onclick=check;inp.addEventListener("keydown",e=>{if(e.key==="Enter")check()});
+  $$(".msol").onclick=()=>{if(!solved&&tries===0){att++;score()}solved=true;inp.disabled=true;$$(".mchk").disabled=true;
+    $$(".msolw").innerHTML=cur.sol.map(l=>`<div class="line">${l}</div>`).join("");$$(".msolw").hidden=false};
+  $$(".mnext").onclick=next;
+});
+</script>
+
+</body>
+</html>
