@@ -98,6 +98,7 @@ details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14
     <button role="tab" data-tab="head-and-flow" aria-selected="true"><span>1</span>Head &amp; flow</button>
     <button role="tab" data-tab="water-circuit" aria-selected="false"><span>2</span>Water circuit</button>
     <button role="tab" data-tab="diode-transistor" aria-selected="false"><span>3</span>Diode &amp; transistor</button>
+    <button role="tab" data-tab="oscillator" aria-selected="false"><span>4</span>Oscillator</button>
   </nav>
 </header>
 
@@ -328,6 +329,79 @@ details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14
         <details><summary>Show answer</summary><p>So that control water has to keep flowing to keep the gate up. A real transistor switches off when the base current stops. Without the hole, the gate would stay stuck open.</p></details></li>
       <li>Give a real circuit where a small current controls a much larger one.
         <details><summary>Show answer</summary><p>For example, a light sensor (LDR) in a potential divider feeds a small base current that switches on a lamp, fan or motor drawing a much larger current.</p></details></li>
+    </ol>
+  </aside>
+</div>
+</section>
+
+<!-- ================= TAB 4 ================= -->
+<section id="oscillator" class="tab" hidden>
+<div class="layout">
+  <div class="bench">
+    <div class="stage"><canvas id="c5" style="aspect-ratio:820/400"></canvas>
+      <div class="cap"><span>Set a starting head difference, then press Release. The flywheel gives the moving water inertia.</span><span id="oState"></span></div></div>
+    <div class="stage"><canvas id="g5a" style="aspect-ratio:820/150"></canvas><canvas id="g5b" style="aspect-ratio:820/150"></canvas></div>
+    <div class="readouts" id="ro5"></div>
+    <div class="controls" id="k5"><h4>Components</h4></div>
+    <div class="controls" id="k5e"><h4>Experiment</h4></div>
+    <div class="stage"><canvas id="e5" style="aspect-ratio:820/300"></canvas>
+      <div class="cap"><span id="e5note"></span><span id="e5fit"></span></div>
+      <div class="tablewrap" id="e5tab"></div></div>
+  </div>
+  <aside class="guide">
+    <h2>Student guide</h2>
+    <h3>What you are looking at</h3>
+    <p>Two beakers (capacitors) joined by a wide pipe. In the pipe is a paddle wheel fixed to a heavy flywheel. Water cannot speed up or slow down without speeding up or slowing down the flywheel too. That gives the flow <b>inertia</b>, which is what an inductor gives a current.</p>
+    <table class="map"><thead><tr><th>Water</th><th>Electricity</th></tr></thead><tbody>
+      <tr><td>Beakers</td><td>Capacitor</td></tr>
+      <tr><td>Flywheel in the pipe</td><td>Inductor (coil)</td></tr>
+      <tr><td>Inertance <i>M</i></td><td>Inductance <i>L</i></td></tr>
+      <tr><td>Pipe friction</td><td>Resistance</td></tr>
+      <tr><td>Head difference Δh</td><td>Voltage across the capacitor</td></tr>
+      <tr><td>Flow Q</td><td>Current I</td></tr>
+    </tbody></table>
+    <h3>Why it oscillates</h3>
+    <ol>
+      <li>Water runs from the high beaker to the low one and spins up the flywheel.</li>
+      <li>When the levels are equal, Δh = 0, but the flywheel is spinning at full speed, so the water keeps going.</li>
+      <li>The water now piles up in the other beaker. That head difference pushes back and slows the flywheel down.</li>
+      <li>The flywheel stops when the head difference is as big as it was at the start, but the other way round. Then the whole thing runs backwards.</li>
+    </ol>
+    <p>Energy swaps between the <b>head difference</b> (stored by the capacitor, ½CV²) and the <b>spinning flywheel</b> (stored by the inductor, ½LI²). Watch the energy bars.</p>
+    <h3>Inertance, read from the equation</h3>
+    <span class="eq">Δh = M × (rate of change of Q) &nbsp;&nbsp; compare &nbsp; E = L dI/dt</span>
+    <p>Read as a definition: <b>inertance is the head difference per unit rate of change of flow</b>. Compare inductance: the emf per unit rate of change of current.</p>
+    <p>Units: cm ÷ (mL s⁻¹ per s) = cm ÷ mL s⁻² = <b>cm s² mL⁻¹</b>. Compare V ÷ A s⁻¹ = V s A⁻¹ = H.</p>
+    <h3>The period</h3>
+    <span class="eq">T = 2π √(M C) &nbsp;&nbsp; compare &nbsp; T = 2π √(LC)</span>
+    <ul>
+      <li>As <i>M</i> gets bigger, <i>T</i> gets bigger (<i>M</i> is above the line, inside the root): <i>T</i> ∝ √<i>M</i>. A heavier flywheel takes longer to speed up and slow down.</li>
+      <li>As <i>C</i> gets bigger, <i>T</i> gets bigger (<i>C</i> is above the line, inside the root): <i>T</i> ∝ √<i>C</i>. Wider beakers need more water to move to change the level.</li>
+      <li>Square both sides: <i>T</i>² = 4π²<i>MC</i>, so <b>T² ∝ M</b>. A graph of T² against M is a straight line through the origin with slope 4π²C.</li>
+    </ul>
+    <p class="note">With two beakers the capacitance is that of two capacitors in series: C = a<sub>A</sub>a<sub>B</sub> / (a<sub>A</sub> + a<sub>B</sub>), which is half one beaker's area when they are equal.</p>
+    <h3>Damping</h3>
+    <p>Pipe friction turns some energy into heat on every swing, so each swing is smaller than the last. With no friction, the oscillation would go on for ever.</p>
+    <h3>Same maths, other places</h3>
+    <p>This is simple harmonic motion: the restoring push (Δh) is proportional to the displacement (the water moved) and acts to bring it back. A mass on a spring and a pendulum behave the same way: mass ↔ flywheel, spring ↔ beakers.</p>
+    <h2>Questions</h2>
+    <ol class="qs">
+      <li>At the moment the two levels are equal, is the flow zero or a maximum? Explain.
+        <details><summary>Show answer</summary><p>A maximum. The flywheel has been speeding up the whole time Δh pushed it one way, so it is spinning fastest when Δh reaches zero. All the energy is in the flywheel.</p></details></li>
+      <li>Compare the Δh and Q graphs. When Δh is at a peak, what is Q doing?
+        <details><summary>Show answer</summary><p>Q is zero. The two graphs are a quarter of a cycle out of step: Q peaks when Δh is zero and is zero when Δh peaks. Voltage and current in an LC circuit are 90° out of phase.</p></details></li>
+      <li>Describe the energy changes over one full cycle.
+        <details><summary>Show answer</summary><p>Head (potential) energy → flywheel (kinetic) energy → head energy the other way round → flywheel energy spinning the other way → back to the start. With friction, a little is lost as heat each time.</p></details></li>
+      <li>M = 0.04 cm s² mL⁻¹ and each beaker is 20 cm². Calculate the period, then measure it.
+        <details><summary>Show answer</summary><p>C = 20 × 20 / 40 = 10 cm². T = 2π √(0.04 × 10) = 2π × 0.632 = 3.97 s.</p></details></li>
+      <li>You make the flywheel four times heavier (M × 4). What happens to the period?
+        <details><summary>Show answer</summary><p>T ∝ √M, so T is multiplied by √4 = 2. The period doubles.</p></details></li>
+      <li>Record T for five values of M. Plot T against M, then T² against M. Which is a straight line through the origin? Use its slope to find C.
+        <details><summary>Show answer</summary><p>T² against M, since T² = 4π²MC. Slope = 4π²C, so C = slope ÷ 4π². T against M is a curve because T ∝ √M.</p></details></li>
+      <li>Does changing the starting head difference change the period?
+        <details><summary>Show answer</summary><p>No. T = 2π√(MC) contains no Δh. A bigger start gives bigger swings that take the same time. This is a key feature of simple harmonic motion.</p></details></li>
+      <li>Set the friction to zero, then raise it. What happens to the swings, and where does the energy go?
+        <details><summary>Show answer</summary><p>At zero they keep the same size. With friction they get smaller each cycle and die away. The energy is turned into heat in the pipe, like the energy turned to heat in the resistance of an LC circuit.</p></details></li>
     </ol>
   </aside>
 </div>
@@ -725,6 +799,80 @@ function draw4g(){
 }
 function ro4(){setT('r4b',S4.Ib.toFixed(2));setT('r4c',fx(S4.Ic));setT('r4e',fx(S4.Ic+S4.Ib));setT('r4g',S4.Ib>0?fx(S4.Ic/S4.Ib):'–');setT('r4z',S4.region||'');}
 
+/* =============== TAB 4: oscillator =============== */
+const S5={a:20,M:.04,R:.005,h0:12,mean:12,x:0,Q:0,run:false,t:0,hist:[],acc:0,th:0,ph:0,lastUp:null,Tm:null,exp:[],xv:'T2M',fit:true,slow:false};
+const C5=makeCanvas($('#c5'),820,400),G5a=makeCanvas($('#g5a'),820,150),G5b=makeCanvas($('#g5b'),820,150),E5=makeCanvas($('#e5'),820,300),y5=h=>352-h*9;
+const Ceff=()=>S5.a/2, Tth=()=>2*Math.PI*Math.sqrt(S5.M*Ceff());
+// x = water moved from A to B (mL); Δh = h0 - 2x/a
+const dh5=()=>S5.h0-2*S5.x/S5.a;
+function reset5(){S5.x=0;S5.Q=0;S5.run=false;S5.t=0;S5.hist=[];S5.acc=0;S5.lastUp=null;S5.Tm=null;const g=$('#b5go');if(g)g.textContent='Release';}
+const k5=$('#k5');
+addSlider(k5,{id:'s5h',label:'Starting head difference',min:2,max:20,step:1,value:S5.h0,unit:'cm'},v=>{S5.h0=v;reset5();});
+addSlider(k5,{id:'s5a',label:'Beaker cross-section (each)',min:10,max:40,step:5,value:S5.a,unit:'cm²'},v=>{S5.a=v;reset5();});
+addSlider(k5,{id:'s5M',label:'Flywheel inertance M',min:.01,max:.16,step:.01,value:S5.M,fmt:v=>v.toFixed(2),unit:'cm s² mL⁻¹'},v=>S5.M=v);
+addSlider(k5,{id:'s5R',label:'Pipe friction R',min:0,max:.06,step:.005,value:S5.R,fmt:v=>v.toFixed(3),unit:'cm s mL⁻¹'},v=>S5.R=v);
+addBtns(k5,[{id:'b5go',text:'Release',primary:true,on:e=>{if(!S5.run&&S5.t===0){S5.run=true;e.textContent='Pause';}else{S5.run=!S5.run;e.textContent=S5.run?'Pause':'Resume';}}},{id:'b5r',text:'Reset',on:()=>reset5()},{id:'b5s',text:'Slow motion off',on:e=>{S5.slow=!S5.slow;e.textContent=S5.slow?'Slow motion on':'Slow motion off';}}]);
+readouts($('#ro5'),[['r5dh','Head diff Δh','cm'],['r5q','Flow Q','mL s⁻¹'],['r5c','Capacitance C','cm²'],['r5tt','Predicted T','s'],['r5tm','Measured T','s']]);
+function step5(dt){
+  if(!S5.run)return;const sub=20,h=dt/sub;
+  for(let i=0;i<sub;i++){const prev=dh5();S5.Q+=(dh5()-S5.R*S5.Q)/S5.M*h;S5.x+=S5.Q*h;S5.t+=h;const now=dh5();
+    if((prev<0)!==(now<0)){if(S5.lastUp!==null)S5.Tm=2*(S5.t-S5.lastUp);S5.lastUp=S5.t;}}
+  S5.th+=S5.Q*dt*.012/Math.sqrt(S5.M/.04);S5.ph+=clamp(S5.Q*1.2,-420,420)*dt;
+  S5.acc+=dt;if(S5.acc>=.05){S5.acc=0;S5.hist.push([S5.t,dh5(),S5.Q]);while(S5.hist.length&&S5.hist[0][0]<S5.t-20)S5.hist.shift();}
+}
+function draw5(){
+  if(!C5.begin())return;const ctx=C5.ctx,d=dh5(),hA=S5.mean+d/2,hB=S5.mean-d/2,w=30+S5.a*2.4,xa=170,xb=650;
+  hgrid(ctx,50,810,y5,0,35);ruler(ctx,44,y5,0,35);
+  const py=y5(1.3),th=22;
+  pipe(ctx,[[xa+w/2,py],[xb-w/2,py]],th,S5.Q,S5.ph);
+  // flywheel
+  const cx=410,R0=26+Math.sqrt(S5.M/.16)*44,cy=py-R0-18;
+  ctx.fillStyle=T.pipe;ctx.fillRect(cx-4,cy,8,py-cy-th/2);
+  ctx.fillStyle=T.panel;ctx.strokeStyle=T.ink;ctx.lineWidth=2;rr(ctx,cx-20,py-th/2-6,40,th+12,5);ctx.fill();ctx.stroke();
+  ctx.save();ctx.translate(cx,py);ctx.rotate(S5.th);ctx.strokeStyle=T.water;ctx.lineWidth=3;for(let i=0;i<4;i++){ctx.rotate(Math.PI/4);ctx.beginPath();ctx.moveTo(-th/2+2,0);ctx.lineTo(th/2-2,0);ctx.stroke();}ctx.restore();
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(S5.th);
+  ctx.fillStyle=T.brass;ctx.beginPath();ctx.arc(0,0,R0,0,7);ctx.fill();ctx.fillStyle=T.panel;ctx.beginPath();ctx.arc(0,0,R0-9,0,7);ctx.fill();
+  ctx.strokeStyle=T.brass;ctx.lineWidth=5;for(let i=0;i<3;i++){ctx.rotate(2.094);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-(R0-6));ctx.stroke();}
+  ctx.fillStyle=T.ink;ctx.beginPath();ctx.arc(0,0,5,0,7);ctx.fill();ctx.restore();
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='center';ctx.fillText('FLYWHEEL',cx,cy-R0-8);ctx.fillText('PADDLE WHEEL',cx,py+th/2+20);
+  beaker(ctx,xa,w,y5(0),y5(25),y5(hA),'Beaker A');beaker(ctx,xb,w,y5(0),y5(25),y5(hB),'Beaker B');
+  levelLine(ctx,48,810,y5(hA));levelLine(ctx,48,810,y5(hB));
+  tag(ctx,xa-w/2-10,y5(hA)+4,fx(hA)+' cm','right',T.water);tag(ctx,xb+w/2+10,y5(hB)+4,fx(hB)+' cm','left',T.water);
+  vArrow(ctx,xa+w/2+40,y5(hA),y5(hB),'Δh');
+  const ar=S5.Q>0.5?' →':S5.Q<-0.5?' ←':'';chip(ctx,560,py-46,'FLOWMETER',fx(Math.abs(S5.Q),0)+' mL/s'+ar,[560,py-10]);
+  // energy bars
+  const C=Ceff(),Eh=.5*C*d*d,Ek=.5*S5.M*S5.Q*S5.Q,E0=.5*C*S5.h0*S5.h0,bx=600,by=20,bw=190;
+  ctx.font=`700 10px ${MONO}`;ctx.textAlign='left';
+  [['HEAD (½CΔh²)',Eh,T.water],['FLYWHEEL (½MQ²)',Ek,T.brass],['TOTAL',Eh+Ek,T.ink]].forEach(([l,v,c],i)=>{const y=by+i*22;
+    ctx.fillStyle=T.muted;ctx.fillText(l,bx-150,y+10);ctx.fillStyle=T.grid;ctx.fillRect(bx,y,bw,12);ctx.fillStyle=c;ctx.fillRect(bx,y,bw*clamp(v/E0,0,1),12);});
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.fillText('ENERGY (share of start)',bx-150,by-6);
+}
+function draw5g(){
+  const t1=Math.max(20,S5.t),t0=t1-20,dm=niceCeil(S5.h0),qm=niceCeil(S5.h0*Ceff()/Math.sqrt(S5.M*Ceff()));
+  [[G5a,1,dm,'Δh / cm',T.water],[G5b,2,qm,'Q / mL s⁻¹',T.brass]].forEach(([G,k,m,lab,col])=>{if(!G.begin())return;const ctx=G.ctx;
+    const gr=graph(G,{x0:t0,x1:t1,y0:-m,y1:m,xs:2,ys:m/2,xl:'time / s',yl:lab});
+    if(S5.hist.length>1){ctx.strokeStyle=col;ctx.lineWidth=2.2;ctx.beginPath();S5.hist.forEach((p,i)=>{const x=gr.X(p[0]),y=gr.Y(clamp(p[k],-m,m));i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}});
+}
+function ro5(){setT('r5dh',fx(dh5()));setT('r5q',fx(S5.Q,0));setT('r5c',String(Ceff()));setT('r5tt',Tth().toFixed(2));setT('r5tm',S5.Tm?S5.Tm.toFixed(2):'–');
+  setT('oState',!S5.run&&S5.t===0?'Ready':!S5.run?'Paused':Math.abs(S5.Q)<1&&Math.abs(dh5())>.5?'Flow stopped: all energy in the head':Math.abs(dh5())<.3?'Levels equal: all energy in the flywheel':'');}
+const XV5={TM:{t:'T against M',lab:'inertance M / cm s² mL⁻¹',f:r=>r.M,y:r=>r.T,yl:'period T / s',hint:'Curved: try T² against M.'},T2M:{t:'T² against M',lab:'inertance M / cm s² mL⁻¹',f:r=>r.M,y:r=>r.T*r.T,yl:'T² / s²',lin:1,su:'s² per cm s² mL⁻¹'},T2C:{t:'T² against C',lab:'capacitance C / cm²',f:r=>r.C,y:r=>r.T*r.T,yl:'T² / s²',lin:1,su:'s² cm⁻²'}};
+{const k5e=$('#k5e'),w=document.createElement('label');w.className='sel';w.innerHTML='Plot <select id="s5x">'+Object.entries(XV5).map(([k,v])=>`<option value="${k}"${k===S5.xv?' selected':''}>${v.t}</option>`).join('')+'</select>';k5e.appendChild(w);w.querySelector('select').addEventListener('change',e=>S5.xv=e.target.value);
+ const bw=addBtns(k5e,[{id:'b5rec',text:'Record period',primary:true,on:()=>{if(!S5.Tm)return;S5.exp.push({M:S5.M,C:Ceff(),R:S5.R,T:S5.Tm});tab5();}},{id:'b5clr',text:'Clear readings',on:()=>{S5.exp=[];tab5();}}]);
+ addCheck(bw,'s5fit','Best-fit line through origin',S5.fit,v=>S5.fit=v);}
+function tab5(){$('#e5tab').innerHTML=S5.exp.length?`<table class="rtab"><thead><tr><th>#</th><th>M / cm s² mL⁻¹</th><th>C / cm²</th><th>T / s</th><th>T² / s²</th></tr></thead><tbody>${S5.exp.map((r,i)=>`<tr><td>${i+1}</td><td>${r.M.toFixed(2)}</td><td>${r.C}</td><td>${r.T.toFixed(2)}</td><td>${(r.T*r.T).toFixed(2)}</td></tr>`).join('')}</tbody></table>`:'';}
+function drawE5(){
+  if(!E5.begin())return;const ctx=E5.ctx,v=XV5[S5.xv],pts=S5.exp.map(r=>[v.f(r),v.y(r)]);
+  const xm=niceCeil((pts.length?Math.max(...pts.map(p=>p[0])):(S5.xv==='T2C'?20:.16))*1.05),ym=niceCeil(Math.max(S5.xv==='TM'?5:20,...pts.map(p=>p[1]))*1.1);
+  const gr=graph(E5,{x0:0,x1:xm,y0:0,y1:ym,xs:xm/4,ys:ym/5,xl:v.lab,yl:v.yl});
+  let fit='',note=S5.Tm?'':'Release the water and wait one full swing before recording. ';
+  if(!pts.length)note+='No readings yet.';else if(v.hint)note+=v.hint;
+  if(v.lin&&S5.fit&&pts.length>1){const k=pts.reduce((a,p)=>a+p[0]*p[1],0)/pts.reduce((a,p)=>a+p[0]*p[0],0);
+    ctx.strokeStyle=T.accent;ctx.lineWidth=1.8;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(gr.X(0),gr.Y(0));const xe=Math.min(xm,ym/k);ctx.lineTo(gr.X(xe),gr.Y(k*xe));ctx.stroke();ctx.setLineDash([]);
+    fit='slope = '+k.toFixed(1)+' '+v.su+(S5.xv==='T2M'?' → C = slope / 4π² = '+(k/(4*Math.PI*Math.PI)).toFixed(1)+' cm²':'');}
+  ctx.fillStyle=T.water;pts.forEach(p=>{ctx.beginPath();ctx.arc(gr.X(p[0]),gr.Y(p[1]),4.5,0,7);ctx.fill();});
+  setT('e5note',note);setT('e5fit',fit);
+}
+
 /* =============== tabs, routing, loop =============== */
 let active='head-and-flow',sub='diode';
 const tabs=[...document.querySelectorAll('.tabs button')];
@@ -742,9 +890,10 @@ let last=performance.now(),lastRO=0;
 function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;readTok();
   if(active==='head-and-flow'){step1(dt*S1.speed);draw1();draw1g();drawE1();}
   else if(active==='water-circuit'){step2(dt*S2.speed);draw2();}
+  else if(active==='oscillator'){step5(dt*(S5.slow?.25:1));draw5();draw5g();drawE5();}
   else if(sub==='diode'){step3(dt);draw3();draw3g();}
   else{step4(dt);draw4();draw4g();}
-  if(now-lastRO>100){lastRO=now;ro1();ro2();ro3();ro4();}
+  if(now-lastRO>100){lastRO=now;ro1();ro2();ro3();ro4();ro5();}
   requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 })();
