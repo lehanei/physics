@@ -99,6 +99,8 @@ details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14
     <button role="tab" data-tab="water-circuit" aria-selected="false"><span>2</span>Water circuit</button>
     <button role="tab" data-tab="diode-transistor" aria-selected="false"><span>3</span>Diode &amp; transistor</button>
     <button role="tab" data-tab="oscillator" aria-selected="false"><span>4</span>Oscillator</button>
+    <button role="tab" data-tab="relaxation" aria-selected="false"><span>5</span>Relaxation</button>
+    <button role="tab" data-tab="flip-flop" aria-selected="false"><span>6</span>Flip-flop</button>
   </nav>
 </header>
 
@@ -334,6 +336,115 @@ details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14
 </div>
 </section>
 
+<!-- ================= TAB 5 ================= -->
+<section id="relaxation" class="tab" hidden>
+<div class="layout">
+  <div class="bench">
+    <div class="stage"><canvas id="c6" style="aspect-ratio:820/380"></canvas>
+      <div class="cap"><span>The beaker fills slowly through a thin pipe. The sticky valve snaps open at the high mark and shuts at the low mark.</span><span id="rState"></span></div></div>
+    <div class="stage"><canvas id="g6" style="aspect-ratio:820/200"></canvas></div>
+    <div class="readouts" id="ro6"></div>
+    <div class="controls" id="k6"><h4>Supply and timing</h4></div>
+  </div>
+  <aside class="guide">
+    <h2>Student guide</h2>
+    <h3>What you are looking at</h3>
+    <p>A supply tank, held at a steady level by a pump, fills a beaker through a thin pipe. The beaker empties through a <b>sticky valve</b> into a drain that lights a lamp while water rushes through it.</p>
+    <table class="map"><thead><tr><th>Water</th><th>Electricity</th></tr></thead><tbody>
+      <tr><td>Supply tank</td><td>Battery</td></tr>
+      <tr><td>Thin pipe</td><td>Resistor R</td></tr>
+      <tr><td>Beaker</td><td>Capacitor C</td></tr>
+      <tr><td>Sticky valve</td><td>Neon lamp, or the switch inside a 555 timer</td></tr>
+      <tr><td>Opening level</td><td>Strike voltage</td></tr>
+      <tr><td>Closing level</td><td>Extinguish voltage</td></tr>
+    </tbody></table>
+    <h3>The sticky valve</h3>
+    <p>This is the Tab 3 flap valve with friction in its hinge. Static friction is bigger than sliding friction, so it takes a big head to unstick it, but once it is moving a smaller head keeps it open. It opens at the high mark and does not close until the level falls to the low mark. Having two switching levels like this is called <b>hysteresis</b>, and it is what makes the circuit oscillate instead of settling.</p>
+    <h3>One cycle</h3>
+    <ol>
+      <li>The valve is shut. The beaker fills, fast at first, then more slowly as its level gets closer to the supply level: the capacitor charging curve.</li>
+      <li>The level reaches the high mark. The valve snaps open and the beaker empties quickly: the lamp flashes.</li>
+      <li>The level falls to the low mark. The valve shuts, and filling starts again.</li>
+    </ol>
+    <p>The level graph is a <b>sawtooth</b>: a slow curved rise, then a sudden drop.</p>
+    <h3>What sets the period</h3>
+    <span class="eq">fill time = RC × ln[(H − h<sub>close</sub>) / (H − h<sub>open</sub>)]</span>
+    <p>The period is the fill time plus the short time the beaker takes to empty.</p>
+    <ul>
+      <li>As <i>R</i> gets bigger, <i>T</i> gets bigger (<i>R</i> is above the line): <i>T</i> ∝ <i>R</i>. A narrower or longer pipe fills the beaker more slowly.</li>
+      <li>As <i>C</i> gets bigger, <i>T</i> gets bigger (<i>C</i> is above the line): <i>T</i> ∝ <i>C</i>. A wider beaker needs more water for each cm.</li>
+    </ul>
+    <p>Units of RC: (cm s mL⁻¹) × (mL cm⁻¹) = <b>s</b>. The product RC is a time: the <b>time constant</b>. Compare Ω × F = s.</p>
+    <h2>Questions</h2>
+    <ol class="qs">
+      <li>Describe the shape of the level–time graph, and explain why the rising part curves.
+        <details><summary>Show answer</summary><p>A sawtooth. The rise curves because the flow in is Q = (H − h) / R: as the level gets closer to the supply level, the head difference gets smaller, so the beaker fills more slowly.</p></details></li>
+      <li>Set the supply level below the opening mark. What happens, and why?
+        <details><summary>Show answer</summary><p>The beaker fills until its level equals the supply level and then stops. It never reaches the opening mark, so the lamp never flashes. A neon lamp flasher needs a supply voltage above the strike voltage.</p></details></li>
+      <li>Double R. Predict the new period, then measure it.
+        <details><summary>Show answer</summary><p>The filling time doubles, so the period roughly doubles: T ∝ R. (The quick emptying time does not change much.)</p></details></li>
+      <li>Show that RC has the unit of time.
+        <details><summary>Show answer</summary><p>R is in cm s mL⁻¹ and C is in mL cm⁻¹. Multiply: cm s mL⁻¹ × mL cm⁻¹ = s.</p></details></li>
+      <li>Move the closing mark up close to the opening mark. What happens to the period and to the size of each flash?
+        <details><summary>Show answer</summary><p>The period gets shorter and each flash lets less water through, because the level only has to rise a little between flashes.</p></details></li>
+      <li>Why would the circuit not oscillate if the valve opened and closed at the same level?
+        <details><summary>Show answer</summary><p>The level would settle at that one level, with the valve partly open and the flow in equal to the flow out. The gap between the two levels (hysteresis) forces the valve to stay fully open or fully shut, so it switches back and forth.</p></details></li>
+    </ol>
+  </aside>
+</div>
+</section>
+
+<!-- ================= TAB 6 ================= -->
+<section id="flip-flop" class="tab" hidden>
+<div class="layout">
+  <div class="bench">
+    <div class="stage"><canvas id="c7" style="aspect-ratio:820/440"></canvas>
+      <div class="cap"><span>Each transistor's lever lights its lamp and lifts a weight out of the other transistor's timing beaker.</span><span id="fState"></span></div></div>
+    <div class="stage"><canvas id="g7" style="aspect-ratio:820/220"></canvas></div>
+    <div class="readouts" id="ro7"></div>
+    <div class="controls" id="k7"><h4>Timing</h4></div>
+  </div>
+  <aside class="guide">
+    <h2>Student guide</h2>
+    <h3>What you are looking at</h3>
+    <p>Two of the Tab 3 lever transistors. Each one has a <b>timing beaker</b> that fills slowly from the supply through a thin pipe. When a timing beaker's level reaches its nozzle, water runs into that transistor's control bucket and the transistor turns on: its main gate opens and its lamp lights.</p>
+    <p>The two transistors are cross-linked. Transistor 1's lever has a cord to a heavy weight (a displacer) standing in transistor 2's timing beaker, and transistor 2's lever has one into beaker 1.</p>
+    <table class="map"><thead><tr><th>Water</th><th>Electricity</th></tr></thead><tbody>
+      <tr><td>Lever gates 1 and 2</td><td>Transistors T1 and T2</td></tr>
+      <tr><td>Thin supply pipes</td><td>Base resistors</td></tr>
+      <tr><td>Timing beakers</td><td>Timing capacitors</td></tr>
+      <tr><td>Nozzle height</td><td>Base–emitter switch-on (≈ 0.7 V)</td></tr>
+      <tr><td>Lifting the displacer out</td><td>The capacitor pulling the other base down</td></tr>
+      <tr><td>Lamps</td><td>LEDs on the collectors</td></tr>
+    </tbody></table>
+    <h3>One cycle</h3>
+    <ol>
+      <li>Transistor 1 is on. Its lever has lifted the displacer out of beaker 2, so beaker 2's level fell suddenly, well below its nozzle. Transistor 2 is off.</li>
+      <li>Beaker 2 refills slowly through its pipe: the capacitor charging curve.</li>
+      <li>Beaker 2 reaches its nozzle. Transistor 2 turns on, lamp 2 lights, and its lever lifts the displacer out of beaker 1. Beaker 1's level drops below its nozzle, so transistor 1 turns off.</li>
+      <li>Now beaker 1 refills, and the same thing happens the other way round.</li>
+    </ol>
+    <p>The lamps flash in turn. This is the <b>astable multivibrator</b>, the classic two-LED flasher. Each transistor turning on switches the other one off: positive feedback makes the switching snap over.</p>
+    <h3>What sets the timing</h3>
+    <p>Each half-cycle is the time a timing beaker takes to refill from its low level to the nozzle. As before, that time is proportional to RC: <b>T ∝ RC</b>. Giving the two sides different R or C makes one lamp stay on longer than the other.</p>
+    <p class="note">In the real circuit the capacitors make the cross-link: when one transistor turns on, the sudden drop in its collector voltage is passed through the capacitor to the other base. Here the displacer and cord do that job.</p>
+    <h2>Questions</h2>
+    <ol class="qs">
+      <li>Why does lifting the displacer out of a beaker make its level fall suddenly?
+        <details><summary>Show answer</summary><p>The displacer takes up space in the water. Take it out and the same volume of water now spreads over the whole beaker without it, so the surface drops at once. The water itself has not gone anywhere.</p></details></li>
+      <li>While lamp 1 is lit, what is happening in timing beaker 2?
+        <details><summary>Show answer</summary><p>It is refilling through its pipe from the low level it was knocked down to. When it reaches the nozzle, transistor 2 turns on and lamp 1 goes out.</p></details></li>
+      <li>Make R₁ twice R₂. Which lamp stays on longer, and why?
+        <details><summary>Show answer</summary><p>Lamp 2. Lamp 2 stays on while beaker 1 refills, and beaker 1 now fills through the bigger resistance, so it takes about twice as long.</p></details></li>
+      <li>Double both timing beakers' cross-sections. What happens to the flash rate?
+        <details><summary>Show answer</summary><p>It halves. Each half-cycle is proportional to RC, so doubling C doubles the period.</p></details></li>
+      <li>What would happen if the cords were taken off?
+        <details><summary>Show answer</summary><p>Both beakers would fill to their nozzles and both transistors would stay on. Nothing would switch either one off. The cross-link is what turns one off when the other turns on.</p></details></li>
+    </ol>
+  </aside>
+</div>
+</section>
+
 <!-- ================= TAB 4 ================= -->
 <section id="oscillator" class="tab" hidden>
 <div class="layout">
@@ -382,6 +493,13 @@ details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14
     <p class="note">With two beakers the capacitance is that of two capacitors in series: C = a<sub>A</sub>a<sub>B</sub> / (a<sub>A</sub> + a<sub>B</sub>), which is half one beaker's area when they are equal.</p>
     <h3>Damping</h3>
     <p>Pipe friction turns some energy into heat on every swing, so each swing is smaller than the last. With no friction, the oscillation would go on for ever.</p>
+    <h3>Keeping it going: transistor feedback</h3>
+    <p>Tick <b>Sustain</b>. A one-way flap (diode) lets a little of the flow into a control bucket, but only while water is flowing towards B. The bucket's weight lifts a transistor gate, which lets a jet of mains water push the paddle wheel the same way. So the push always comes at the right moment in the cycle, like pushing a child on a swing.</p>
+    <ul>
+      <li>If the gain is too low, the pushes are smaller than the friction losses, and the swings still die away.</li>
+      <li>If the gain is high enough, the swings grow, even from a tiny start, until the gate is fully open (saturation). Then they stay the same size.</li>
+    </ul>
+    <p>This is how every electronic oscillator works: an amplifier (transistor) with <b>positive feedback</b> feeds in just enough energy each cycle to replace what the resistance turns into heat. The period is still set by M and C.</p>
     <h3>Same maths, other places</h3>
     <p>This is simple harmonic motion: the restoring push (Δh) is proportional to the displacement (the water moved) and acts to bring it back. A mass on a spring and a pendulum behave the same way: mass ↔ flywheel, spring ↔ beakers.</p>
     <h2>Questions</h2>
@@ -402,6 +520,12 @@ details p{background:var(--chip);border-radius:5px;padding:6px 10px;font-size:14
         <details><summary>Show answer</summary><p>No. T = 2π√(MC) contains no Δh. A bigger start gives bigger swings that take the same time. This is a key feature of simple harmonic motion.</p></details></li>
       <li>Set the friction to zero, then raise it. What happens to the swings, and where does the energy go?
         <details><summary>Show answer</summary><p>At zero they keep the same size. With friction they get smaller each cycle and die away. The energy is turned into heat in the pipe, like the energy turned to heat in the resistance of an LC circuit.</p></details></li>
+      <li>Tick Sustain with a 2 cm start. Find the lowest gain that keeps the swings going. What has to be true about the energy fed in?
+        <details><summary>Show answer</summary><p>The energy fed in by the jet each cycle must be at least as big as the energy lost to friction each cycle. Below that gain the swings still die away; above it they grow.</p></details></li>
+      <li>With Sustain on, why do the swings stop growing?
+        <details><summary>Show answer</summary><p>The gate saturates: it cannot open any further, so the push cannot get any bigger. The swings settle at the size where the push per cycle equals the friction loss per cycle.</p></details></li>
+      <li>Why must the flap valve stop the control flow when the water flows towards A?
+        <details><summary>Show answer</summary><p>So the jet only pushes in the direction the water is already moving. If it pushed all the time, it would push against the flow for half of each cycle and take energy out. The timing of the feedback matters.</p></details></li>
     </ol>
   </aside>
 </div>
@@ -800,7 +924,7 @@ function draw4g(){
 function ro4(){setT('r4b',S4.Ib.toFixed(2));setT('r4c',fx(S4.Ic));setT('r4e',fx(S4.Ic+S4.Ib));setT('r4g',S4.Ib>0?fx(S4.Ic/S4.Ib):'–');setT('r4z',S4.region||'');}
 
 /* =============== TAB 4: oscillator =============== */
-const S5={a:20,M:.04,R:.005,h0:12,mean:12,x:0,Q:0,run:false,t:0,hist:[],acc:0,th:0,ph:0,lastUp:null,Tm:null,exp:[],xv:'T2M',fit:true,slow:false};
+const S5={a:20,M:.04,R:.005,h0:12,mean:12,x:0,Q:0,run:false,t:0,hist:[],acc:0,th:0,ph:0,lastUp:null,Tm:null,exp:[],xv:'T2M',fit:true,slow:false,sus:false,gain:.6,g:0,jet:0};
 const C5=makeCanvas($('#c5'),820,400),G5a=makeCanvas($('#g5a'),820,150),G5b=makeCanvas($('#g5b'),820,150),E5=makeCanvas($('#e5'),820,300),y5=h=>352-h*9;
 const Ceff=()=>S5.a/2, Tth=()=>2*Math.PI*Math.sqrt(S5.M*Ceff());
 // x = water moved from A to B (mL); Δh = h0 - 2x/a
@@ -811,12 +935,16 @@ addSlider(k5,{id:'s5h',label:'Starting head difference',min:2,max:20,step:1,valu
 addSlider(k5,{id:'s5a',label:'Beaker cross-section (each)',min:10,max:40,step:5,value:S5.a,unit:'cm²'},v=>{S5.a=v;reset5();});
 addSlider(k5,{id:'s5M',label:'Flywheel inertance M',min:.01,max:.16,step:.01,value:S5.M,fmt:v=>v.toFixed(2),unit:'cm s² mL⁻¹'},v=>S5.M=v);
 addSlider(k5,{id:'s5R',label:'Pipe friction R',min:0,max:.06,step:.005,value:S5.R,fmt:v=>v.toFixed(3),unit:'cm s mL⁻¹'},v=>S5.R=v);
+addHead(k5,'Transistor feedback');
+{const b=addBtns(k5,[]);addCheck(b,'s5sus','Sustain (transistor feedback on)',S5.sus,v=>S5.sus=v);}
+addSlider(k5,{id:'s5g',label:'Feedback gain (lever ratio)',min:0,max:1,step:.05,value:S5.gain,fmt:v=>v.toFixed(2)},v=>S5.gain=v);
 addBtns(k5,[{id:'b5go',text:'Release',primary:true,on:e=>{if(!S5.run&&S5.t===0){S5.run=true;e.textContent='Pause';}else{S5.run=!S5.run;e.textContent=S5.run?'Pause':'Resume';}}},{id:'b5r',text:'Reset',on:()=>reset5()},{id:'b5s',text:'Slow motion off',on:e=>{S5.slow=!S5.slow;e.textContent=S5.slow?'Slow motion on':'Slow motion off';}}]);
 readouts($('#ro5'),[['r5dh','Head diff Δh','cm'],['r5q','Flow Q','mL s⁻¹'],['r5c','Capacitance C','cm²'],['r5tt','Predicted T','s'],['r5tm','Measured T','s']]);
 function step5(dt){
   if(!S5.run)return;const sub=20,h=dt/sub;
-  for(let i=0;i<sub;i++){const prev=dh5();S5.Q+=(dh5()-S5.R*S5.Q)/S5.M*h;S5.x+=S5.Q*h;S5.t+=h;const now=dh5();
-    if((prev<0)!==(now<0)){if(S5.lastUp!==null)S5.Tm=2*(S5.t-S5.lastUp);S5.lastUp=S5.t;}}
+  for(let i=0;i<sub;i++){const prev=dh5();S5.g=S5.sus?Math.min(1,S5.gain*Math.max(0,S5.Q)/20):0;S5.jet=S5.g*3*Math.max(0,1-S5.Q/120);S5.Q+=(dh5()-S5.R*S5.Q+S5.jet)/S5.M*h;S5.x+=S5.Q*h;S5.t+=h;const now=dh5();
+    if((prev<0)!==(now<0)){if(S5.lastUp!==null)S5.Tm=2*(S5.t-S5.lastUp);S5.lastUp=S5.t;}
+    const lim=S5.a*11;if(S5.x>S5.h0*S5.a/2+lim){S5.x=S5.h0*S5.a/2+lim;S5.Q=Math.min(0,S5.Q);}if(S5.x<S5.h0*S5.a/2-lim){S5.x=S5.h0*S5.a/2-lim;S5.Q=Math.max(0,S5.Q);}}
   S5.th+=S5.Q*dt*.012/Math.sqrt(S5.M/.04);S5.ph+=clamp(S5.Q*1.2,-420,420)*dt;
   S5.acc+=dt;if(S5.acc>=.05){S5.acc=0;S5.hist.push([S5.t,dh5(),S5.Q]);while(S5.hist.length&&S5.hist[0][0]<S5.t-20)S5.hist.shift();}
 }
@@ -835,17 +963,30 @@ function draw5(){
   ctx.strokeStyle=T.brass;ctx.lineWidth=5;for(let i=0;i<3;i++){ctx.rotate(2.094);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-(R0-6));ctx.stroke();}
   ctx.fillStyle=T.ink;ctx.beginPath();ctx.arc(0,0,5,0,7);ctx.fill();ctx.restore();
   ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='center';ctx.fillText('FLYWHEEL',cx,cy-R0-8);ctx.fillText('PADDLE WHEEL',cx,py+th/2+20);
+  if(S5.sus){const gx=300,gy=py-62,tx=250;
+    // mains tank and jet
+    ctx.fillStyle=T.water2;ctx.fillRect(tx-28,y5(31),56,y5(26)-y5(31));ctx.strokeStyle=T.ink;ctx.lineWidth=2;ctx.strokeRect(tx-28,y5(32),56,y5(26)-y5(32));
+    ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='center';ctx.fillText('MAINS',tx,y5(32)-6);
+    pipe(ctx,[[tx,y5(26)],[tx,gy],[gx+20,gy],[cx-24,py-th/2-4]],8,S5.jet,S5.ph,S5.jet>.01);
+    ctx.fillStyle=T.brass;ctx.fillRect(gx-5,gy-14-16*S5.g,10,28);ctx.strokeStyle=T.ink;ctx.lineWidth=1.2;ctx.strokeRect(gx-5,gy-14-16*S5.g,10,28);
+    ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText('TRANSISTOR GATE',gx-10,gy+22);
+    // sensing branch with flap and control bucket
+    const sx=330,bk=py+th/2+30;ctx.strokeStyle=T.pipe;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(sx,py+th/2);ctx.lineTo(sx,bk-6);ctx.stroke();
+    ctx.strokeStyle=T.brass;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(sx-6,py+th/2+6);ctx.lineTo(sx+6*(S5.g>0?0:1),py+th/2+14);ctx.stroke();
+    ctx.fillStyle=T.water2;ctx.fillRect(sx-12,bk+12-12*S5.g,24,12*S5.g);ctx.strokeStyle=T.ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx-14,bk-2);ctx.lineTo(sx-11,bk+12);ctx.lineTo(sx+11,bk+12);ctx.lineTo(sx+14,bk-2);ctx.stroke();
+    ctx.strokeStyle=T.muted;ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(sx+14,bk+4);ctx.lineTo(gx+40,bk+4);ctx.lineTo(gx+40,gy);ctx.lineTo(gx+5,gy);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=T.muted;ctx.textAlign='left';ctx.fillText('flap + control bucket',sx+20,bk+16);}
   beaker(ctx,xa,w,y5(0),y5(25),y5(hA),'Beaker A');beaker(ctx,xb,w,y5(0),y5(25),y5(hB),'Beaker B');
   levelLine(ctx,48,810,y5(hA));levelLine(ctx,48,810,y5(hB));
   tag(ctx,xa-w/2-10,y5(hA)+4,fx(hA)+' cm','right',T.water);tag(ctx,xb+w/2+10,y5(hB)+4,fx(hB)+' cm','left',T.water);
   vArrow(ctx,xa+w/2+40,y5(hA),y5(hB),'Δh');
   const ar=S5.Q>0.5?' →':S5.Q<-0.5?' ←':'';chip(ctx,560,py-46,'FLOWMETER',fx(Math.abs(S5.Q),0)+' mL/s'+ar,[560,py-10]);
   // energy bars
-  const C=Ceff(),Eh=.5*C*d*d,Ek=.5*S5.M*S5.Q*S5.Q,E0=.5*C*S5.h0*S5.h0,bx=600,by=20,bw=190;
+  const C=Ceff(),Eh=.5*C*d*d,Ek=.5*S5.M*S5.Q*S5.Q,E0=.5*C*Math.pow(S5.sus?20:S5.h0,2),bx=600,by=20,bw=190;
   ctx.font=`700 10px ${MONO}`;ctx.textAlign='left';
   [['HEAD (½CΔh²)',Eh,T.water],['FLYWHEEL (½MQ²)',Ek,T.brass],['TOTAL',Eh+Ek,T.ink]].forEach(([l,v,c],i)=>{const y=by+i*22;
     ctx.fillStyle=T.muted;ctx.fillText(l,bx-150,y+10);ctx.fillStyle=T.grid;ctx.fillRect(bx,y,bw,12);ctx.fillStyle=c;ctx.fillRect(bx,y,bw*clamp(v/E0,0,1),12);});
-  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.fillText('ENERGY (share of start)',bx-150,by-6);
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.fillText(S5.sus?'ENERGY (share of a 20 cm start)':'ENERGY (share of start)',bx-150,by-6);
 }
 function draw5g(){
   const t1=Math.max(20,S5.t),t0=t1-20,dm=niceCeil(S5.h0),qm=niceCeil(S5.h0*Ceff()/Math.sqrt(S5.M*Ceff()));
@@ -854,7 +995,7 @@ function draw5g(){
     if(S5.hist.length>1){ctx.strokeStyle=col;ctx.lineWidth=2.2;ctx.beginPath();S5.hist.forEach((p,i)=>{const x=gr.X(p[0]),y=gr.Y(clamp(p[k],-m,m));i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}});
 }
 function ro5(){setT('r5dh',fx(dh5()));setT('r5q',fx(S5.Q,0));setT('r5c',String(Ceff()));setT('r5tt',Tth().toFixed(2));setT('r5tm',S5.Tm?S5.Tm.toFixed(2):'–');
-  setT('oState',!S5.run&&S5.t===0?'Ready':!S5.run?'Paused':Math.abs(S5.Q)<1&&Math.abs(dh5())>.5?'Flow stopped: all energy in the head':Math.abs(dh5())<.3?'Levels equal: all energy in the flywheel':'');}
+  setT('oState',!S5.run&&S5.t===0?'Ready':S5.sus&&S5.g>=1?'Gate saturated':S5.sus&&S5.g>0?'Transistor gate open: jet pushing':!S5.run?'Paused':Math.abs(S5.Q)<1&&Math.abs(dh5())>.5?'Flow stopped: all energy in the head':Math.abs(dh5())<.3?'Levels equal: all energy in the flywheel':'');}
 const XV5={TM:{t:'T against M',lab:'inertance M / cm s² mL⁻¹',f:r=>r.M,y:r=>r.T,yl:'period T / s',hint:'Curved: try T² against M.'},T2M:{t:'T² against M',lab:'inertance M / cm s² mL⁻¹',f:r=>r.M,y:r=>r.T*r.T,yl:'T² / s²',lin:1,su:'s² per cm s² mL⁻¹'},T2C:{t:'T² against C',lab:'capacitance C / cm²',f:r=>r.C,y:r=>r.T*r.T,yl:'T² / s²',lin:1,su:'s² cm⁻²'}};
 {const k5e=$('#k5e'),w=document.createElement('label');w.className='sel';w.innerHTML='Plot <select id="s5x">'+Object.entries(XV5).map(([k,v])=>`<option value="${k}"${k===S5.xv?' selected':''}>${v.t}</option>`).join('')+'</select>';k5e.appendChild(w);w.querySelector('select').addEventListener('change',e=>S5.xv=e.target.value);
  const bw=addBtns(k5e,[{id:'b5rec',text:'Record period',primary:true,on:()=>{if(!S5.Tm)return;S5.exp.push({M:S5.M,C:Ceff(),R:S5.R,T:S5.Tm});tab5();}},{id:'b5clr',text:'Clear readings',on:()=>{S5.exp=[];tab5();}}]);
@@ -873,6 +1014,123 @@ function drawE5(){
   setT('e5note',note);setT('e5fit',fit);
 }
 
+/* =============== TAB 5: relaxation oscillator =============== */
+const S6={H:35,R:1,C:8,hOn:25,hOff:6,V:60,open:false,t:0,hist:[],acc:0,lastOpen:null,Tm:null,ph:0,phD:0,Qin:0,Qout:0};
+const C6=makeCanvas($('#c6'),820,380),G6=makeCanvas($('#g6'),820,200),y6=h=>345-h*7;
+const k6=$('#k6');
+addSlider(k6,{id:'s6H',label:'Supply level H',min:15,max:42,step:1,value:S6.H,unit:'cm'},v=>S6.H=v);
+addSlider(k6,{id:'s6R',label:'Pipe resistance R',min:.5,max:4,step:.1,value:S6.R,fmt:v=>v.toFixed(1),unit:'cm s mL⁻¹'},v=>S6.R=v);
+addSlider(k6,{id:'s6C',label:'Beaker cross-section C',min:5,max:25,step:1,value:S6.C,unit:'cm²'},v=>{if(S6.C)S6.V*=v/S6.C;S6.C=v;});
+addHead(k6,'Sticky valve');
+const s6on=addSlider(k6,{id:'s6on',label:'Opens at',min:8,max:32,step:1,value:S6.hOn,unit:'cm'},v=>{S6.hOn=v;if(S6.hOff>v-2){S6.hOff=v-2;s6off&&s6off.set(S6.hOff);}});
+var s6off=addSlider(k6,{id:'s6off',label:'Closes at',min:2,max:30,step:1,value:S6.hOff,unit:'cm'},v=>{S6.hOff=v;if(v>S6.hOn-2){S6.hOn=v+2;s6on.set(S6.hOn);}});
+addBtns(k6,[{id:'b6r',text:'Empty and restart',on:()=>{S6.V=0;S6.open=false;S6.t=0;S6.hist=[];S6.lastOpen=null;S6.Tm=null;}}]);
+readouts($('#ro6'),[['r6h','Beaker level','cm'],['r6qi','Flow in','mL s⁻¹'],['r6qo','Flow out','mL s⁻¹'],['r6rc','RC','s'],['r6tp','Predicted fill time','s'],['r6tm','Measured T','s']]);
+function step6(dt){const sub=40,h=dt/sub;
+  for(let i=0;i<sub;i++){const lv=S6.V/S6.C;const qi=(S6.H-lv)/S6.R,qo=S6.open?lv/0.08:0;S6.V=Math.max(0,S6.V+(qi-qo)*h);S6.t+=h;S6.Qin=qi;S6.Qout=qo;
+    const L=S6.V/S6.C;if(!S6.open&&L>=S6.hOn){S6.open=true;if(S6.lastOpen!==null)S6.Tm=S6.t-S6.lastOpen;S6.lastOpen=S6.t;}else if(S6.open&&L<=S6.hOff)S6.open=false;}
+  S6.ph+=clamp(S6.Qin*8,-300,300)*dt;S6.phD+=clamp(S6.Qout*2,0,420)*dt;
+  S6.acc+=dt;if(S6.acc>=.05){S6.acc=0;S6.hist.push([S6.t,S6.V/S6.C]);while(S6.hist.length&&S6.hist[0][0]<S6.t-30)S6.hist.shift();}
+  setT('rState',S6.H<=S6.hOn?'Supply below the opening mark: the valve will never open':S6.open?'Valve open: lamp flashing':'Valve shut: beaker filling');}
+const Tp6=()=>S6.H>S6.hOn?S6.R*S6.C*Math.log((S6.H-S6.hOff)/(S6.H-S6.hOn)):null;
+function draw6(){
+  if(!C6.begin())return;const ctx=C6.ctx,lv=S6.V/S6.C,bw=30+S6.C*2.4,bx=430;
+  hgrid(ctx,50,810,y6,0,45);ruler(ctx,44,y6,0,45);
+  // supply tank + pump label
+  const tx=120,tb=S6.H-8;pipe(ctx,[[tx+45,y6(tb+.9)],[220,y6(tb+.9)]],8,S6.Qin,S6.ph);
+  bundle([220,y6(tb+.9)],[bx-bw/2-20,y6(1)],1,6,40+S6.R*15).forEach(p=>pipe(ctx,p,6,S6.Qin,S6.ph));
+  pipe(ctx,[[bx-bw/2-20,y6(1)],[bx-bw/2,y6(1)]],8,S6.Qin,S6.ph);
+  beaker(ctx,tx,90,y6(tb),y6(S6.H+3),y6(S6.H),'Supply');
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='center';ctx.fillText('held level by a pump',tx,y6(tb)+30);
+  // drain + valve
+  const vx=bx+bw/2+60,dy=y6(1);pipe(ctx,[[bx+bw/2,dy],[vx-14,dy]],12,S6.Qout,S6.phD,true);pipe(ctx,[[vx+14,dy],[690,dy],[690,y6(-2.5)]],12,S6.Qout,S6.phD,S6.open);
+  ctx.fillStyle=S6.open?T.water2:T.panel;ctx.strokeStyle=T.pipe;ctx.lineWidth=3;ctx.fillRect(vx-14,dy-16,28,32);ctx.strokeRect(vx-14,dy-16,28,32);
+  ctx.strokeStyle=T.brass;ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(vx-8,dy-14);S6.open?ctx.lineTo(vx+10,dy-6):ctx.lineTo(vx-8,dy+14);ctx.stroke();ctx.lineCap='butt';
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='center';ctx.fillText('STICKY VALVE',vx,dy+32);
+  // lamp
+  const lx=730,ly=y6(14);ctx.fillStyle=S6.open?T.warn:T.chip||T.grid;ctx.globalAlpha=S6.open?1:.6;ctx.beginPath();ctx.arc(lx,ly,20,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=T.ink;ctx.lineWidth=2;ctx.stroke();
+  if(S6.open){ctx.strokeStyle=T.warn;ctx.lineWidth=2;for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(lx+Math.cos(a)*25,ly+Math.sin(a)*25);ctx.lineTo(lx+Math.cos(a)*34,ly+Math.sin(a)*34);ctx.stroke();}}
+  ctx.fillStyle=T.ink;ctx.font=`700 11px ${MONO}`;ctx.fillText('LAMP',lx,ly+46);ctx.strokeStyle=T.muted;ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(690,y6(1));ctx.lineTo(lx,ly+20);ctx.stroke();ctx.setLineDash([]);
+  beaker(ctx,bx,bw,y6(0),y6(34),y6(lv),'Beaker');
+  [[S6.hOn,'opens',T.warn],[S6.hOff,'closes',T.good]].forEach(([h,l,c])=>{ctx.strokeStyle=c;ctx.setLineDash([5,4]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bx-bw/2-8,y6(h));ctx.lineTo(bx+bw/2+8,y6(h));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=c;ctx.font=`700 11px ${MONO}`;ctx.textAlign='left';ctx.fillText(l+' '+h,bx+bw/2+12,y6(h)+4);});
+  levelLine(ctx,48,bx-bw/2,y6(lv));levelLine(ctx,48,tx-45,y6(S6.H));
+  tag(ctx,bx,y6(34)-8,'h = '+fx(lv)+' cm','center',T.water);tag(ctx,tx,y6(S6.H+3)-8,'H = '+S6.H+' cm','center',T.water);
+}
+function draw6g(){
+  if(!G6.begin())return;const ctx=G6.ctx,t1=Math.max(30,S6.t);
+  const gr=graph(G6,{x0:t1-30,x1:t1,y0:0,y1:40,xs:5,ys:10,xl:'time / s',yl:'level / cm'});
+  [[S6.hOn,T.warn],[S6.hOff,T.good]].forEach(([h,c])=>{ctx.strokeStyle=c;ctx.setLineDash([5,4]);ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(gr.b.l,gr.Y(h));ctx.lineTo(gr.b.r,gr.Y(h));ctx.stroke();ctx.setLineDash([]);});
+  if(S6.hist.length>1){ctx.strokeStyle=T.water;ctx.lineWidth=2.2;ctx.beginPath();S6.hist.forEach((p,i)=>{i?ctx.lineTo(gr.X(p[0]),gr.Y(p[1])):ctx.moveTo(gr.X(p[0]),gr.Y(p[1]));});ctx.stroke();}
+}
+function ro6(){setT('r6h',fx(S6.V/S6.C));setT('r6qi',fx(S6.Qin));setT('r6qo',fx(S6.Qout));setT('r6rc',(S6.R*S6.C).toFixed(1));const tp=Tp6();setT('r6tp',tp?tp.toFixed(1):'never');setT('r6tm',S6.Tm?S6.Tm.toFixed(1):'–');}
+
+/* =============== TAB 6: astable flip-flop =============== */
+const S7={H:30,N:15,R:[1,1],C:10,V:[160,0],b:[0,0],g:[0,0],t:0,hist:[],acc:0,last:[null,null],on:[null,null],Ton:[null,null],ph:[0,0],Qin:[0,0]};
+const C7=makeCanvas($('#c7'),820,440),G7=makeCanvas($('#g7'),820,220),y7=h=>392-h*8.5;
+const KICK=10; // cm drop when displacer lifted out
+const lvl7=i=>S7.V[i]/S7.C+KICK*(1-S7.g[1-i]);
+const k7=$('#k7');
+addSlider(k7,{id:'s7R0',label:'R₁ (beaker 1 supply pipe)',min:.5,max:3,step:.1,value:S7.R[0],fmt:v=>v.toFixed(1),unit:'cm s mL⁻¹'},v=>S7.R[0]=v);
+addSlider(k7,{id:'s7R1',label:'R₂ (beaker 2 supply pipe)',min:.5,max:3,step:.1,value:S7.R[1],fmt:v=>v.toFixed(1),unit:'cm s mL⁻¹'},v=>S7.R[1]=v);
+addSlider(k7,{id:'s7C',label:'Timing beaker cross-section C',min:5,max:20,step:1,value:S7.C,unit:'cm²'},v=>{if(S7.C){S7.V[0]*=v/S7.C;S7.V[1]*=v/S7.C;}S7.C=v;});
+addBtns(k7,[{id:'b7r',text:'Restart',on:()=>{S7.V=[16*S7.C,0];S7.b=[0,0];S7.g=[0,0];S7.t=0;S7.hist=[];S7.on=[null,null];S7.Ton=[null,null];}}]);
+readouts($('#ro7'),[['r7l1','Lamp 1',''],['r7l2','Lamp 2',''],['r7h1','Beaker 1','cm'],['r7h2','Beaker 2','cm'],['r7t1','Lamp 1 on for','s'],['r7t2','Lamp 2 on for','s']]);
+function step7(dt){const sub=40,h=dt/sub;
+  for(let k=0;k<sub;k++){
+    for(const i of [0,1]){const L=lvl7(i),qi=(S7.H-L)/S7.R[i],qb=Math.max(0,L-S7.N)/0.3;S7.Qin[i]=qi;S7.V[i]=Math.max(0,S7.V[i]+(qi-qb)*h);
+      S7.b[i]+=(qb*0.6-S7.b[i])/0.25*h;}
+    for(const i of [0,1]){const was=S7.g[i]>.5;S7.g[i]=clamp((S7.b[i]-.3)/.4,0,1);const is=S7.g[i]>.5;
+      if(is&&!was)S7.on[i]=S7.t;if(!is&&was&&S7.on[i]!==null)S7.Ton[i]=S7.t-S7.on[i];}
+    S7.t+=h;}
+  S7.ph[0]+=clamp(S7.Qin[0]*8,-300,300)*dt;S7.ph[1]+=clamp(S7.Qin[1]*8,-300,300)*dt;
+  S7.acc+=dt;if(S7.acc>=.05){S7.acc=0;S7.hist.push([S7.t,lvl7(0),lvl7(1),S7.g[0],S7.g[1]]);while(S7.hist.length&&S7.hist[0][0]<S7.t-30)S7.hist.shift();}
+  setT('fState',S7.g[0]>.5?'Transistor 1 on, transistor 2 off':S7.g[1]>.5?'Transistor 2 on, transistor 1 off':'Both off: switching');}
+function draw7(){
+  if(!C7.begin())return;const ctx=C7.ctx,bw=30+S7.C*2.4,xs=[300,520],col=[T.accent,T.brass];
+  hgrid(ctx,10,810,y7,0,40);
+  // supply
+  const sx=410;beaker(ctx,sx,90,y7(S7.H-5),y7(S7.H+3),y7(S7.H),'');ctx.fillStyle=T.ink;ctx.font=`700 12px ${BODY}`;ctx.textAlign='center';ctx.fillText('Supply (held by a pump)',sx,y7(S7.H+3)-8);
+  [0,1].forEach(i=>{const dir=i?1:-1,bx=xs[i],sy=y7(S7.H-4.1);
+    const a=[sx+dir*45,sy],m=[sx+dir*70,sy],e=[bx-dir*(bw/2+14),y7(2)];
+    pipe(ctx,[a,m],7,S7.Qin[i],S7.ph[i]);bundle(m,[e[0],sy+40],1,5,30+S7.R[i]*20).forEach(p=>pipe(ctx,p,5,S7.Qin[i],S7.ph[i]));
+    pipe(ctx,[[e[0],sy+40],e,[bx-dir*bw/2,y7(2)]],7,S7.Qin[i],S7.ph[i]);});
+  [0,1].forEach(i=>{const dir=i?1:-1,bx=xs[i],L=lvl7(i),g=S7.g[i],G=S7.g[1-i];
+    // displacer in this beaker hangs from the OTHER lever
+    const dTop=y7(4)-60-G*(y7(4)-y7(40))*0.62;
+    beaker(ctx,bx,bw,y7(0),y7(30),y7(L),'Timing beaker '+(i+1));
+    ctx.fillStyle=col[1-i];ctx.globalAlpha=.85;ctx.fillRect(bx-bw*.22,dTop,bw*.44,60);ctx.globalAlpha=1;ctx.strokeStyle=T.ink;ctx.lineWidth=1.2;ctx.strokeRect(bx-bw*.22,dTop,bw*.44,60);
+    // nozzle at N on the outer side
+    const nx=bx+dir*bw/2,ny=y7(S7.N),bkx=i?720:100;ctx.strokeStyle=T.ink;ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(bx-bw/2,ny);ctx.lineTo(bx+bw/2,ny);ctx.stroke();ctx.setLineDash([]);
+    pipe(ctx,[[nx,ny],[bkx,ny],[bkx,y7(12.5)]],4,S7.b[i],S7.ph[i],S7.b[i]>.05);
+    // lever: bucket end at bkx, pivot, other end lifts
+    const pv=[bkx-dir*50,y7(10)],tilt=0.35*g,lend=[pv[0]+dir*50*Math.cos(tilt),pv[1]+50*Math.sin(tilt)],rend=[pv[0]-dir*55*Math.cos(tilt),pv[1]-55*Math.sin(tilt)];
+    ctx.strokeStyle=T.ink;ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(lend[0],lend[1]);ctx.lineTo(rend[0],rend[1]);ctx.stroke();ctx.lineCap='butt';
+    ctx.fillStyle=T.brass;ctx.beginPath();ctx.arc(pv[0],pv[1],5,0,7);ctx.fill();ctx.strokeStyle=T.pipe;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(pv[0],pv[1]+5);ctx.lineTo(pv[0],y7(0));ctx.stroke();
+    // bucket hangs from end nearest the nozzle (lend)
+    const bt=lend[1]+8,fill=clamp(S7.b[i],0,1)*.85;ctx.strokeStyle=T.ink;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(lend[0],lend[1]);ctx.lineTo(lend[0],bt);ctx.stroke();
+    if(fill>0){ctx.fillStyle=T.water2;ctx.fillRect(lend[0]-14,bt+26*(1-fill),28,26*fill);}
+    ctx.strokeStyle=T.ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(lend[0]-17,bt);ctx.lineTo(lend[0]-13,bt+26);ctx.lineTo(lend[0]+13,bt+26);ctx.lineTo(lend[0]+17,bt);ctx.stroke();
+    // cord from lifting end over the top to the displacer in the other beaker
+    const ox=xs[1-i],cy0=22+i*10;ctx.strokeStyle=col[i];ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(rend[0],rend[1]);ctx.lineTo(rend[0],cy0);ctx.lineTo(ox+(i?-6:6),cy0);
+    const otherTop=y7(4)-60-g*(y7(4)-y7(40))*0.62;ctx.lineTo(ox+(i?-6:6),otherTop);ctx.stroke();
+    // lamp above the lever
+    const lx=i?760:60,ly=y7(31);ctx.fillStyle=g>.5?col[i]:T.grid;ctx.beginPath();ctx.arc(lx,ly,16,0,7);ctx.fill();ctx.strokeStyle=T.ink;ctx.lineWidth=2;ctx.stroke();
+    if(g>.5){ctx.strokeStyle=col[i];ctx.lineWidth=2;for(let k=0;k<8;k++){const a=k*Math.PI/4;ctx.beginPath();ctx.moveTo(lx+Math.cos(a)*21,ly+Math.sin(a)*21);ctx.lineTo(lx+Math.cos(a)*28,ly+Math.sin(a)*28);ctx.stroke();}}
+    ctx.fillStyle=T.ink;ctx.font=`700 11px ${MONO}`;ctx.textAlign='center';ctx.fillText('LAMP '+(i+1),lx,ly+32);ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.fillText('TRANSISTOR '+(i+1),pv[0],y7(0)+14);
+    tag(ctx,bx,y7(30)-8,fx(L)+' cm','center',T.water);});
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='left';ctx.fillText('0 cm',12,y7(0)-4);
+  ctx.fillStyle=T.muted;ctx.font=`500 10px ${MONO}`;ctx.textAlign='center';ctx.fillText('nozzles at '+S7.N+' cm',410,y7(S7.N)+16);
+}
+function draw7g(){
+  if(!G7.begin())return;const ctx=G7.ctx,t1=Math.max(30,S7.t);
+  const gr=graph(G7,{x0:t1-30,x1:t1,y0:0,y1:30,xs:5,ys:10,xl:'time / s',yl:'level / cm'});
+  ctx.strokeStyle=T.muted;ctx.setLineDash([4,4]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(gr.b.l,gr.Y(S7.N));ctx.lineTo(gr.b.r,gr.Y(S7.N));ctx.stroke();ctx.setLineDash([]);
+  [[1,T.accent],[2,T.brass]].forEach(([k,c])=>{if(S7.hist.length<2)return;ctx.strokeStyle=c;ctx.lineWidth=2.2;ctx.beginPath();S7.hist.forEach((p,i)=>{const y=gr.Y(clamp(p[k],0,30));i?ctx.lineTo(gr.X(p[0]),y):ctx.moveTo(gr.X(p[0]),y);});ctx.stroke();});
+  ctx.font=`700 11px ${MONO}`;ctx.textAlign='left';ctx.fillStyle=T.accent;ctx.fillText('beaker 1',gr.b.l+8,gr.b.t+10);ctx.fillStyle=T.brass;ctx.fillText('beaker 2',gr.b.l+80,gr.b.t+10);
+}
+function ro7(){setT('r7l1',S7.g[0]>.5?'ON':'off');setT('r7l2',S7.g[1]>.5?'ON':'off');setT('r7h1',fx(lvl7(0)));setT('r7h2',fx(lvl7(1)));setT('r7t1',S7.Ton[0]?S7.Ton[0].toFixed(1):'–');setT('r7t2',S7.Ton[1]?S7.Ton[1].toFixed(1):'–');}
+
 /* =============== tabs, routing, loop =============== */
 let active='head-and-flow',sub='diode';
 const tabs=[...document.querySelectorAll('.tabs button')];
@@ -890,10 +1148,12 @@ let last=performance.now(),lastRO=0;
 function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;readTok();
   if(active==='head-and-flow'){step1(dt*S1.speed);draw1();draw1g();drawE1();}
   else if(active==='water-circuit'){step2(dt*S2.speed);draw2();}
+  else if(active==='relaxation'){step6(dt);draw6();draw6g();}
+  else if(active==='flip-flop'){step7(dt);draw7();draw7g();}
   else if(active==='oscillator'){step5(dt*(S5.slow?.25:1));draw5();draw5g();drawE5();}
   else if(sub==='diode'){step3(dt);draw3();draw3g();}
   else{step4(dt);draw4();draw4g();}
-  if(now-lastRO>100){lastRO=now;ro1();ro2();ro3();ro4();ro5();}
+  if(now-lastRO>100){lastRO=now;ro1();ro2();ro3();ro4();ro5();ro6();ro7();}
   requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 })();
